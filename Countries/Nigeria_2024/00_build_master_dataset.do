@@ -192,12 +192,8 @@ save "$wip_hh/MTF_2024_HH_Nigeria_Master.dta", replace
 
 	save "$wip_hh/$master_dta", replace
 
-	** C. Generator & D. Rechargeable Battery Full Modules
-	use "$wip_hh/$master_dta", clear
-	merge 1:1 interview__id using "$raw_hh/sec_c_generator.dta", nogen
-	merge 1:1 interview__id using "$raw_hh/sec_c_rechar_ba.dta", nogen
-
-	** Generator expenditure
+	** C. Generator Expenditure (pre-aggregated from sec_c_generator.dta roster)
+	use "$raw_hh/sec_c_generator.dta", clear
 	replace SEC_C_Q88 = . if SEC_C_Q88 == 888
 	gen gen_exp_maint_yr = SEC_C_Q88
 	gen gen_exp_maint_m  = gen_exp_maint_yr / 12
@@ -206,25 +202,45 @@ save "$wip_hh/MTF_2024_HH_Nigeria_Master.dta", replace
 	replace nbr_mth_gen = 12 if SEC_C_Q84__111 == 1
 
 	replace SEC_C_Q91 = . if SEC_C_Q91 == 888
-	gen gen_exp_m  = SEC_C_Q91
-	gen gen_exp_yr = gen_exp_m * nbr_mth_gen
+	gen gen_exp_fuel_m  = SEC_C_Q91
+	gen gen_exp_fuel_yr = gen_exp_fuel_m * nbr_mth_gen
 
-	recode gen_exp_maint_m gen_exp_maint_yr gen_exp_m gen_exp_yr (. = 0)
-	gen gen_exp_tot_m  = gen_exp_maint_m + gen_exp_m
-	gen gen_exp_tot_yr = gen_exp_maint_yr + gen_exp_yr
+	recode gen_exp_maint_m gen_exp_maint_yr gen_exp_fuel_m gen_exp_fuel_yr (. = 0)
+	gen gen_exp_item_m  = gen_exp_maint_m + gen_exp_fuel_m
+	gen gen_exp_item_yr = gen_exp_maint_yr + gen_exp_fuel_yr
+
+	* Aggregate across multiple generators per household
+	bys interview__id: egen gen_exp_tot_m  = total(gen_exp_item_m)
+	bys interview__id: egen gen_exp_tot_yr = total(gen_exp_item_yr)
 	lab var gen_exp_tot_m  "Monthly total generator expenditure"
 	lab var gen_exp_tot_yr "Annual total generator expenditure"
+	keep interview__id gen_exp_tot_m gen_exp_tot_yr
+	duplicates drop
+	save "$wip_hh/generator_exp.dta", replace
 
-	** Rechargeable battery expenditure
+	** D. Rechargeable Battery Expenditure (pre-aggregated from sec_c_rechar_ba.dta roster)
+	use "$raw_hh/sec_c_rechar_ba.dta", clear
 	egen nbr_mth_rech = rowtotal(SEC_C_Q103__1-SEC_C_Q103__12)
 	replace nbr_mth_rech = 12 if SEC_C_Q103__111 == 1
 
 	replace SEC_C_Q108 = . if SEC_C_Q108 == 888
-	gen rech_bat_exp_m  = SEC_C_Q108
-	gen rech_bat_exp_yr = rech_bat_exp_m * nbr_mth_rech
-	recode rech_bat_exp_m rech_bat_exp_yr (. = 0)
+	gen rech_bat_exp_item_m  = SEC_C_Q108
+	gen rech_bat_exp_item_yr = rech_bat_exp_item_m * nbr_mth_rech
+	recode rech_bat_exp_item_m rech_bat_exp_item_yr (. = 0)
+
+	* Aggregate across multiple batteries per household
+	bys interview__id: egen rech_bat_exp_m  = total(rech_bat_exp_item_m)
+	bys interview__id: egen rech_bat_exp_yr = total(rech_bat_exp_item_yr)
 	lab var rech_bat_exp_m  "Monthly rechargeable battery expenditure"
 	lab var rech_bat_exp_yr "Annual rechargeable battery expenditure"
+	keep interview__id rech_bat_exp_m rech_bat_exp_yr
+	duplicates drop
+	save "$wip_hh/rechar_ba_exp.dta", replace
+
+	** Merge pre-aggregated expenditures into master dataset (1:1 is guaranteed)
+	use "$wip_hh/$master_dta", clear
+	merge 1:1 interview__id using "$wip_hh/generator_exp.dta", nogen
+	merge 1:1 interview__id using "$wip_hh/rechar_ba_exp.dta", nogen
 
 	** Combine electricity expenditure
 	recode grid_exp_m grid_exp_yr minigrid_exp_m minigrid_exp_yr gen_exp_tot_m gen_exp_tot_yr rech_bat_exp_m rech_bat_exp_yr (. = 0)
