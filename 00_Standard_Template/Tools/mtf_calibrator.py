@@ -631,7 +631,7 @@ di " 01_setup.do complete — Master dataset validated."
         for ccode in admin1_codes:
             country_reg_scalars.append(f"REG_{ccode}_SOLAR")
 
-        reg_scalars_str = " \\\n\t\t".join([" ".join(country_reg_scalars[i:i+5]) for i in range(0, len(country_reg_scalars), 5)])
+        reg_scalars_str = " ///\n\t\t".join([" ".join(country_reg_scalars[i:i+5]) for i in range(0, len(country_reg_scalars), 5)])
 
         namibia_scalars_pattern = re.compile(r'REG_KHARAS_ELEC.*?REG_ZAMBEZI_SOLAR', re.DOTALL)
         text = namibia_scalars_pattern.sub(reg_scalars_str, text)
