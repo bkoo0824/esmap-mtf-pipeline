@@ -231,5 +231,5 @@ The helper automatically scans for data leaks, stages your code, commits, and pu
 
 ## 📞 Support & Contacts
 If you encounter any issues or need custom variables added for your country survey, please contact:
-- **Bryan Koo** (Senior Energy Specialist, World Bank ESMAP) — `bkoo@worldbank.org`
-- **ESMAP Energy Access Team** — Global MTF Survey Diagnostics Helpdesk
+- **Bryan Koo** (Senior Energy Specialist, World Bank ESMAP) — `bkoo@worldbankgroup.org`
+- **ESMAP Data and Analytics Team** — Global MTF Survey Diagnostics Helpdesk
