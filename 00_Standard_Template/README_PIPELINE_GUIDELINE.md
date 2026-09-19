@@ -291,3 +291,49 @@ The pipeline exports **260+ calibrated indicators** across 10 structured dimensi
    `replace fuel_buy_freq = 15 if regexm(lower(SEC_I_Q07_oth), "year")`
 3. **Word Document XML Preservation:**  
    The `inject_report.py` script renders the Word document directly from the injected Markdown file, guaranteeing that table widths, callout borders, and 300-DPI charts are rendered cleanly without Microsoft Word XML corruption.
+
+---
+
+## 7. Team Collaboration, Version Control & Data Privacy (GitHub Monorepo)
+
+To collaborate with data scientists and country economists across different survey countries, the pipeline is version-controlled in a centralized private GitHub repository:
+
+**Repository URL:** [https://github.com/bkoo0824/esmap-mtf-pipeline](https://github.com/bkoo0824/esmap-mtf-pipeline)
+
+### Architecture: Strict Code/Data Separation
+- **Data Layer (OneDrive / SharePoint):** All survey microdata (`*.dta`, `*.xlsx`, `Data/clean`, `Data/wip`) remains strictly on your local/shared institutional OneDrive under World Bank access controls. Microdata is NEVER uploaded to GitHub.
+- **Code Layer (GitHub):** All Stata do-files (`00` to `07`), Python tools, cookstove configuration forms, and Markdown templates are version-controlled in the private Monorepo.
+- **Bridge (`c(username)`):** Stata master scripts dynamically resolve data paths based on the analyst's OS username (e.g. `WB453090`, `bryan`, `wb123456`).
+
+### Automated Data Privacy Guard (Pre-Commit Hook)
+A pre-commit security hook (`.git/hooks/pre-commit`) actively intercepts every commit:
+- Scans staged files for microdata formats (`.dta`, `.xlsx`, `.sav`, `.sas7bdat`).
+- Scans file sizes: strictly aborts commits containing any file > 5 MB.
+- Prevents accidental `git add .` data leaks.
+
+### 1-Command CLI Helper (`git_sync.py`)
+Run the helper tool from the root of the repository:
+
+```bash
+# Check repository health and confirm zero data files exist in the repo:
+python3 git_sync.py --status
+
+# Validate safety, stage safe code, commit, and push in one step:
+python3 git_sync.py --sync -m "Update cooking attribute tiers for Nigeria"
+
+# Pull latest revisions from team members:
+python3 git_sync.py --pull
+
+# Import updated do-files from your local analysis directory into the repository:
+python3 git_sync.py --import-country "Nigeria_2024" --source "/path/to/07. Data Analysis/Do-file"
+```
+
+### Data Scientist Onboarding Checklist
+1. **Clone Repo:** `git clone git@github.com:bkoo0824/esmap-mtf-pipeline.git`
+2. **Add OneDrive Path:** Open `Countries/<Country>/<Country>_MTF_Master.do` and add your username block in Section 1:
+   ```stata
+   if c(username) == "wb123456" {
+       global user "C:/Users/wb123456/OneDrive - WBG/06. Data Analysis"
+   }
+   ```
+3. **Branch & PR:** Always create a feature branch (`git checkout -b feature/country-fix`), commit changes, push, and open a Pull Request against `main`.
