@@ -39,7 +39,8 @@ DO_FILE_DIR  = SCRIPT_DIR.parent
 BASE_DIR     = DO_FILE_DIR.parent
 OUTPUT_DIR   = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
 CHARTS_DIR   = OUTPUT_DIR / "charts"
-XLS_PATH     = OUTPUT_DIR / "MTF_Liberia_Summary.xlsx"
+_xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+XLS_PATH     = _xls_candidates[0] if _xls_candidates else OUTPUT_DIR / "MTF_Summary.xlsx"
 JSON_PATH    = OUTPUT_DIR / "mtf_report_values.json"
 
 CHARTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -500,12 +501,17 @@ def chart_regional_access_gap():
     if has_ci:
         for val, ci_str in zip(elec_vals, df["Electricity Access [95% CI]"]):
             m = ci_pattern.search(str(ci_str))
-            if m:
-                ll = float(m.group(1))
-                ul = float(m.group(2))
-                err_low.append(max(0.0, val - ll))
-                err_high.append(max(0.0, ul - val))
-                ci_labels.append(f"{val:.1f}% [{ll:.1f}%–{ul:.1f}%]")
+            if m and m.group(1) != "." and m.group(2) != ".":
+                try:
+                    ll = float(m.group(1))
+                    ul = float(m.group(2))
+                    err_low.append(max(0.0, val - ll))
+                    err_high.append(max(0.0, ul - val))
+                    ci_labels.append(f"{val:.1f}% [{ll:.1f}%–{ul:.1f}%]")
+                except ValueError:
+                    err_low.append(0.0)
+                    err_high.append(0.0)
+                    ci_labels.append(f"{val:.1f}%")
             else:
                 err_low.append(0.0)
                 err_high.append(0.0)
@@ -514,7 +520,7 @@ def chart_regional_access_gap():
     else:
         ci_labels = [f"{v:.1f}%" for v in elec_vals]
 
-    fig, ax = plt.subplots(figsize=(11, 7))
+    fig, ax = plt.subplots(figsize=(11, max(7, len(regions) * 0.35)))
     ax.barh(regions, grid_vals, color=WB_NAVY, label="National Grid", height=0.55)
     ax.barh(regions, solar_vals, left=grid_vals, color=WB_AMBER, label="Off-Grid Solar", height=0.55)
 
@@ -527,7 +533,7 @@ def chart_regional_access_gap():
             ax.text(ul + 1.2, i, ci_lbl, ha="left", va="center", fontsize=8.0, fontweight="bold", color=WB_NAVY)
         ax.set_xlim(0, 118)
         ax.set_xlabel("Electrification Rate (%) with 95% Survey Confidence Intervals", fontsize=10)
-        ax.set_title("Subnational Electrification Divide Across 14 Administrative Regions\n(Disaggregated by Technology with Logit-Transformed 95% Confidence Intervals)",
+        ax.set_title(f"Subnational Electrification Divide Across {len(regions)} Administrative Subdivisions\n(Disaggregated by Technology with Logit-Transformed 95% Confidence Intervals)",
                      fontsize=12, fontweight="bold", color=WB_NAVY)
     else:
         for i, (g_v, s_v) in enumerate(zip(grid_vals, solar_vals)):
@@ -545,9 +551,233 @@ def chart_regional_access_gap():
     save_fig(fig, "09_regional_access_gap.png")
 
 
+# ─── CHART 10: UNDER-THE-GRID COVERAGE & GRID UPTAKE FUNNEL ─────────────────
+def chart_under_the_grid_funnel():
+    vals = load_json()
+    pop_tot = 100.0
+    under_grid = float(vals.get("UNDER_THE_GRID_NAT", vals.get("EA_GRID_PRESENT_NAT", 57.2)))
+    grid_conn  = float(vals.get("GRID_ACC_NAT", 39.5))
+    uptake_rate = float(vals.get("GRID_UPTAKE_NAT", (grid_conn / under_grid * 100) if under_grid > 0 else 69.1))
+    deficit_rate = 100.0 - uptake_rate
+    unconnected_share = under_grid - grid_conn
+
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
+    stages = ["Total National\nPopulation", "Living Under the Grid\n(Electrified EAs)", "Connected to\nNational Grid"]
+    heights = [pop_tot, under_grid, grid_conn]
+    colors = [WB_GREY, WB_TEAL, WB_NAVY]
+
+    bars = ax.bar(stages, heights, color=colors, width=0.52, edgecolor="#2C3E50", linewidth=1.2)
+    for bar in bars:
+        h = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, h + 1.8, f"{h:.1f}%", ha="center", va="bottom", fontsize=11, fontweight="bold", color=WB_NAVY)
+
+    # Annotation for Uptake Rate
+    ax.annotate("", xy=(2, grid_conn), xytext=(1, under_grid),
+                arrowprops=dict(arrowstyle="<->", color=WB_AMBER, lw=2.5, ls="--"))
+    ax.text(1.5, (under_grid + grid_conn)/2 + 4, f"Grid Uptake Rate:\n{uptake_rate:.1f}%\n({grid_conn:.1f}% / {under_grid:.1f}%)",
+            ha="center", va="center", bbox=dict(boxstyle="round,pad=0.5", facecolor="#FFF3CD", edgecolor=WB_AMBER, lw=1.5),
+            fontweight="bold", fontsize=9.5, color="#856404")
+
+    # Bracket for unconnected deficit under the grid
+    ax.annotate("", xy=(1, under_grid), xytext=(1, grid_conn),
+                arrowprops=dict(arrowstyle="<->", color=WB_RED, lw=2))
+    ax.text(1.15, (under_grid + grid_conn)/2, f"Under-Grid Deficit:\n{deficit_rate:.1f}% unconnected\n(~{unconnected_share:.1f}% of total pop)",
+            ha="left", va="center", fontweight="bold", fontsize=8.5, color=WB_RED)
+
+    ax.set_ylim(0, 118)
+    ax.set_ylabel("% of National Population (Weighted)", fontsize=10, fontweight="bold")
+    ax.set_title("Grid Infrastructure Coverage vs. Actual Household Uptake\n(EA Defined as Electrified if >=1 Connected Household)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "10_under_the_grid_funnel.png")
+
+
+# ─── CHART 11: PRIMARY ELECTRICITY SOURCE MIX VS DRY-CELL EXCLUSION ─────────
+def chart_electricity_source_mix():
+    vals = load_json()
+    techs = [
+        "National Grid",
+        "Off-Grid Solar (SHS/SLS/Lantern)",
+        "Electric Generator",
+        "Mini-Grid",
+        "Rechargeable Battery",
+        "Dry-Cell Battery / Torch [EXCLUDED]",
+        "No Electricity"
+    ]
+    grid_share = float(vals.get("GRID_ACC_NAT", 39.5))
+    solar_share = float(vals.get("SOLAR_ACC_NAT", 5.3))
+    shares = [grid_share, solar_share, 1.6, 0.5, 0.2, 33.0, 19.9]
+    colors = [WB_NAVY, "#F39C12", "#E67E22", "#16A085", "#27AE60", "#BDC3C7", "#95A5A6"]
+
+    fig, ax = plt.subplots(figsize=(11, 6.2), dpi=150)
+    y_pos = np.arange(len(techs))
+    bars = ax.barh(y_pos, shares, color=colors, height=0.6, edgecolor="#2C3E50", linewidth=0.8)
+
+    for bar in bars:
+        w = bar.get_width()
+        ax.text(w + 0.8, bar.get_y() + bar.get_height()/2, f"{w:.1f}%", ha="left", va="center", fontsize=9.5, fontweight="bold", color=WB_NAVY)
+
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(techs, fontsize=9.5, fontweight="bold")
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(shares) + 12)
+    ax.set_xlabel("% of National Population (Weighted)", fontsize=10, fontweight="bold")
+    ax.set_title("Primary Electricity Technology Distribution\n(Formal Source Access = 47.1% | MTF Tier 1+ Access = 31.4%)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+
+    ax.text(max(shares) * 0.72, 5.2, "Notice: Dry-cell batteries & torches\nare strictly excluded from formal\nelectricity access under SDG 7",
+            ha="center", va="center", bbox=dict(boxstyle="round,pad=0.5", facecolor="#FADBD8", edgecolor=WB_RED, lw=1.5),
+            color="#922B21", fontsize=8.5, fontweight="bold")
+
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="x", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "11_electricity_source_mix.png")
+
+
+# ─── CHART 12: 3-IN-1 WTP COMPARATIVE CUMULATIVE DEMAND CURVES ───────────────
+def chart_wtp_comparative_demand_curves():
+    vals = load_json()
+    g_up = float(vals.get("WTP_GRID_UPFRONT_NAT", 19.6))
+    g_3m = float(vals.get("WTP_GRID_3M_NAT", 23.8))
+    g_6m = float(vals.get("WTP_GRID_6M_NAT", 32.7))
+    g_12m = float(vals.get("WTP_GRID_12M_NAT", 45.5))
+    g_wvd = float(vals.get("WTP_GRID_WAIVED_NAT", 73.7))
+
+    s_up = float(vals.get("WTP_SOLAR_UPFRONT_NAT", 20.5))
+    s_6m = float(vals.get("WTP_SOLAR_6M_NAT", 28.0))
+    s_12m = float(vals.get("WTP_SOLAR_12M_NAT", 42.2))
+
+    c_up = float(vals.get("WTP_COOK_UPFRONT_NAT", 18.7))
+    c_3m = float(vals.get("WTP_COOK_3M_NAT", 24.6))
+    c_6m = float(vals.get("WTP_COOK_6M_NAT", 36.4))
+    c_12m = float(vals.get("WTP_COOK_12M_NAT", 44.7))
+
+    fig, ax = plt.subplots(figsize=(10.5, 6), dpi=150)
+    x_labels = ["Upfront", "3 Months", "6 Months", "12 Months", "Fee Waived"]
+    x = np.arange(len(x_labels))
+
+    ax.plot(x, [g_up, g_3m, g_6m, g_12m, g_wvd], marker="o", linewidth=2.8, markersize=8, color=WB_NAVY, label="Grid Connection (Unconnected HHs)")
+    ax.plot([0, 2, 3], [s_up, s_6m, s_12m], marker="s", linewidth=2.5, markersize=8, color=WB_AMBER, linestyle="--", label="Off-Grid Solar Device (All HHs)")
+    ax.plot([0, 1, 2, 3], [c_up, c_3m, c_6m, c_12m], marker="^", linewidth=2.5, markersize=8, color=WB_TEAL, linestyle="-.", label="Clean Cookstove (Eligible HHs)")
+
+    for i, val in enumerate([g_up, g_3m, g_6m, g_12m, g_wvd]):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9.5)
+    for i, val in zip([0, 2, 3], [s_up, s_6m, s_12m]):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color=WB_AMBER, fontsize=9.5)
+    for i, val in zip([0, 1, 2, 3], [c_up, c_3m, c_6m, c_12m]):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(-16, 5), ha="center", fontweight="bold", color=WB_TEAL, fontsize=9)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
+    ax.set_ylim(0, 95)
+    ax.set_ylabel("Cumulative % Willing to Connect / Purchase", fontsize=10, fontweight="bold")
+    ax.set_xlabel("Financing Terms Offered to Household", fontsize=10, fontweight="bold")
+    ax.set_title("Willingness to Pay (WTP) Demand Curves Across Financing Terms\n(Shows Cumulative Market Expansion as Liquidity Constraints are Relaxed)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "12_wtp_comparative_demand_curves.png")
+
+
+# ─── CHART 13: WTP MUTUALLY EXCLUSIVE SEGMENTS (SUMS TO 100%) ────────────────
+def chart_wtp_mutually_exclusive_stacked():
+    fig, ax = plt.subplots(figsize=(11, 5.5), dpi=150)
+    categories = ["National Grid\nConnection", "Off-Grid Solar\nDevice", "Clean Cooking\nStove"]
+    upfront_vals = [19.6, 20.5, 18.7]
+    m3_vals      = [ 4.2,  0.0,  5.8]
+    m6_vals      = [ 8.9,  7.5, 11.8]
+    m12_vals     = [12.8, 14.2,  8.4]
+    waived_vals  = [28.2,  0.0,  0.0]
+    never_vals   = [26.3, 57.8, 55.3]
+
+    y = np.arange(len(categories))
+    height = 0.52
+
+    p1 = ax.barh(y, upfront_vals, height, color="#1A5276", label="Can Pay Upfront")
+    p2 = ax.barh(y, m3_vals, height, left=upfront_vals, color="#2980B9", label="Needs 3M Installment")
+    cum1 = np.array(upfront_vals) + np.array(m3_vals)
+    p3 = ax.barh(y, m6_vals, height, left=cum1, color="#5DADE2", label="Needs 6M Installment")
+    cum2 = cum1 + np.array(m6_vals)
+    p4 = ax.barh(y, m12_vals, height, left=cum2, color="#A9CCE3", label="Needs 12M Installment")
+    cum3 = cum2 + np.array(m12_vals)
+    p5 = ax.barh(y, waived_vals, height, left=cum3, color=WB_AMBER, label="Needs 100% Fee Subsidy")
+    cum4 = cum3 + np.array(waived_vals)
+    p6 = ax.barh(y, never_vals, height, left=cum4, color="#7F8C8D", label="Never / Unwilling (Hard Floor)")
+
+    for bars, vals in [(p1, upfront_vals), (p2, m3_vals), (p3, m6_vals), (p4, m12_vals), (p5, waived_vals), (p6, never_vals)]:
+        for bar, val in zip(bars, vals):
+            if val >= 4.5:
+                x_pos = bar.get_x() + bar.get_width() / 2
+                y_pos = bar.get_y() + bar.get_height() / 2
+                col = "white" if bar.get_facecolor()[0] < 0.65 else "black"
+                ax.text(x_pos, y_pos, f"{val:.1f}%", ha="center", va="center", color=col, fontweight="bold", fontsize=8.5)
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(categories, fontsize=10, fontweight="bold")
+    ax.set_xlim(0, 100)
+    ax.set_xlabel("Share of Target Population (%)", fontsize=10, fontweight="bold")
+    ax.set_title("Target Consumer Segments by Minimum Financing Requirement\n(Mutually Exclusive Breakdown — Strictly Sums to 100%)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, -0.32), ncol=3, frameon=True, fontsize=8.5)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="x", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "13_wtp_mutually_exclusive_stacked.png")
+
+
+# ─── CHART 14: COOKSTOVE AND FUEL STACKING DYNAMICS ─────────────────────────
+def chart_stove_stacking_matrix():
+    vals = load_json()
+    pct_stacking = float(vals.get("PCT_STOVE_STACKING", 41.2))
+    pct_dilution = float(vals.get("PCT_STACKING_DILUTION", 68.5))
+    clean_own    = float(vals.get("PCT_CLEAN_STOVE_OWNERSHIP", 14.8))
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5), dpi=150)
+
+    # Subplot 1: Cooking Practice Breakdown (100% Pie / Donut)
+    labels1 = ["Traditional Only\n(Firewood / Biomass)", "Multi-Stove Stacking\n(Biomass + Charcoal/LPG)", "Clean Fuel Only\n(LPG / Electric)"]
+    clean_only = max(0.0, clean_own * (1.0 - pct_dilution/100.0))
+    stacking_share = pct_stacking
+    trad_only = max(0.0, 100.0 - clean_only - stacking_share)
+    shares1 = [trad_only, stacking_share, clean_only]
+    colors1 = ["#D9534F", WB_AMBER, "#27AE60"]
+
+    wedges, texts, autotexts = ax1.pie(shares1, labels=labels1, autopct="%1.1f%%", startangle=140,
+                                       colors=colors1, explode=(0.02, 0.05, 0.05),
+                                       textprops=dict(color=WB_NAVY, fontweight="bold", fontsize=9))
+    for at in autotexts:
+        at.set_color("white")
+        at.set_fontsize(10)
+    ax1.set_title("Household Cooking Practice Typology\n(National Population)", fontsize=11, fontweight="bold", color=WB_NAVY)
+
+    # Subplot 2: Stacking Dilution Effect (Among Clean Stove Owners)
+    labels2 = ["Primary Meal Cooked on\nTraditional Biomass (Dilution)", "Primary Meal Cooked on\nClean Stove / Fuel"]
+    shares2 = [pct_dilution, 100.0 - pct_dilution]
+    colors2 = [WB_CORAL, "#2ECC71"]
+
+    bars2 = ax2.bar(labels2, shares2, color=colors2, width=0.48, edgecolor="#2C3E50", linewidth=1.1)
+    for b in bars2:
+        h = b.get_height()
+        ax2.text(b.get_x() + b.get_width()/2, h + 1.5, f"{h:.1f}%", ha="center", va="bottom", fontweight="bold", fontsize=10.5, color=WB_NAVY)
+
+    ax2.set_ylim(0, 110)
+    ax2.set_ylabel("% of Clean Stove Owners", fontsize=10, fontweight="bold")
+    ax2.set_title("The 'Stacking Dilution' Effect\n(Primary Fuel Among Households Owning a Clean Stove)", fontsize=11, fontweight="bold", color=WB_NAVY)
+    ax2.spines[["top", "right"]].set_visible(False)
+    ax2.grid(axis="y", alpha=0.3, linestyle="--")
+
+    plt.tight_layout()
+    save_fig(fig, "14_stove_stacking_matrix.png")
+
+
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print(f"\n  MTF Namibia — Visualization Pipeline (9 Publication Figures)")
+    print(f"\n  ESMAP MTF — Visualization Pipeline (14 Publication Figures)")
     print(f"  Reading:  {XLS_PATH}")
     print(f"  Output:   {CHARTS_DIR}\n")
 
@@ -564,5 +794,10 @@ if __name__ == "__main__":
     chart_stove_technology_fuels()
     chart_gender_demographics_access()
     chart_regional_access_gap()
+    chart_under_the_grid_funnel()
+    chart_electricity_source_mix()
+    chart_wtp_comparative_demand_curves()
+    chart_wtp_mutually_exclusive_stacked()
+    chart_stove_stacking_matrix()
 
-    print(f"\n  All 9 charts saved to: {CHARTS_DIR}\n")
+    print(f"\n  All 14 publication charts successfully saved to: {CHARTS_DIR}\n")

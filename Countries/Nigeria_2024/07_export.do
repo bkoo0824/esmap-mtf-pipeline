@@ -404,7 +404,7 @@
 
 	local grid_vars ///
 		barrier_cost barrier_dist barrier_tariff barrier_landlord barrier_unrel barrier_admin ///
-		under_grid_unconnected grid_uptake ///
+		under_the_grid under_grid_unconnected grid_uptake ///
 		wtp_grid_upfront wtp_grid_3m wtp_grid_6m wtp_grid_12m wtp_grid_waived wtp_grid_never refuse_wiring_cost
 
 	foreach var of local grid_vars {
@@ -686,6 +686,39 @@
 	putexcel A`row' = "Cookstove Decision: Joint" B`row' = (e(b)[1,3] * 100) C`row' = (e(b)[1,3] * 100)
 	putexcel save
 
+	*===========================================================================
+	*  SHEET 11: COOKING WTP & DECISION MAKING
+	*===========================================================================
+	putexcel set "`xls'", sheet("Cooking_WTP") modify
+	local row = 1
+	putexcel A`row' = "Metric" B`row' = "National (%)" C`row' = "Urban (%)" D`row' = "Rural (%)"
+	local row = 2
+
+	local cook_wtp_vars ///
+		cook_dec_female cook_dec_male cook_dec_joint ///
+		wtp_cook_upfront wtp_cook_3m wtp_cook_6m wtp_cook_12m wtp_cook_never refuse_cook_cost
+
+	foreach var of local cook_wtp_vars {
+		putexcel A`row' = "`var'"
+		foreach loc in NAT URB RUR {
+			if "`loc'" == "NAT" local cond ""
+			if "`loc'" == "URB" local cond "subpop(if loc_urban_rural == 1)"
+			if "`loc'" == "RUR" local cond "subpop(if loc_urban_rural == 2)"
+			local col = cond("`loc'" == "NAT", "B", cond("`loc'" == "URB", "C", "D"))
+
+			capture {
+				if "`cond'" == "" svy: mean `var'
+				else svy, `cond': mean `var'
+				local val = e(b)[1,1] * 100
+				putexcel `col'`row' = `val'
+				local uc_var = upper("`var'")
+				scalar json_`uc_var'_`loc' = `val'
+			}
+		}
+		local row = `row' + 1
+	}
+	putexcel save
+
 
 	*===========================================================================
 	*  WRITE EXPANDED JSON FILE
@@ -731,6 +764,7 @@
 		BARRIER_LANDLORD_NAT BARRIER_LANDLORD_URB BARRIER_LANDLORD_RUR ///
 		BARRIER_UNREL_NAT BARRIER_UNREL_URB BARRIER_UNREL_RUR ///
 		BARRIER_ADMIN_NAT BARRIER_ADMIN_URB BARRIER_ADMIN_RUR ///
+		UNDER_THE_GRID_NAT UNDER_THE_GRID_URB UNDER_THE_GRID_RUR ///
 		UNDER_GRID_UNCONNECTED_NAT UNDER_GRID_UNCONNECTED_URB UNDER_GRID_UNCONNECTED_RUR ///
 		GRID_UPTAKE_NAT GRID_UPTAKE_URB GRID_UPTAKE_RUR ///
 		GRID_YEARS_NAT GRID_YEARS_URB GRID_YEARS_RUR ///
@@ -738,6 +772,12 @@
 		WTP_GRID_UPFRONT_NAT WTP_GRID_UPFRONT_URB WTP_GRID_UPFRONT_RUR ///
 		WTP_GRID_3M_NAT WTP_GRID_6M_NAT WTP_GRID_12M_NAT WTP_GRID_WAIVED_NAT WTP_GRID_NEVER_NAT ///
 		REFUSE_WIRING_COST_NAT ///
+		WTP_COOK_UPFRONT_NAT WTP_COOK_UPFRONT_URB WTP_COOK_UPFRONT_RUR ///
+		WTP_COOK_3M_NAT WTP_COOK_3M_URB WTP_COOK_3M_RUR ///
+		WTP_COOK_6M_NAT WTP_COOK_6M_URB WTP_COOK_6M_RUR ///
+		WTP_COOK_12M_NAT WTP_COOK_12M_URB WTP_COOK_12M_RUR ///
+		WTP_COOK_NEVER_NAT WTP_COOK_NEVER_URB WTP_COOK_NEVER_RUR ///
+		REFUSE_COOK_COST_NAT REFUSE_COOK_COST_URB REFUSE_COOK_COST_RUR ///
 		WTP_SOLAR_UPFRONT_NAT WTP_SOLAR_6M_NAT WTP_SOLAR_12M_NAT WTP_SOLAR_24M_NAT WTP_SOLAR_NEVER_NAT ///
 		REFUSE_SOLAR_COST_NAT SRF_AWARE_NAT SRF_AWARE_URB SRF_AWARE_RUR ///
 		GRID_BACKUP_CANDLE_NAT GRID_BACKUP_CANDLE_URB GRID_BACKUP_CANDLE_RUR ///
