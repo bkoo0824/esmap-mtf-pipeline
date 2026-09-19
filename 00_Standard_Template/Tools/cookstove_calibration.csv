@@ -1,0 +1,27 @@
+# MTF Cookstove Calibration Form
+# ============================================================
+# INSTRUCTIONS FOR COORDINATOR:
+# 1. Review each row and confirm the questionnaire_code values match
+#    the numeric codes used in Section G (stove type question) of the
+#    country's Survey Solutions / SurveyCTO questionnaire.
+# 2. The stove_description field is used in the report Table 3.1 and Box 3.
+# 3. iso_emission_tier and efficiency_tier MUST be confirmed with a
+#    cookstove expert before running the pipeline.
+#    - iso_emission_tier: 0 (open fire) to 5 (electric/solar)
+#    - efficiency_tier:   0 (< 10%) to 5 (>= 50%)
+# 4. stove_group is used internally by the Stata do-file to map
+#    stoves to the stove_primary_type categories. Valid values:
+#    open_fire | traditional | ics | clean_gas | clean_electric | clean_solar | clean_bio | transitional_bio | other
+# 5. primary_fuel and notes are used in report Table 3.1.
+# 6. The stat_key column maps to the Stata export placeholder name.
+# ============================================================
+questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur
+"1,2","Three-Stone / Open Fire",0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R
+"3,5,22","Traditional / Local Stove",0,0,traditional,Wood / Charcoal,Uninsulated metal grate or brazier,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R
+"4,6,7,8,9,20,21","Improved Cookstove (ICS)",3,2,ics,Firewood / Charcoal,Enclosed combustion with insulation; confirm tier with expert,STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+"10,11,12,13,14,23","Clean Fuel: LPG / Biogas",4,4,clean_gas,Bottled LPG (Butane/Propane),Tier 4-5 depending on ventilation; confirm with expert,STOVE_CLEAN_N,STOVE_CLEAN_U,STOVE_CLEAN_R
+19,"Clean Fuel: Electric Stove",5,5,clean_electric,Grid electricity,Tier 5 when used as primary stove,STOVE_ELEC_N,STOVE_ELEC_U,STOVE_ELEC_R
+"17,18","Solar Cooker",5,5,clean_solar,Solar radiation,Typically available only in high-insolation areas,STOVE_SOLAR_N,STOVE_SOLAR_U,STOVE_SOLAR_R
+15,"Biogas Stove",5,4,clean_bio,Biogas (anaerobic digester),Confirm availability and prevalence with country team,STOVE_BIO_N,STOVE_BIO_U,STOVE_BIO_R
+16,"Biofuel / Ethanol Stove",4,3,transitional_bio,Ethanol / Liquid biofuel,Confirm emission tier with expert (varies by fuel quality),STOVE_BIOFUEL_N,STOVE_BIOFUEL_U,STOVE_BIOFUEL_R
+555,"Other Cookstove",,,,Other / Unspecified,Recode from open-text responses after reviewing data,STOVE_OTHER_N,STOVE_OTHER_U,STOVE_OTHER_R

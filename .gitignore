@@ -1,0 +1,54 @@
+# ==============================================================================
+# DATA PRIVACY: STRICT CODE-ONLY POLICY
+# Under no circumstances should World Bank survey microdata be committed to Git.
+# ==============================================================================
+
+# 1. Stata microdata & intermediate datasets
+*.dta
+*.dta.*
+*.ster
+*.gph
+*.smcl
+*.log
+
+# 2. Raw survey spreadsheets & sampling weights
+*.xlsx
+*.xls
+*.xlsm
+*.csv.raw
+
+# 3. Data & Output Directories
+**/Data/
+**/Data/**
+**/Output/
+**/Output/**
+**/wip/
+**/wip/**
+**/clean/
+**/clean/**
+**/raw/
+**/raw/**
+
+# 4. Binary reports, media & large outputs
+*.docx
+*.pdf
+*.zip
+*.tar.gz
+*.7z
+
+# 5. OS & Python caches
+__pycache__/
+*.py[cod]
+.venv/
+env/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ALLOWLIST: Code, configuration, documentation
+!*.md
+!*.do
+!*.py
+!*.bat
+!*.sh
+!*.csv

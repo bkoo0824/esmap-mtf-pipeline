@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import subprocess, sys
+from pathlib import Path
+
+res = subprocess.run(["git", "diff", "--cached", "--name-only"], stdout=subprocess.PIPE, text=True)
+staged_files = [f.strip() for f in res.stdout.splitlines() if f.strip()]
+
+forbidden_exts = (".dta", ".xlsx", ".xls", ".xlsm", ".sav", ".zsav", ".sas7bdat")
+forbidden_hits = [f for f in staged_files if f.lower().endswith(forbidden_exts) or "data/" in f.lower() or "output/" in f.lower()]
+
+if forbidden_hits:
+    sys.stderr.write("\n" + "="*68 + "\n")
+    sys.stderr.write(" [SECURITY VIOLATION] DATA PRIVACY COMMIT BLOCKED!\n")
+    sys.stderr.write("="*68 + "\n")
+    sys.stderr.write("You are attempting to commit confidential survey microdata or outputs:\n")
+    for f in forbidden_hits:
+        sys.stderr.write(f"  [X] {f}\n")
+    sys.stderr.write("\nAction Required:\n")
+    sys.stderr.write("  Unstage these files immediately using:\n")
+    sys.stderr.write("    git rm --cached <file>  OR  git restore --staged <file>\n")
+    sys.stderr.write("  Keep all microdata in your local OneDrive Data/ folder.\n")
+    sys.stderr.write("Commit rejected.\n\n")
+    sys.exit(1)
+
+MAX_BYTES = 5 * 1024 * 1024
+large_files = []
+for f in staged_files:
+    p = Path(f)
+    if p.is_file() and p.stat().st_size > MAX_BYTES:
+        size_mb = p.stat().st_size / (1024 * 1024)
+        large_files.append(f"{f} ({size_mb:.1f} MB)")
+
+if large_files:
+    sys.stderr.write("\n[ERROR] Oversized file detected (> 5MB):\n")
+    for lf in large_files:
+        sys.stderr.write(f"  [X] {lf}\n")
+    sys.stderr.write("Please do not commit large files or binaries to the code repository.\n\n")
+    sys.exit(1)
+
+sys.exit(0)

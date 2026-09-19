@@ -1,0 +1,9 @@
+# Auto-normalize line endings across Windows and Linux
+* text=auto
+
+# Keep Stata do-files and scripts clean
+*.do text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.csv text eol=lf
+*.bat text eol=crlf
