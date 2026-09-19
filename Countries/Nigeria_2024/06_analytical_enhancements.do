@@ -164,12 +164,17 @@
 	lab var barrier_admin    "Grid barrier: Administrative delay / complicated"
 
 	* Under the grid: EA has grid infrastructure, but HH is not connected
-	capture drop ea_grid_present under_grid_unconnected grid_uptake
-	bys SEC_A_Q05: egen ea_grid_present = max(grid_hh)
-	lab var ea_grid_present "Grid infrastructure present in Enumeration Area (EA)"
+	capture drop ea_grid_present under_the_grid under_grid_unconnected grid_uptake
+	capture confirm variable psu_id
+	if !_rc bys psu_id: egen ea_grid_present = max(grid_hh)
+	else    bys SEC_A_Q07: egen ea_grid_present = max(grid_hh)
+	lab var ea_grid_present "Enumeration Area has at least 1 grid-connected household"
+
+	gen byte under_the_grid = (ea_grid_present == 1)
+	lab var under_the_grid "Household lives in electrified EA ('under the grid')"
 
 	gen byte under_grid_unconnected = (ea_grid_present == 1 & grid_hh == 0)
-	lab var under_grid_unconnected "Living in electrified EA but unconnected ('under the grid')"
+	lab var under_grid_unconnected "Living in electrified EA but unconnected ('under the grid deficit')"
 
 	gen byte grid_uptake = grid_hh if ea_grid_present == 1
 	lab var grid_uptake "Household grid uptake rate among EAs with grid"
@@ -266,6 +271,26 @@
 	lab var cook_dec_female "Cookstove purchase decided by female household member"
 	lab var cook_dec_male   "Cookstove purchase decided by male household member"
 	lab var cook_dec_joint  "Cookstove purchase decided jointly"
+
+
+	*===========================================================================
+	*  ENHANCEMENT 9b: WTP FOR CLEAN COOKSTOVES (SEC_K)
+	*===========================================================================
+
+	capture drop wtp_cook_upfront wtp_cook_3m wtp_cook_6m wtp_cook_12m wtp_cook_never refuse_cook_cost
+	gen byte wtp_cook_upfront = (SEC_K_Q03 == 1) if SEC_K_Q03 < .
+	gen byte wtp_cook_3m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1) if SEC_K_Q03 < .
+	gen byte wtp_cook_6m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1) if SEC_K_Q03 < .
+	gen byte wtp_cook_12m     = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1 | SEC_K_Q06 == 1) if SEC_K_Q03 < .
+	gen byte wtp_cook_never   = (SEC_K_Q06 == 2 | SEC_K_Q07 < .) if SEC_K_Q03 < .
+	gen byte refuse_cook_cost = (SEC_K_Q07 == 1) if SEC_K_Q07 < .
+
+	lab var wtp_cook_upfront "WTP Clean Cookstove: upfront"
+	lab var wtp_cook_3m      "WTP Clean Cookstove: 3-month installment"
+	lab var wtp_cook_6m      "WTP Clean Cookstove: 6-month installment"
+	lab var wtp_cook_12m     "WTP Clean Cookstove: 12-month installment"
+	lab var wtp_cook_never   "Will NEVER purchase clean cookstove"
+	lab var refuse_cook_cost "Cannot afford clean cookstove payment"
 
 
 	*===========================================================================
