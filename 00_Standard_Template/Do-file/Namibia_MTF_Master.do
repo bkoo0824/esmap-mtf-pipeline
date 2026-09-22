@@ -29,23 +29,38 @@
 *======================    1. USER & PATH SETUP   ============================*
 																// jumptosetup
 
-* --- Bryan: Linux (local machine) ---
-	if c(username)=="bryan" {
+if c(os) == "Windows" {
+	* --- Bryan: Windows (WBG OneDrive) ---
+	if c(username) == "WB453090" {
+		global user "C:/Users/WB453090/OneDrive - WBG/1_mtf_energy_global_survey/9_Data analysis_MTF countries/30_Namibia/Data Analysis"
+	}
+	* --- Kat: Windows (WBG Desktop) ---
+	else if c(username) == "wb570814" {
+		global user "C:/Users/wb570814/OneDrive - WBG/Desktop/MTF-desktop/Namibia/Data analysis"
+	}
+	* --- Fallback for other Windows users ---
+	else {
+		global user "C:/Users/`c(username)'/OneDrive - WBG/1_mtf_energy_global_survey/9_Data analysis_MTF countries/30_Namibia/Data Analysis"
+	}
+	global raw_hh "$user/Data/household data/Household"
+}
+else if c(os) == "Unix" {
+	* --- Bryan: Linux (local machine) ---
+	if c(username) == "bryan" {
 		global user "/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/30_Namibia/Data Analysis"
 	}
-
-* --- Bryan: Windows (WBG OneDrive) ---
-	if c(username)=="WB453090" {
-		global user "C:\Users\WB453090\OneDrive - WBG\1_mtf_energy_global_survey\9_Data analysis_MTF countries\30_Namibia\Data Analysis"
+	* --- Fallback for other Unix users ---
+	else {
+		global user "/home/`c(username)'/MTF/9_Data analysis_MTF countries/30_Namibia/Data Analysis"
 	}
-
-* --- Kat: Windows (WBG Desktop) ---
-	if c(username)=="wb570814" {
-		global user "C:\Users\wb570814\OneDrive - WBG\Desktop\MTF-desktop\Namibia\Data analysis"
-	}
+	global raw_hh "$user/Data/household data/Household"
+}
+else {
+	global user "/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/30_Namibia/Data Analysis"
+	global raw_hh "$user/Data/household data/Household"
+}
 
 * Common folder paths
-	global raw_hh    "$user/Data/household data/Household"   // raw survey data
 	global wip_hh    "$user/Data/wip_hh"                    // work-in-progress data
 	global clean     "$user/Data/clean"                     // clean final data
 	global output    "$user/Output"                         // output folder

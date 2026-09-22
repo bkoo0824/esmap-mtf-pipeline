@@ -8,6 +8,8 @@ pip install --upgrade pyinstaller pandas openpyxl
 
 pyinstaller --noconfirm --onefile --console ^
     --name "mtf_calibrator" ^
+    --add-data "..\Do-file;Do-file" ^
+    --add-data "cookstove_calibration.csv;Tools" ^
     --hidden-import "pandas" ^
     --hidden-import "openpyxl" ^
     mtf_calibrator.py
