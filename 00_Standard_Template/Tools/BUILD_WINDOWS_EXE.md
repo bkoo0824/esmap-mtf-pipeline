@@ -42,7 +42,7 @@ Open PowerShell in `00_MTF_Country_Pipeline_Standard\Tools\` and run:
 
 ```powershell
 pip install pyinstaller pandas openpyxl
-pyinstaller --onefile --name "mtf_calibrator" mtf_calibrator.py
+pyinstaller --noconfirm --onefile --console --name "mtf_calibrator" --add-data "..\Do-file;Do-file" --hidden-import "pandas" --hidden-import "openpyxl" mtf_calibrator.py
 ```
 
 The resulting standalone executable will be located in:

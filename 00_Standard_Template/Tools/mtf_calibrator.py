@@ -774,40 +774,49 @@ def find_template_dir(custom_path: Optional[str] = None) -> Path:
         if p.exists() and (p / "Do-file").exists():
             return p
 
-    # 1. Check PyInstaller bundled temp dir (_MEIPASS)
+    # 1. PyInstaller bundled temp dir (_MEIPASS)
     if hasattr(sys, "_MEIPASS"):
         meipass_p = Path(sys._MEIPASS)
         if (meipass_p / "Do-file").exists():
             return meipass_p
         if (meipass_p / "00_Standard_Template" / "Do-file").exists():
             return meipass_p / "00_Standard_Template"
+        if (meipass_p / "00_MTF_Country_Pipeline_Standard" / "Do-file").exists():
+            return meipass_p / "00_MTF_Country_Pipeline_Standard"
 
-    # 2. Check relative to executable or script
-    base_dir = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parent
-    # If running from Tools/ or Tools/dist/
-    candidates = [
-        base_dir.parent,                 # e.g., Tools/ -> 00_Standard_Template
-        base_dir.parent.parent,          # e.g., Tools/dist/ -> 00_Standard_Template
-        base_dir,                        # running inside template dir
-    ]
+    # 2. Ascend from the script or executable location
+    start_dir = Path(sys.executable if getattr(sys, "frozen", False) else __file__).resolve().parent
+    search_chain = [start_dir] + list(start_dir.parents)
+    for p in search_chain:
+        if (p / "Do-file").exists():
+            return p
+        if (p / "00_Standard_Template" / "Do-file").exists():
+            return p / "00_Standard_Template"
+        if (p / "00_MTF_Country_Pipeline_Standard" / "Do-file").exists():
+            return p / "00_MTF_Country_Pipeline_Standard"
 
     # 3. Well-known fallback paths on Windows & Linux
     home = Path.home()
-    candidates.extend([
+    well_known = [
         # Windows OneDrive paths
         home / "OneDrive - WBG" / "1_mtf_energy_global_survey" / "9_Data analysis_MTF countries" / "0_mtf_analysis_template" / "00_Standard_Template",
         home / "OneDrive - WBG" / "1_mtf_energy_global_survey" / "9_Data analysis_MTF countries" / "00_MTF_Country_Pipeline_Standard",
-        # Linux paths
-        Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/00_MTF_Country_Pipeline_Standard"),
-        Path("/home/bryan/OneDrive/Work/04-Global_Analytics_&_ESMAP/2_MTF_Country_Surveys/esmap-mtf-pipeline/00_Standard_Template"),
-    ])
+        # Local repo clone / Work directory
+        home / "OneDrive" / "Work" / "04-Global_Analytics_&_ESMAP" / "2_MTF_Country_Surveys" / "esmap-mtf-pipeline" / "00_Standard_Template",
+    ]
+    # Only test Linux path on POSIX/Unix systems to prevent C:\media\... fallback on Windows
+    if os.name != "nt":
+        well_known.append(Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/00_MTF_Country_Pipeline_Standard"))
 
-    for c in candidates:
-        if c.exists() and (c / "Do-file").exists():
-            return c.resolve()
+    for w in well_known:
+        try:
+            if w.exists() and (w / "Do-file").exists():
+                return w.resolve()
+        except Exception:
+            continue
 
-    # Fallback to base_dir if nothing else found
-    return base_dir.parent
+    # Fallback to start_dir.parent if nothing else matches
+    return start_dir.parent
 
 
 def main():
