@@ -33,6 +33,7 @@ try:
     HAS_DOCX = True
 except ImportError:
     HAS_DOCX = False
+    Document = Inches = Pt = RGBColor = WD_ALIGN_PARAGRAPH = WD_TABLE_ALIGNMENT = parse_xml = OxmlElement = nsdecls = qn = None
     print("[warn] python-docx not installed — Word injection skipped", file=sys.stderr)
 
 # ─── PATHS ─────────────────────────────────────────────────────────────────────
@@ -118,11 +119,14 @@ def inject_markdown(values: dict):
 
 # ─── INJECT WORD DOCUMENT ─────────────────────────────────────────────────────
 # Color palette: World Bank ESMAP Standards
-COLOR_NAVY     = RGBColor(0, 34, 68)       # #002244
-COLOR_ACCENT   = RGBColor(0, 119, 153)     # #007799
-COLOR_CHARCOAL = RGBColor(34, 34, 34)      # #222222
-COLOR_MUTED    = RGBColor(100, 100, 100)   # #666666
-COLOR_WHITE    = RGBColor(255, 255, 255)   # #FFFFFF
+if HAS_DOCX:
+    COLOR_NAVY     = RGBColor(0, 34, 68)       # #002244
+    COLOR_ACCENT   = RGBColor(0, 119, 153)     # #007799
+    COLOR_CHARCOAL = RGBColor(34, 34, 34)      # #222222
+    COLOR_MUTED    = RGBColor(100, 100, 100)   # #666666
+    COLOR_WHITE    = RGBColor(255, 255, 255)   # #FFFFFF
+else:
+    COLOR_NAVY = COLOR_ACCENT = COLOR_CHARCOAL = COLOR_MUTED = COLOR_WHITE = None
 
 HEX_NAVY     = "002244"
 HEX_ACCENT   = "007799"
@@ -182,8 +186,14 @@ def _set_table_borders(table, border_color_hex=HEX_BORDER):
     tblPr.append(borders)
 
 
-def _add_formatted_runs(paragraph, text, base_color=COLOR_CHARCOAL, base_size=Pt(10.0)):
+def _add_formatted_runs(paragraph, text, base_color=None, base_size=None):
     """Parse inline **bold**, *italic*, and `code` into formatted Word runs."""
+    if not HAS_DOCX:
+        return
+    if base_color is None:
+        base_color = COLOR_CHARCOAL
+    if base_size is None:
+        base_size = Pt(10.0)
     tokens = re.split(r'(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)', text)
     for token in tokens:
         if not token:
