@@ -7,14 +7,14 @@ echo ============================================================
 echo.
 
 REM 1. Ensure required packages are installed
-pip install --upgrade pyinstaller python-docx pillow
+pip install --upgrade pyinstaller python-docx pillow openpyxl
 
 echo.
 echo [Building EXE...]
 echo.
 
 REM 2. Compile standalone one-file executable
-REM    Bundles: MTF_Report_Template.md (template), pillow (image), python-docx (Word export)
+REM    Bundles: MTF_Report_Template.md (template), pillow (image), python-docx (Word export), openpyxl (Excel export)
 pyinstaller --noconfirm --onefile --console ^
     --name "inject_report" ^
     --add-data "..\MTF_Report_Template.md;Do-file" ^
@@ -26,6 +26,9 @@ pyinstaller --noconfirm --onefile --console ^
     --hidden-import "docx.oxml.ns" ^
     --hidden-import "PIL" ^
     --hidden-import "PIL.Image" ^
+    --hidden-import "openpyxl" ^
+    --hidden-import "openpyxl.styles" ^
+    --hidden-import "openpyxl.utils" ^
     inject_report.py
 
 echo.
