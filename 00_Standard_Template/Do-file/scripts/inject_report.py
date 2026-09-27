@@ -48,10 +48,30 @@ except ImportError:
     HAS_DOCX = False
     Document = Inches = Pt = RGBColor = WD_ALIGN_PARAGRAPH = WD_TABLE_ALIGNMENT = parse_xml = OxmlElement = nsdecls = qn = None
 
+# ─── PYINSTALLER FROZEN EXE SUPPORT ──────────────────────────────────────────
+# When running as a bundled .exe (PyInstaller --onefile), __file__ points to a
+# temporary extraction directory. We need to handle both modes:
+#   - Script mode: __file__ is .../Do-file/scripts/inject_report.py
+#   - EXE mode:    sys.executable is the .exe, sys._MEIPASS is the temp bundle dir
+if getattr(sys, 'frozen', False):
+    # Running as PyInstaller bundled EXE
+    _EXE_DIR    = Path(sys.executable).resolve().parent
+    _BUNDLE_DIR = Path(sys._MEIPASS)
+    # Bundled template is at <MEIPASS>/Do-file/MTF_Report_Template.md
+    _BUNDLED_TEMPLATE = _BUNDLE_DIR / "Do-file" / "MTF_Report_Template.md"
+    # The EXE sits in scripts\ or dist\ — walk up to find the workspace root
+    # Try: exe_dir, exe_dir/.., exe_dir/../..
+    SCRIPT_DIR    = _EXE_DIR
+    DO_FILE_DIR   = _EXE_DIR.parent if (_EXE_DIR.parent / "MTF_Report_Template.md").exists() else _EXE_DIR
+    DEFAULT_BASE_DIR = _EXE_DIR.parent.parent if (_EXE_DIR.parent.parent / "Output").exists() else _EXE_DIR.parent
+else:
+    # Running as normal Python script
+    _BUNDLED_TEMPLATE = None
+    SCRIPT_DIR         = Path(__file__).resolve().parent
+    DO_FILE_DIR        = SCRIPT_DIR.parent
+    DEFAULT_BASE_DIR   = DO_FILE_DIR.parent
+
 # ─── DEFAULT PATHS (BACKWARD COMPATIBILITY) ──────────────────────────────────
-SCRIPT_DIR         = Path(__file__).resolve().parent
-DO_FILE_DIR        = SCRIPT_DIR.parent
-DEFAULT_BASE_DIR   = DO_FILE_DIR.parent
 BASE_DIR           = DEFAULT_BASE_DIR
 DEFAULT_OUT_DIR    = DEFAULT_BASE_DIR / "Output" / "streamlined" if (DEFAULT_BASE_DIR / "Output" / "streamlined").exists() else DEFAULT_BASE_DIR / "Output"
 OUTPUT_DIR         = DEFAULT_OUT_DIR
@@ -59,7 +79,9 @@ DEFAULT_CHARTS_DIR = DEFAULT_OUT_DIR / "charts"
 CHARTS_DIR         = DEFAULT_CHARTS_DIR
 
 JSON_PATH          = DEFAULT_OUT_DIR / "mtf_report_values.json"
-MD_TEMPLATE        = DO_FILE_DIR / "MTF_Report_Template.md"
+# When frozen as EXE, use the bundled template; otherwise use relative path
+MD_TEMPLATE        = (_BUNDLED_TEMPLATE if _BUNDLED_TEMPLATE and _BUNDLED_TEMPLATE.exists()
+                      else DO_FILE_DIR / "MTF_Report_Template.md")
 DOCX_TEMPLATE      = DO_FILE_DIR / "MTF_Report_Template.docx"
 
 DEFAULT_COUNTRY    = "Liberia"
