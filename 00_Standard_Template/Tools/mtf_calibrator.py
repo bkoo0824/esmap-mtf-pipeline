@@ -36,6 +36,19 @@ STANDARD_ROSTERS = [
 ]
 
 
+def safe_write_text(file_path: Path, content: str, encoding: str = "utf-8"):
+    """Robust file writer to avoid [Errno 9] Bad file descriptor on Windows OneDrive and PyInstaller."""
+    p = Path(file_path).resolve()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(p), mode="w", encoding=encoding, errors="replace") as f:
+        f.write(content)
+        f.flush()
+        try:
+            os.fsync(f.fileno())
+        except Exception:
+            pass
+
+
 class CookstoveLoader:
     """Reads cookstove_calibration.csv and generates do-file code and report tables."""
 
@@ -420,7 +433,7 @@ class MTFGenerator:
             pattern3 = re.compile(r'\t*capture drop cs_efcy_tier\s*\n\t*gen cs_efcy_tier = \.\s*\n(?:\t*replace cs_efcy_tier = [^\n]+\n)+\s*lab val cs_efcy_tier tier\s*\n\s*lab var cs_efcy_tier[^\n]+')
             text = pattern3.sub(efcy_tier_stata, text)
 
-        (dofile_out / "04_cooking_attributes.do").write_text(text, encoding="utf-8")
+        safe_write_text(dofile_out / "04_cooking_attributes.do", text)
 
     def _generate_master_do(self, dofile_out: Path):
         country = self.params.get("country_name", "Liberia")
@@ -571,7 +584,7 @@ di "========================================================"
 di " Pipeline complete. Outputs in: $out_sl"
 di "========================================================"
 """
-        target_file.write_text(content, encoding="utf-8")
+        safe_write_text(target_file, content)
 
     def _generate_build_master_do(self, dofile_out: Path):
         src = self.template_dir / "Do-file" / "00_build_master_dataset.do"
@@ -622,7 +635,7 @@ save "$wip_hh/{master_out}", replace
             sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
             text = sec2_pattern.sub(weight_block.strip(), text)
 
-        (dofile_out / "00_build_master_dataset.do").write_text(text, encoding="utf-8")
+        safe_write_text(dofile_out / "00_build_master_dataset.do", text)
 
     def _generate_setup_do(self, dofile_out: Path):
         country = self.params.get("country_name", "Liberia")
@@ -665,7 +678,7 @@ svy: tabulate hh_exp_quintile
 save "$wip_hh/{master_out}", replace
 di " 01_setup.do complete — Master dataset validated."
 """
-        (dofile_out / "01_setup.do").write_text(content, encoding="utf-8")
+        safe_write_text(dofile_out / "01_setup.do", content)
 
     def _generate_enhancements_do(self, dofile_out: Path):
         src = self.template_dir / "Do-file" / "06_analytical_enhancements.do"
@@ -689,7 +702,7 @@ di " 01_setup.do complete — Master dataset validated."
         pattern = re.compile(r'\*  ENHANCEMENT 11:.*?(?=save "\$wip_hh)', re.DOTALL)
         text = pattern.sub(enh11_block + "\n\n", text)
 
-        (dofile_out / "06_analytical_enhancements.do").write_text(text, encoding="utf-8")
+        safe_write_text(dofile_out / "06_analytical_enhancements.do", text)
 
     def _generate_export_do(self, dofile_out: Path):
         src = self.template_dir / "Do-file" / "07_export.do"
@@ -733,7 +746,7 @@ di " 01_setup.do complete — Master dataset validated."
         namibia_scalars_pattern = re.compile(r'REG_KHARAS_ELEC.*?REG_ZAMBEZI_SOLAR', re.DOTALL)
         text = namibia_scalars_pattern.sub(reg_scalars_str, text)
 
-        (dofile_out / "07_export.do").write_text(text, encoding="utf-8")
+        safe_write_text(dofile_out / "07_export.do", text)
 
     def _deploy_python_scripts(self, dofile_out: Path, scripts_out: Path):
         country = self.params.get("country_name", "Liberia")
@@ -750,12 +763,12 @@ di " 01_setup.do complete — Master dataset validated."
         if src_vis.exists():
             v_text = src_vis.read_text(encoding="utf-8")
             v_text = v_text.replace("MTF_Namibia_Summary.xlsx", f"MTF_{country}_Summary.xlsx")
-            (scripts_out / "visualize.py").write_text(v_text, encoding="utf-8")
+            safe_write_text(scripts_out / "visualize.py", v_text)
 
         if src_inj.exists():
             i_text = src_inj.read_text(encoding="utf-8")
             i_text = i_text.replace("MTF_Namibia_Report", f"MTF_{country}_Report")
-            (scripts_out / "inject_report.py").write_text(i_text, encoding="utf-8")
+            safe_write_text(scripts_out / "inject_report.py", i_text)
 
         if src_tpl.exists():
             t_text = src_tpl.read_text(encoding="utf-8")
@@ -798,7 +811,7 @@ di " 01_setup.do complete — Master dataset validated."
                                         "     ============================================================ -->")
                     t_text = t_text.replace(regional_comment, reg_text)
 
-            (dofile_out / "MTF_Report_Template.md").write_text(t_text, encoding="utf-8")
+            safe_write_text(dofile_out / "MTF_Report_Template.md", t_text)
 
 
 def find_template_dir(custom_path: Optional[str] = None) -> Path:
