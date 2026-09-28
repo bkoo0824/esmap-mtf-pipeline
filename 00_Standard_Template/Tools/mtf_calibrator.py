@@ -214,6 +214,38 @@ class CookstoveLoader:
         lines.append('\tlab var cs_efcy_tier "Cooking: Efficiency Tier (ISO thermal efficiency)"')
         return "\n".join(lines)
 
+    @classmethod
+    def generate_template_csv(cls, country_name: str) -> str:
+        """Generates standard CSV content for a new country cookstove calibration."""
+        header = f"""# MTF Cookstove Calibration Form — {country_name.capitalize()}
+# ============================================================
+# INSTRUCTIONS FOR COORDINATOR & COOKSTOVE EXPERT:
+# 1. Review each row and confirm the questionnaire_code values match
+#    the numeric codes used in Section G (stove type question: SEC_G_Q05)
+#    of the country's MTF survey.
+# 2. The stove_description field is used in report Table 3.1 and Box 3.
+# 3. iso_emission_tier and efficiency_tier MUST be confirmed with a
+#    cookstove expert before running the pipeline.
+#    - iso_emission_tier: 0 (open fire) to 5 (electric/solar)
+#    - efficiency_tier:   0 (< 10%) to 5 (>= 50%)
+# 4. stove_group maps stoves into standard Stata analysis categories:
+#    open_fire | traditional | ics | clean_gas | clean_electric | clean_solar | clean_bio | transitional_bio | other
+# 5. primary_fuel and notes are documented in report Table 3.1.
+# 6. The stat_key column maps to the Stata export placeholder names.
+# ============================================================
+questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur
+"1,2","Three-Stone / Open Fire",0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R
+"3,5,22","Traditional / Local Stove",0,0,traditional,Wood / Charcoal,Uninsulated metal grate or brazier,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R
+"4,6,7,8,9,20,21","Improved Cookstove (ICS)",3,2,ics,Firewood / Charcoal,Enclosed combustion with insulation; confirm tier with expert,STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+"10,11,12,13,14,23","Clean Fuel: LPG / Biogas",4,4,clean_gas,Bottled LPG (Butane/Propane),Tier 4-5 depending on ventilation; confirm with expert,STOVE_CLEAN_N,STOVE_CLEAN_U,STOVE_CLEAN_R
+19,"Clean Fuel: Electric Stove",5,5,clean_electric,Grid electricity,Tier 5 when used as primary stove,STOVE_ELEC_N,STOVE_ELEC_U,STOVE_ELEC_R
+"17,18","Solar Cooker",5,5,clean_solar,Solar radiation,Typically available only in high-insolation areas,STOVE_SOLAR_N,STOVE_SOLAR_U,STOVE_SOLAR_R
+15,"Biogas Stove",5,4,clean_bio,Biogas (anaerobic digester),Confirm availability and prevalence with country team,STOVE_BIO_N,STOVE_BIO_U,STOVE_BIO_R
+16,"Biofuel / Ethanol Stove",4,3,transitional_bio,Ethanol / Liquid biofuel,Confirm emission tier with expert (varies by fuel quality),STOVE_BIOFUEL_N,STOVE_BIOFUEL_U,STOVE_BIOFUEL_R
+555,"Other Cookstove",,,,Other / Unspecified,Recode from open-text responses after reviewing data,STOVE_OTHER_N,STOVE_OTHER_U,STOVE_OTHER_R
+"""
+        return header
+
 
 
 
@@ -826,6 +858,24 @@ di " 01_setup.do complete — Master dataset validated."
 
             safe_write_text(dofile_out / "MTF_Report_Template.md", t_text)
 
+        # Deploy country cookstove calibration CSV into country scripts folder for local editing
+        target_csv = scripts_out / f"cookstove_calibration_{country.lower()}.csv"
+        target_csv_generic = scripts_out / "cookstove_calibration.csv"
+        active_csv_path = self.params.get("cookstove_csv_path")
+        if active_csv_path and Path(active_csv_path).exists():
+            try:
+                shutil.copy2(active_csv_path, target_csv)
+                shutil.copy2(active_csv_path, target_csv_generic)
+            except Exception:
+                pass
+        else:
+            try:
+                csv_content = CookstoveLoader.generate_template_csv(country)
+                safe_write_text(target_csv, csv_content)
+                safe_write_text(target_csv_generic, csv_content)
+            except Exception:
+                pass
+
 
 def find_template_dir(custom_path: Optional[str] = None) -> Path:
     """Auto-discover Standard Template directory across PyInstaller, Windows OneDrive, and Linux."""
@@ -970,23 +1020,51 @@ def main():
     import getpass
     params["username"] = args.username if args.username else getpass.getuser()
 
-    # Load cookstove calibration CSV (checks custom arg -> Tools/cookstove_calibration_<country>.csv -> Tools/cookstove_calibration.csv)
+    # Load cookstove calibration CSV
+    # Search Priority:
+    # 1. User explicit argument (--cookstove-config)
+    # 2. Country-specific in country workspace (country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv")
+    # 3. Country-specific in Tools/ (Tools / cookstove_calibration_<country>.csv)
+    # 4. Standard default in Tools/ (Tools / cookstove_calibration.csv)
     cname_clean = params["country_name"].lower().strip()
+    tools_dir = template_dir / "Tools"
+    country_scripts_csv = country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname_clean}.csv"
+    country_scripts_csv_generic = country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv"
+    tools_country_csv = tools_dir / f"cookstove_calibration_{cname_clean}.csv"
+    tools_default_csv = tools_dir / "cookstove_calibration.csv"
+
     if args.cookstove_config:
         cookstove_csv_path = Path(args.cookstove_config).resolve()
+    elif country_scripts_csv.exists():
+        cookstove_csv_path = country_scripts_csv
+    elif country_scripts_csv_generic.exists():
+        cookstove_csv_path = country_scripts_csv_generic
+    elif tools_country_csv.exists():
+        cookstove_csv_path = tools_country_csv
+    elif tools_default_csv.exists():
+        cookstove_csv_path = tools_default_csv
     else:
-        # Check for country-specific calibration first, then fallback to standard
-        country_specific_csv = template_dir / "Tools" / f"cookstove_calibration_{cname_clean}.csv"
-        default_csv = template_dir / "Tools" / "cookstove_calibration.csv"
-        if country_specific_csv.exists():
-            cookstove_csv_path = country_specific_csv
-        elif default_csv.exists():
-            cookstove_csv_path = default_csv
-        else:
+        # If no CSV exists at all, auto-generate country-specific template in Tools/
+        cookstove_csv_path = tools_dir / f"cookstove_calibration_{cname_clean}.csv"
+        try:
+            template_text = CookstoveLoader.generate_template_csv(params["country_name"])
+            safe_write_text(cookstove_csv_path, template_text)
+            print(f"  ★ Generated new country cookstove calibration template: {cookstove_csv_path.name}")
+        except Exception:
             cookstove_csv_path = None
+
+    # If country-specific CSV does not exist in Tools/, create one automatically for easy expert editing
+    if tools_dir.exists() and not tools_country_csv.exists():
+        try:
+            template_text = CookstoveLoader.generate_template_csv(params["country_name"])
+            safe_write_text(tools_country_csv, template_text)
+            print(f"  ★ Created country cookstove calibration form: Tools/{tools_country_csv.name}")
+        except Exception:
+            pass
 
     print(f" [2b/3] Loading cookstove calibration configuration (Source: {cookstove_csv_path.name if cookstove_csv_path else 'Built-in Defaults'})...")
     cs_loader = CookstoveLoader(cookstove_csv_path)
+    params["cookstove_csv_path"] = cookstove_csv_path
     params["cookstove_typology_table"] = cs_loader.generate_typology_table()
     params["cookstove_stats_table_rows"] = cs_loader.generate_stats_table_rows()
     params["cookstove_mainstove_stata"] = cs_loader.generate_mainstove_stata()
