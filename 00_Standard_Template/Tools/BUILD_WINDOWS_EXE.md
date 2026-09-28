@@ -22,6 +22,7 @@ REM 2. Compile standalone one-file executable
 pyinstaller --noconfirm --onefile --console ^
     --name "mtf_calibrator" ^
     --add-data "..\Do-file;Do-file" ^
+    --add-data "cookstove_calibration*.csv;Tools" ^
     --hidden-import "pandas" ^
     --hidden-import "openpyxl" ^
     mtf_calibrator.py

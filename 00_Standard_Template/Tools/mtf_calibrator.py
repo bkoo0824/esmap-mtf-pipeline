@@ -159,6 +159,35 @@ class CookstoveLoader:
         lines.append('\tlab var cs_emit_tier "Stove ISO Emission Tier (0-5)"')
         return "\n".join(lines)
 
+    def generate_efcy_tier_stata(self) -> str:
+        """Returns Stata cs_efcy_tier assignment block."""
+        group_to_int = {
+            "open_fire": 1, "traditional": 2, "ics": 3,
+            "clean_gas": 4, "clean_electric": 5, "clean_solar": 6,
+            "clean_bio": 7, "transitional_bio": 8, "other": 555
+        }
+        # Build mainstove_val -> efficiency_tier mapping
+        tier_map: dict = {}
+        for row in self.rows:
+            group = row.get("stove_group", "other").strip()
+            val = group_to_int.get(group, 555)
+            tier = row.get("efficiency_tier", "").strip()
+            if tier.isdigit() and val not in tier_map:
+                tier_map[val] = int(tier)
+        # Group by tier value
+        from collections import defaultdict
+        by_tier: dict = defaultdict(list)
+        for mv, tv in tier_map.items():
+            by_tier[tv].append(mv)
+        lines = ["capture drop cs_efcy_tier", "gen cs_efcy_tier = ."]
+        for tv in sorted(by_tier.keys()):
+            mvs = by_tier[tv]
+            codes = ", ".join(str(m) for m in sorted(mvs))
+            lines.append(f"\treplace cs_efcy_tier = {tv} if inlist(mainstove, {codes})")
+        lines.append('\tlab val cs_efcy_tier tier')
+        lines.append('\tlab var cs_efcy_tier "Cooking: Efficiency Tier (ISO thermal efficiency)"')
+        return "\n".join(lines)
+
 
 
 
@@ -377,6 +406,7 @@ class MTFGenerator:
 
         mainstove_stata = self.params.get("cookstove_mainstove_stata", "")
         emit_tier_stata = self.params.get("cookstove_emit_tier_stata", "")
+        efcy_tier_stata = self.params.get("cookstove_efcy_tier_stata", "")
 
         if mainstove_stata:
             pattern = re.compile(r'\t*capture drop mainstove\s*\n\t*gen mainstove = \.\s*\n(?:\t*replace mainstove = [^\n]+\n)+')
@@ -385,6 +415,10 @@ class MTFGenerator:
         if emit_tier_stata:
             pattern2 = re.compile(r'\t*capture drop cs_emit_tier[^\n]*\n\t*gen cs_emit_tier = \.\s*\n(?:\t*replace cs_emit_tier = [^\n]+\n)+\s*lab var cs_emit_tier[^\n]+')
             text = pattern2.sub(emit_tier_stata, text)
+
+        if efcy_tier_stata:
+            pattern3 = re.compile(r'\t*capture drop cs_efcy_tier\s*\n\t*gen cs_efcy_tier = \.\s*\n(?:\t*replace cs_efcy_tier = [^\n]+\n)+\s*lab val cs_efcy_tier tier\s*\n\s*lab var cs_efcy_tier[^\n]+')
+            text = pattern3.sub(efcy_tier_stata, text)
 
         (dofile_out / "04_cooking_attributes.do").write_text(text, encoding="utf-8")
 
@@ -910,20 +944,28 @@ def main():
     import getpass
     params["username"] = args.username if args.username else getpass.getuser()
 
-    # Load cookstove calibration CSV
+    # Load cookstove calibration CSV (checks custom arg -> Tools/cookstove_calibration_<country>.csv -> Tools/cookstove_calibration.csv)
+    cname_clean = params["country_name"].lower().strip()
     if args.cookstove_config:
         cookstove_csv_path = Path(args.cookstove_config).resolve()
     else:
-        # Auto-locate in Tools/ next to the calibrator
+        # Check for country-specific calibration first, then fallback to standard
+        country_specific_csv = template_dir / "Tools" / f"cookstove_calibration_{cname_clean}.csv"
         default_csv = template_dir / "Tools" / "cookstove_calibration.csv"
-        cookstove_csv_path = default_csv if default_csv.exists() else None
+        if country_specific_csv.exists():
+            cookstove_csv_path = country_specific_csv
+        elif default_csv.exists():
+            cookstove_csv_path = default_csv
+        else:
+            cookstove_csv_path = None
 
-    print(" [2b/3] Loading cookstove calibration configuration...")
+    print(f" [2b/3] Loading cookstove calibration configuration (Source: {cookstove_csv_path.name if cookstove_csv_path else 'Built-in Defaults'})...")
     cs_loader = CookstoveLoader(cookstove_csv_path)
     params["cookstove_typology_table"] = cs_loader.generate_typology_table()
     params["cookstove_stats_table_rows"] = cs_loader.generate_stats_table_rows()
     params["cookstove_mainstove_stata"] = cs_loader.generate_mainstove_stata()
     params["cookstove_emit_tier_stata"] = cs_loader.generate_emit_tier_stata()
+    params["cookstove_efcy_tier_stata"] = cs_loader.generate_efcy_tier_stata()
 
     print("\n------------------ DETECTED CONFIGURATION ------------------")
     print(f"  Target User / System: {params['username']} (auto-configured in Master Do-file)")
