@@ -39,26 +39,38 @@ STANDARD_ROSTERS = [
 def safe_write_text(file_path: Path, content: str, encoding: str = "utf-8"):
     """Robust file writer to avoid [Errno 9] Bad file descriptor on Windows OneDrive and PyInstaller."""
     p = Path(file_path).resolve()
-    p.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(str(p.parent), exist_ok=True)
     raw_data = content.encode(encoding, errors="replace")
 
     import time
     for attempt in range(5):
         try:
-            # Open in binary mode without C runtime text-mode buffering
-            with open(str(p), mode="wb") as f:
-                f.write(raw_data)
+            # Use low-level os.open with explicit binary write flags to bypass CRT buffered stream issues
+            flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+            if hasattr(os, "O_BINARY"):
+                flags |= os.O_BINARY
+            fd = os.open(str(p), flags, 0o666)
+            try:
+                os.write(fd, raw_data)
+            finally:
+                os.close(fd)
             return
-        except OSError as e:
+        except Exception:
             if attempt < 4:
-                time.sleep(0.3)
+                time.sleep(0.4)
             else:
-                # Fallback: write to a temp file and replace
+                # Ultimate fallback: write to user's system temp dir and copy
                 import tempfile
-                with tempfile.NamedTemporaryFile(mode="wb", dir=str(p.parent), delete=False) as tf:
+                tf = tempfile.NamedTemporaryFile(delete=False)
+                try:
                     tf.write(raw_data)
-                    tmp_name = tf.name
-                shutil.move(tmp_name, str(p))
+                    tf.close()
+                    shutil.copy2(tf.name, str(p))
+                finally:
+                    try:
+                        os.unlink(tf.name)
+                    except Exception:
+                        pass
                 return
 
 
