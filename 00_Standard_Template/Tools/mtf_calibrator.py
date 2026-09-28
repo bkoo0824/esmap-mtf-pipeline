@@ -40,13 +40,26 @@ def safe_write_text(file_path: Path, content: str, encoding: str = "utf-8"):
     """Robust file writer to avoid [Errno 9] Bad file descriptor on Windows OneDrive and PyInstaller."""
     p = Path(file_path).resolve()
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(str(p), mode="w", encoding=encoding, errors="replace") as f:
-        f.write(content)
-        f.flush()
+    raw_data = content.encode(encoding, errors="replace")
+
+    import time
+    for attempt in range(5):
         try:
-            os.fsync(f.fileno())
-        except Exception:
-            pass
+            # Open in binary mode without C runtime text-mode buffering
+            with open(str(p), mode="wb") as f:
+                f.write(raw_data)
+            return
+        except OSError as e:
+            if attempt < 4:
+                time.sleep(0.3)
+            else:
+                # Fallback: write to a temp file and replace
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode="wb", dir=str(p.parent), delete=False) as tf:
+                    tf.write(raw_data)
+                    tmp_name = tf.name
+                shutil.move(tmp_name, str(p))
+                return
 
 
 class CookstoveLoader:
