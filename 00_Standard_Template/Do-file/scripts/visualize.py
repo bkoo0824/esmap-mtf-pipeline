@@ -482,66 +482,100 @@ def chart_gender_demographics_access():
     save_fig(fig, "08_gender_demographics_access.png")
 
 
-# ─── CHART 9: REGIONAL ELECTRIFICATION DIVIDE (14 REGIONS) ────────────────────
+# ─── CHART 9: REGIONAL ELECTRIFICATION DIVIDE ────────────────────────────────
+# Auto-skipped when: n_regions > 10  OR  average 95%-CI width > 25 pp
+# (In those cases the chart adds noise rather than analytical value.)
+_REGIONAL_CI_THRESHOLD = 25.0   # pp — average CI width above which chart is dropped
+_REGIONAL_N_THRESHOLD  = 10     # number of regions above which chart is dropped
+
 def chart_regional_access_gap():
+    """
+    Subnational electrification divide chart.
+    Returns True if chart was saved, False if it was skipped.
+    Skip conditions:
+      • Number of regions > _REGIONAL_N_THRESHOLD  (too cluttered)
+      • Average 95%-CI width > _REGIONAL_CI_THRESHOLD pp  (too imprecise)
+    """
     df = load_sheet("Regional_Disagg")
     df = df.sort_values(by="Electricity Access (%)", ascending=True)
 
-    regions = [str(r) for r in df.index]
-    grid_vals = df["Grid Access (%)"].astype(float).values
-    solar_vals = df["Off-grid Solar (%)"].astype(float).values
-    elec_vals = df["Electricity Access (%)"].astype(float).values
+    regions   = [str(r) for r in df.index]
+    n_regions = len(regions)
 
-    # Check for survey 95% confidence interval estimation
-    has_ci = "Electricity Access [95% CI]" in df.columns
+    # ── Guard 1: Too many regions ────────────────────────────────────────────
+    if n_regions > _REGIONAL_N_THRESHOLD:
+        print(f"  ⚠  chart_regional_access_gap SKIPPED — {n_regions} regions > threshold {_REGIONAL_N_THRESHOLD}")
+        return False
+
+    grid_vals  = df["Grid Access (%)"].astype(float).values
+    solar_vals = df["Off-grid Solar (%)"].astype(float).values
+    elec_vals  = df["Electricity Access (%)"].astype(float).values
+
+    # ── Parse 95% CI column ──────────────────────────────────────────────────
+    has_ci    = "Electricity Access [95% CI]" in df.columns
     err_low, err_high = [], []
     ci_labels = []
-    ci_pattern = re.compile(r'\[\s*([0-9.]+)%\s*–\s*([0-9.]+)%\]')
+    ci_pattern = re.compile(r'\[\s*([0-9.]+)%\s*[–-]\s*([0-9.]+)%\]')
 
     if has_ci:
+        ci_widths = []
         for val, ci_str in zip(elec_vals, df["Electricity Access [95% CI]"]):
             m = ci_pattern.search(str(ci_str))
-            if m and m.group(1) != "." and m.group(2) != ".":
+            if m:
                 try:
                     ll = float(m.group(1))
                     ul = float(m.group(2))
+                    width = ul - ll
+                    ci_widths.append(width)
                     err_low.append(max(0.0, val - ll))
                     err_high.append(max(0.0, ul - val))
                     ci_labels.append(f"{val:.1f}% [{ll:.1f}%–{ul:.1f}%]")
                 except ValueError:
+                    ci_widths.append(0.0)
                     err_low.append(0.0)
                     err_high.append(0.0)
                     ci_labels.append(f"{val:.1f}%")
             else:
+                ci_widths.append(0.0)
                 err_low.append(0.0)
                 err_high.append(0.0)
                 ci_labels.append(f"{val:.1f}%")
+
+        # ── Guard 2: CI too wide ─────────────────────────────────────────────
+        avg_ci_width = sum(ci_widths) / len(ci_widths) if ci_widths else 0.0
+        if avg_ci_width > _REGIONAL_CI_THRESHOLD:
+            print(f"  ⚠  chart_regional_access_gap SKIPPED — avg CI width {avg_ci_width:.1f} pp > threshold {_REGIONAL_CI_THRESHOLD} pp")
+            return False
+
         xerr = [err_low, err_high]
     else:
         ci_labels = [f"{v:.1f}%" for v in elec_vals]
 
-    fig, ax = plt.subplots(figsize=(11, max(7, len(regions) * 0.35)))
-    ax.barh(regions, grid_vals, color=WB_NAVY, label="National Grid", height=0.55)
+    # ── Draw chart ───────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(11, max(7, n_regions * 0.55)))
+    ax.barh(regions, grid_vals,  color=WB_NAVY,  label="National Grid",   height=0.55)
     ax.barh(regions, solar_vals, left=grid_vals, color=WB_AMBER, label="Off-Grid Solar", height=0.55)
 
     if has_ci:
-        y_pos = np.arange(len(regions))
+        y_pos = np.arange(n_regions)
         ax.errorbar(elec_vals, y_pos, xerr=xerr, fmt="none", ecolor="#2C3E50",
-                     elinewidth=1.4, capsize=3.5, capthick=1.4, zorder=5, label="95% CI (Total Access)")
+                    elinewidth=1.4, capsize=3.5, capthick=1.4, zorder=5, label="95% CI (Total Access)")
         for i, (tot, ci_lbl) in enumerate(zip(elec_vals, ci_labels)):
             ul = tot + err_high[i]
             ax.text(ul + 1.2, i, ci_lbl, ha="left", va="center", fontsize=8.0, fontweight="bold", color=WB_NAVY)
         ax.set_xlim(0, 118)
         ax.set_xlabel("Electrification Rate (%) with 95% Survey Confidence Intervals", fontsize=10)
-        ax.set_title(f"Subnational Electrification Divide Across {len(regions)} Administrative Subdivisions\n(Disaggregated by Technology with Logit-Transformed 95% Confidence Intervals)",
-                     fontsize=12, fontweight="bold", color=WB_NAVY)
+        ax.set_title(
+            f"Subnational Electrification Divide Across {n_regions} Administrative Subdivisions\n"
+            "(Disaggregated by Technology with Logit-Transformed 95% Confidence Intervals)",
+            fontsize=12, fontweight="bold", color=WB_NAVY)
     else:
         for i, (g_v, s_v) in enumerate(zip(grid_vals, solar_vals)):
             tot = g_v + s_v
             ax.text(tot + 1.2, i, f"{tot:.1f}%", ha="left", va="center", fontsize=8.5, fontweight="bold", color=WB_NAVY)
         ax.set_xlim(0, 105)
         ax.set_xlabel("Electrification Rate (%)", fontsize=10)
-        ax.set_title("Electricity Access by Technology Across 14 Administrative Regions",
+        ax.set_title(f"Electricity Access by Technology Across {n_regions} Administrative Regions",
                      fontsize=12, fontweight="bold", color=WB_NAVY)
 
     ax.legend(framealpha=0.9, loc="lower right", fontsize=9)
@@ -549,6 +583,7 @@ def chart_regional_access_gap():
     ax.grid(axis="x", alpha=0.3, linestyle="--")
     plt.tight_layout()
     save_fig(fig, "09_regional_access_gap.png")
+    return True
 
 
 # ─── CHART 10: UNDER-THE-GRID COVERAGE & GRID UPTAKE FUNNEL ─────────────────
