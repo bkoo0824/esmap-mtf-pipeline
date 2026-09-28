@@ -230,21 +230,28 @@ class CookstoveLoader:
     def generate_template_csv(cls, country_name: str) -> str:
         """Generates standard CSV content for a new country cookstove calibration."""
         header = f"""# MTF Cookstove Calibration Form — {country_name.capitalize()}
-# ============================================================
-# INSTRUCTIONS FOR COORDINATOR & COOKSTOVE EXPERT:
-# 1. Review each row and confirm the questionnaire_code values match
-#    the numeric codes used in Section G (stove type question: SEC_G_Q05)
-#    of the country's MTF survey.
-# 2. The stove_description field is used in report Table 3.1 and Box 3.
-# 3. iso_emission_tier and efficiency_tier MUST be confirmed with a
-#    cookstove expert before running the pipeline.
-#    - iso_emission_tier: 0 (open fire) to 5 (electric/solar)
-#    - efficiency_tier:   0 (< 10%) to 5 (>= 50%)
-# 4. stove_group maps stoves into standard Stata analysis categories:
-#    open_fire | traditional | ics | clean_gas | clean_electric | clean_solar | clean_bio | transitional_bio | other
-# 5. primary_fuel and notes are documented in report Table 3.1.
-# 6. The stat_key column maps to the Stata export placeholder names.
-# ============================================================
+# ==============================================================================
+# INSTRUCTIONS FOR COUNTRY COORDINATORS & COOKSTOVE SPECIALISTS:
+#
+# 1. questionnaire_code (MUST EDIT):
+#    - Match the numeric option codes used in Section G of your survey
+#      (Question SEC_G_Q05 in Survey Solutions or cookstoves.dta).
+#    - Multiple codes must be comma-separated inside double quotes, e.g. "1,2" or "3,5,22".
+#
+# 2. iso_emission_tier & efficiency_tier (EXPERT REVIEW REQUIRED):
+#    - iso_emission_tier: ISO 19867 emission rating from 0 (open fire) to 5 (electric/solar).
+#    - efficiency_tier:   ISO thermal efficiency from 0 (< 10%) to 5 (>= 50%).
+#
+# 3. stove_description & primary_fuel:
+#    - Enter the descriptive names for Report Table 3.1 and Box 3.
+#
+# 4. stove_group (DO NOT CHANGE):
+#    - Internal keyword for Stata: open_fire | traditional | ics | clean_gas |
+#      clean_electric | clean_solar | clean_bio | transitional_bio | other
+#
+# 5. stat_key_nat, stat_key_urb, stat_key_rur (DO NOT CHANGE):
+#    - Internal placeholder keys linking Stata export to the report template.
+# ==============================================================================
 questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur
 "1,2","Three-Stone / Open Fire",0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R
 "3,5,22","Traditional / Local Stove",0,0,traditional,Wood / Charcoal,Uninsulated metal grate or brazier,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R
