@@ -97,7 +97,7 @@ MD_OUT             = DEFAULT_OUT_DIR / f"MTF_{DEFAULT_COUNTRY}_Report.md"
 DOCX_OUT           = DEFAULT_OUT_DIR / f"MTF_{DEFAULT_COUNTRY}_Report.docx"
 
 
-# ─── 14 PUBLICATION CHARTS SCHEMA ────────────────────────────────────────────
+# ─── 14+ PUBLICATION CHARTS SCHEMA ───────────────────────────────────────────
 CHART_FILENAMES = {
     "CHART_ELEC_TIERS"     : "01_elec_tier_distribution.png",
     "CHART_COOKING_TIERS"  : "02_cooking_tier_distribution.png",
@@ -110,7 +110,10 @@ CHART_FILENAMES = {
     "CHART_REGIONAL_GAP"   : "09_regional_access_gap.png",
     "CHART_UNDER_GRID"     : "10_under_the_grid_funnel.png",
     "CHART_SOURCE_MIX"     : "11_electricity_source_mix.png",
-    "CHART_WTP_DEMAND"     : "12_wtp_comparative_demand_curves.png",
+    "CHART_WTP_DEMAND"     : "12a_wtp_grid_connection.png",  # backward compatibility fallback
+    "CHART_WTP_GRID"       : "12a_wtp_grid_connection.png",
+    "CHART_WTP_SOLAR"      : "12b_wtp_solar_device.png",
+    "CHART_WTP_COOKSTOVE"  : "12c_wtp_cookstove.png",
     "CHART_WTP_SEGMENTS"   : "13_wtp_mutually_exclusive_stacked.png",
     "CHART_STOVE_STACKING" : "14_stove_stacking_matrix.png",
 }
@@ -1056,12 +1059,63 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 48)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # MASTER INDEX TAB
+    # PRE-FLIGHT CHECK: SUBNATIONAL (REGIONAL) DATA & CI WIDTH
+    # ─────────────────────────────────────────────────────────────────────────
+    reg_raw = get_summary_sheet_data("Regional_Disagg")
+    skip_regional = False
+    skip_reason = ""
+    r_rows = []
+
+    if reg_raw and len(reg_raw) > 1:
+        ci_pattern = re.compile(r'\[\s*([0-9.]+)%\s*[–-]\s*([0-9.]+)%\]')
+        ci_widths = []
+        for row in reg_raw[1:]:
+            r_name = str(row[0] or "")
+            if not r_name or r_name.lower().startswith("total"):
+                continue
+            e_pct = float(row[1]) if row[1] is not None and str(row[1]).strip() != "" else 0.0
+            e_ci  = str(row[2] or "-")
+            g_pct = float(row[3]) if len(row) > 3 and row[3] is not None and str(row[3]).strip() != "" else 0.0
+            g_ci  = str(row[4] or "-") if len(row) > 4 else "-"
+            s_pct = float(row[5]) if len(row) > 5 and row[5] is not None and str(row[5]).strip() != "" else 0.0
+            s_ci  = str(row[6] or "-") if len(row) > 6 else "-"
+            r_rows.append((r_name, g_pct, g_ci, s_pct, s_ci, e_pct, e_ci))
+
+            m = ci_pattern.search(e_ci)
+            if m:
+                try:
+                    w = float(m.group(2)) - float(m.group(1))
+                    ci_widths.append(w)
+                except ValueError:
+                    ci_widths.append(0.0)
+
+        n_reg = len(r_rows)
+        avg_ci = sum(ci_widths) / len(ci_widths) if ci_widths else 0.0
+        if n_reg > 10:
+            skip_regional = True
+            skip_reason = f"Omitted: {n_reg} regions > 10 threshold"
+        elif avg_ci > 25.0:
+            skip_regional = True
+            skip_reason = f"Omitted: average 95% CI width {avg_ci:.1f}pp > 25pp threshold"
+    else:
+        skip_regional = True
+        skip_reason = "Omitted: No Regional_Disagg data available"
+
+    # Check cookstove WTP availability
+    has_cook_wtp = any([
+        g("WTP_COOK_UPFRONT_NAT", 0) > 0,
+        g("WTP_COOK_3M_NAT", 0) > 0,
+        g("WTP_COOK_6M_NAT", 0) > 0,
+        g("WTP_COOK_12M_NAT", 0) > 0,
+    ])
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MASTER INDEX TAB (DYNAMICALLY BUILT)
     # ─────────────────────────────────────────────────────────────────────────
     ws_idx = wb.create_sheet(title="Figure_Index")
     ws_idx.views.sheetView[0].showGridLines = True
     ws_idx.cell(1, 1, f"ESMAP Multi-Tier Framework (MTF) — {country_name} 2024").font = font_title
-    ws_idx.cell(2, 1, "Report Graphics Designer Data Package (14 Publication Suite Figures)").font = font_subtitle
+    ws_idx.cell(2, 1, "Report Graphics Designer Data Package (Publication Suite Figures)").font = font_subtitle
     ws_idx.cell(4, 1, "This workbook provides the verified econometric statistics and underlying data series for every figure in the final report.").font = font_note
 
     headers_idx = ["Figure #", "Report Figure Title", "Source Image Filename", "Data Sheet Tab", "Core Thematic Domain"]
@@ -1072,24 +1126,35 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
         cell.alignment = align_center
 
     figure_catalog = [
-        (1, "Figure 1: Electricity Access Tier Distribution", "01_elec_tier_distribution.png", "Fig01_Elec_Tiers", "Electricity Diagnostic"),
-        (2, "Figure 2: Primary Electricity Technology Distribution & Dry-Cell Exclusion", "11_electricity_source_mix.png", "Fig02_Source_Mix", "Electricity Diagnostic"),
-        (3, "Figure 3: Under-the-Grid Densification & Grid Uptake Funnel", "10_under_the_grid_funnel.png", "Fig03_Under_Grid_Funnel", "Electricity Infill Policy"),
-        (4, "Figure 4: Electricity Attribute Performance Radar (Grid vs Off-Grid)", "03_elec_attribute_radar.png", "Fig04_Attribute_Radar", "Quality & Reliability"),
-        (5, "Figure 5: Energy Access Across Expenditure Quintiles (Q1 to Q5)", "04_quintile_access_curve.png", "Fig05_Quintiles", "Equity & Poverty"),
-        (6, "Figure 6: Grid Connection Barriers & Payment Modalities", "06_grid_barriers_wtp.png", "Fig06_Grid_Barriers_WTP", "Consumer Affordability"),
-        (7, "Figure 7: 3-in-1 Cumulative WTP Demand Curves Across Financing Terms", "12_wtp_comparative_demand_curves.png", "Fig07_WTP_Demand_Curves", "Demand Modeling"),
-        (8, "Figure 8: Target Consumer Segments by Minimum Financing Requirement", "13_wtp_mutually_exclusive_stacked.png", "Fig08_WTP_Segments", "Market Segmentation"),
-        (9, "Figure 9: Primary Cookstove Typology & Primary Cooking Fuels", "07_stove_technology_fuels.png", "Fig09_Stove_Fuels", "Clean Cooking (MECS)"),
-        (10, "Figure 10: MECS Clean Cooking Tier Distribution", "02_cooking_tier_distribution.png", "Fig10_Cooking_Tiers", "Clean Cooking (MECS)"),
-        (11, "Figure 11: Cookstove Stacking Patterns & Exposure Dilution Effect", "14_stove_stacking_matrix.png", "Fig11_Stove_Stacking", "Clean Cooking (MECS)"),
-        (12, "Figure 12: Gender Demographics, Educational Attainment & Access Parity", "08_gender_demographics_access.png", "Fig12_Gender_Parity", "Gender & Social Inclusion"),
-        (13, "Figure 13: Gender Time-Use Burden for Fuel Gathering", "05_gender_fuel_collection_time.png", "Fig13_Gender_Fuel_Time", "Gender & Social Inclusion"),
-        (14, "Figure 14: Subnational Disparities in Electricity Access", "09_regional_access_gap.png", "Fig14_Regional_Access_Gap", "Subnational Disparities"),
+        ("Figure 1", "Figure 1: Electricity Access Tier Distribution", "01_elec_tier_distribution.png", "Fig01_Elec_Tiers", "Electricity Diagnostic"),
+        ("Figure 2", "Figure 2: Primary Electricity Technology Distribution & Dry-Cell Exclusion", "11_electricity_source_mix.png", "Fig02_Source_Mix", "Electricity Diagnostic"),
+        ("Figure 3", "Figure 3: Under-the-Grid Densification & Grid Uptake Funnel", "10_under_the_grid_funnel.png", "Fig03_Under_Grid_Funnel", "Electricity Infill Policy"),
+        ("Figure 4", "Figure 4: Electricity Attribute Performance Radar (Grid vs Off-Grid)", "03_elec_attribute_radar.png", "Fig04_Attribute_Radar", "Quality & Reliability"),
+        ("Figure 5", "Figure 5: Energy Access Across Expenditure Quintiles (Q1 to Q5)", "04_quintile_access_curve.png", "Fig05_Quintiles", "Equity & Poverty"),
+        ("Figure 6", "Figure 6: Grid Connection Barriers & Payment Modalities", "06_grid_barriers_wtp.png", "Fig06_Grid_Barriers_WTP", "Consumer Affordability"),
+        ("Figure 7a", "Figure 7a: Grid Connection WTP Cumulative Demand Curve", "12a_wtp_grid_connection.png", "Fig07a_Grid_WTP", "Demand Modeling"),
+        ("Figure 7b", "Figure 7b: Off-Grid Solar WTP Cumulative Demand Curve", "12b_wtp_solar_device.png", "Fig07b_Solar_WTP", "Demand Modeling"),
     ]
+    if has_cook_wtp:
+        figure_catalog.append(("Figure 7c", "Figure 7c: Clean Cookstove WTP Cumulative Demand Curve", "12c_wtp_cookstove.png", "Fig07c_Cookstove_WTP", "Demand Modeling"))
 
-    for row_idx, (fnum, title, img, tab, domain) in enumerate(figure_catalog, 7):
-        ws_idx.cell(row_idx, 1, f"Figure {fnum}").alignment = align_center
+    figure_catalog.extend([
+        ("Figure 8", "Figure 8: Target Consumer Segments by Minimum Financing Requirement", "13_wtp_mutually_exclusive_stacked.png", "Fig08_WTP_Segments", "Market Segmentation"),
+        ("Figure 9", "Figure 9: Primary Cookstove Typology & Primary Cooking Fuels", "07_stove_technology_fuels.png", "Fig09_Stove_Fuels", "Clean Cooking (MECS)"),
+        ("Figure 10", "Figure 10: MECS Clean Cooking Tier Distribution", "02_cooking_tier_distribution.png", "Fig10_Cooking_Tiers", "Clean Cooking (MECS)"),
+        ("Figure 11", "Figure 11: Cookstove Stacking Patterns & Exposure Dilution Effect", "14_stove_stacking_matrix.png", "Fig11_Stove_Stacking", "Clean Cooking (MECS)"),
+        ("Figure 12", "Figure 12: Gender Demographics, Educational Attainment & Access Parity", "08_gender_demographics_access.png", "Fig12_Gender_Parity", "Gender & Social Inclusion"),
+        ("Figure 13", "Figure 13: Gender Time-Use Burden for Fuel Gathering", "05_gender_fuel_collection_time.png", "Fig13_Gender_Fuel_Time", "Gender & Social Inclusion"),
+    ])
+
+    if not skip_regional:
+        figure_catalog.append(("Figure 14", "Figure 14: Subnational Disparities in Electricity Access", "09_regional_access_gap.png", "Fig14_Regional_Access_Gap", "Subnational Disparities"))
+    else:
+        # Note omission in index header
+        ws_idx.cell(3, 1, f"Note: Subnational Regional Disparities figure ({skip_reason})").font = font_subtitle
+
+    for row_idx, (fnum_str, title, img, tab, domain) in enumerate(figure_catalog, 7):
+        ws_idx.cell(row_idx, 1, fnum_str).alignment = align_center
         ws_idx.cell(row_idx, 2, title).alignment = align_left
         ws_idx.cell(row_idx, 3, img).alignment = align_left
         ws_idx.cell(row_idx, 4, tab).alignment = align_center
@@ -1346,36 +1411,112 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 07: 3-in-1 WTP Demand Curves (12_wtp_comparative_demand_curves.png)
+    # FIG 07a: Grid Connection WTP Demand Curve (12a_wtp_grid_connection.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig07_WTP_Demand_Curves")
+    ws = wb.create_sheet(title="Fig07a_Grid_WTP")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 7: 3-in-1 Cumulative WTP Demand Curves Across Financing Terms").font = font_title
-    ws.cell(2, 1, "Source: 12_wtp_comparative_demand_curves.png | Cumulative market expansion as terms are relaxed").font = font_subtitle
+    ws.cell(1, 1, "Figure 7a: Grid Connection Willingness to Pay by Financing Term").font = font_title
+    ws.cell(2, 1, "Source: 12a_wtp_grid_connection.png | Cumulative market expansion among unconnected households").font = font_subtitle
 
-    headers = ["Financing Term Offered", "National Grid (%)", "Off-Grid Solar Home System (%)", "Clean Cookstove (%)"]
+    headers = ["Financing Term Offered", "Cumulative % Willing to Connect", "Incremental Market Expansion (%p)"]
     for c_idx, h in enumerate(headers, 1):
         cell = ws.cell(4, c_idx, h)
         cell.font = font_th
         cell.fill = fill_navy
         cell.alignment = align_center
 
-    curves_data = [
-        ("Upfront Payment", g("WTP_GRID_UPFRONT_NAT", 41.1), g("WTP_SOLAR_UPFRONT_NAT", 13.3), 18.7),
-        ("3 Months Installments", g("WTP_GRID_3M_NAT", 65.4), None, 24.6),
-        ("6 Months Installments", g("WTP_GRID_6M_NAT", 81.5), g("WTP_SOLAR_6M_NAT", 30.4), 36.4),
-        ("12 Months Installments", g("WTP_GRID_12M_NAT", 90.1), g("WTP_SOLAR_12M_NAT", 55.9), 44.7),
-        ("100% Fee Waived", g("WTP_GRID_WAIVED_NAT", 84.4), None, None),
+    g_up = g("WTP_GRID_UPFRONT_NAT", 19.6)
+    g_3m = g("WTP_GRID_3M_NAT", 23.8)
+    g_6m = g("WTP_GRID_6M_NAT", 32.7)
+    g_12m = g("WTP_GRID_12M_NAT", 45.5)
+    g_wvd = g("WTP_GRID_WAIVED_NAT", 73.7)
+
+    grid_wtp_rows = [
+        ("Upfront Payment (Full Connection Fee)", g_up, 0.0),
+        ("3 Months Installment Plan", g_3m, g_3m - g_up),
+        ("6 Months Installment Plan", g_6m, g_6m - g_3m),
+        ("12 Months Installment Plan", g_12m, g_12m - g_6m),
+        ("100% Fee Waived (Full Subsidy)", g_wvd, g_wvd - g_12m),
     ]
-    for r_idx, (t_lbl, g_v, s_v, c_v) in enumerate(curves_data, 5):
+    for r_idx, (t_lbl, cum_v, inc_v) in enumerate(grid_wtp_rows, 5):
         ws.cell(r_idx, 1, t_lbl).alignment = align_left
-        ws.cell(r_idx, 2, round(g_v, 2) if g_v is not None else "-").alignment = align_right
-        ws.cell(r_idx, 3, round(s_v, 2) if s_v is not None else "-").alignment = align_right
-        ws.cell(r_idx, 4, round(c_v, 2) if c_v is not None else "-").alignment = align_right
-        for c in range(1, 5):
+        ws.cell(r_idx, 2, round(cum_v, 2)).alignment = align_right
+        ws.cell(r_idx, 3, round(inc_v, 2)).alignment = align_right
+        for c in range(1, 4):
             ws.cell(r_idx, c).font = font_td
             ws.cell(r_idx, c).border = table_border
     auto_fit_cols(ws)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # FIG 07b: Off-Grid Solar WTP Demand Curve (12b_wtp_solar_device.png)
+    # ─────────────────────────────────────────────────────────────────────────
+    ws = wb.create_sheet(title="Fig07b_Solar_WTP")
+    ws.views.sheetView[0].showGridLines = True
+    ws.cell(1, 1, "Figure 7b: Off-Grid Solar Device Willingness to Pay by Financing Term").font = font_title
+    ws.cell(2, 1, "Source: 12b_wtp_solar_device.png | Cumulative market expansion among target households").font = font_subtitle
+
+    headers = ["Financing Term Offered", "Cumulative % Willing to Purchase", "Incremental Market Expansion (%p)"]
+    for c_idx, h in enumerate(headers, 1):
+        cell = ws.cell(4, c_idx, h)
+        cell.font = font_th
+        cell.fill = fill_accent
+        cell.alignment = align_center
+
+    s_up = g("WTP_SOLAR_UPFRONT_NAT", 20.5)
+    s_6m = g("WTP_SOLAR_6M_NAT", 28.0)
+    s_12m = g("WTP_SOLAR_12M_NAT", 42.2)
+    s_24m = g("WTP_SOLAR_24M_NAT", 55.0)
+
+    solar_wtp_rows = [
+        ("Upfront Cash Purchase (Full Price)", s_up, 0.0),
+        ("6 Months Installment Plan", s_6m, s_6m - s_up),
+        ("12 Months Installment Plan", s_12m, s_12m - s_6m),
+        ("24 Months Installment Plan (PAYG)", s_24m, s_24m - s_12m),
+    ]
+    for r_idx, (t_lbl, cum_v, inc_v) in enumerate(solar_wtp_rows, 5):
+        ws.cell(r_idx, 1, t_lbl).alignment = align_left
+        ws.cell(r_idx, 2, round(cum_v, 2)).alignment = align_right
+        ws.cell(r_idx, 3, round(inc_v, 2)).alignment = align_right
+        for c in range(1, 4):
+            ws.cell(r_idx, c).font = font_td
+            ws.cell(r_idx, c).border = table_border
+    auto_fit_cols(ws)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # FIG 07c: Clean Cookstove WTP Demand Curve (12c_wtp_cookstove.png) [Conditional]
+    # ─────────────────────────────────────────────────────────────────────────
+    if has_cook_wtp:
+        ws = wb.create_sheet(title="Fig07c_Cookstove_WTP")
+        ws.views.sheetView[0].showGridLines = True
+        ws.cell(1, 1, "Figure 7c: Clean Cookstove Willingness to Pay by Financing Term").font = font_title
+        ws.cell(2, 1, "Source: 12c_wtp_cookstove.png | Cumulative market expansion among eligible cooking households").font = font_subtitle
+
+        headers = ["Financing Term Offered", "Cumulative % Willing to Purchase", "Incremental Market Expansion (%p)"]
+        for c_idx, h in enumerate(headers, 1):
+            cell = ws.cell(4, c_idx, h)
+            cell.font = font_th
+            cell.fill = fill_navy
+            cell.alignment = align_center
+
+        c_up = g("WTP_COOK_UPFRONT_NAT", 18.7)
+        c_3m = g("WTP_COOK_3M_NAT", 24.6)
+        c_6m = g("WTP_COOK_6M_NAT", 36.4)
+        c_12m = g("WTP_COOK_12M_NAT", 44.7)
+
+        cook_wtp_rows = [
+            ("Upfront Cash Purchase (Full Price)", c_up, 0.0),
+            ("3 Months Installment Plan", c_3m, c_3m - c_up),
+            ("6 Months Installment Plan", c_6m, c_6m - c_3m),
+            ("12 Months Installment Plan", c_12m, c_12m - c_6m),
+        ]
+        for r_idx, (t_lbl, cum_v, inc_v) in enumerate(cook_wtp_rows, 5):
+            ws.cell(r_idx, 1, t_lbl).alignment = align_left
+            ws.cell(r_idx, 2, round(cum_v, 2)).alignment = align_right
+            ws.cell(r_idx, 3, round(inc_v, 2)).alignment = align_right
+            for c in range(1, 4):
+                ws.cell(r_idx, c).font = font_td
+                ws.cell(r_idx, c).border = table_border
+        auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
     # FIG 08: Mutually Exclusive WTP Segments (13_wtp_mutually_exclusive_stacked.png)
@@ -1653,53 +1794,40 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 14: Subnational Disparities (09_regional_access_gap.png)
+    # FIG 14: Subnational Disparities (09_regional_access_gap.png) [Conditional]
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig14_Regional_Access_Gap")
-    ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 14: Subnational Disparities in Electricity Access").font = font_title
-    ws.cell(2, 1, "Source: 09_regional_access_gap.png | Administrative regions disaggregated by technology with 95% CIs").font = font_subtitle
+    if not skip_regional:
+        ws = wb.create_sheet(title="Fig14_Regional_Access_Gap")
+        ws.views.sheetView[0].showGridLines = True
+        ws.cell(1, 1, "Figure 14: Subnational Disparities in Electricity Access").font = font_title
+        ws.cell(2, 1, "Source: 09_regional_access_gap.png | Administrative regions disaggregated by technology with 95% CIs").font = font_subtitle
 
-    headers = ["Administrative Region / County", "Grid Access (%)", "Grid [95% CI]", "Off-Grid Solar (%)", "Solar [95% CI]", "Total Electricity Access (%)", "Total Access [95% CI]"]
-    for c_idx, h in enumerate(headers, 1):
-        cell = ws.cell(4, c_idx, h)
-        cell.font = font_th
-        cell.fill = fill_navy
-        cell.alignment = align_center
+        headers = ["Administrative Region / County", "Grid Access (%)", "Grid [95% CI]", "Off-Grid Solar (%)", "Solar [95% CI]", "Total Electricity Access (%)", "Total Access [95% CI]"]
+        for c_idx, h in enumerate(headers, 1):
+            cell = ws.cell(4, c_idx, h)
+            cell.font = font_th
+            cell.fill = fill_navy
+            cell.alignment = align_center
 
-    reg_raw = get_summary_sheet_data("Regional_Disagg")
-    if reg_raw and len(reg_raw) > 1:
-        r_rows = []
-        for row in reg_raw[1:]:
-            r_name = str(row[0] or "")
-            if not r_name or r_name.lower().startswith("total"):
-                continue
-            e_pct = float(row[1]) if row[1] is not None and str(row[1]).strip() != "" else 0.0
-            e_ci  = str(row[2] or "-")
-            g_pct = float(row[3]) if len(row) > 3 and row[3] is not None and str(row[3]).strip() != "" else 0.0
-            g_ci  = str(row[4] or "-") if len(row) > 4 else "-"
-            s_pct = float(row[5]) if len(row) > 5 and row[5] is not None and str(row[5]).strip() != "" else 0.0
-            s_ci  = str(row[6] or "-") if len(row) > 6 else "-"
-            r_rows.append((r_name, g_pct, g_ci, s_pct, s_ci, e_pct, e_ci))
-
-        r_rows.sort(key=lambda x: x[5])
-        for r_idx, (r_name, g_pct, g_ci, s_pct, s_ci, e_pct, e_ci) in enumerate(r_rows, 5):
-            ws.cell(r_idx, 1, r_name).alignment = align_left
-            ws.cell(r_idx, 2, round(g_pct, 2)).alignment = align_right
-            ws.cell(r_idx, 3, g_ci).alignment = align_center
-            ws.cell(r_idx, 4, round(s_pct, 2)).alignment = align_right
-            ws.cell(r_idx, 5, s_ci).alignment = align_center
-            ws.cell(r_idx, 6, round(e_pct, 2)).alignment = align_right
-            ws.cell(r_idx, 7, e_ci).alignment = align_center
-            for c in range(1, 8):
-                ws.cell(r_idx, c).font = font_td
-                ws.cell(r_idx, c).border = table_border
-    else:
-        ws.cell(5, 1, "Nationwide Aggregate").alignment = align_left
-        ws.cell(5, 2, round(grid_s, 2)).alignment = align_right
-        ws.cell(5, 4, round(sol_s, 2)).alignment = align_right
-        ws.cell(5, 6, round(g("ELEC_ACC_NAT", 33.2), 2)).alignment = align_right
-    auto_fit_cols(ws)
+        if r_rows:
+            r_rows_sorted = sorted(r_rows, key=lambda x: x[5])
+            for r_idx, (r_name, g_pct, g_ci, s_pct, s_ci, e_pct, e_ci) in enumerate(r_rows_sorted, 5):
+                ws.cell(r_idx, 1, r_name).alignment = align_left
+                ws.cell(r_idx, 2, round(g_pct, 2)).alignment = align_right
+                ws.cell(r_idx, 3, g_ci).alignment = align_center
+                ws.cell(r_idx, 4, round(s_pct, 2)).alignment = align_right
+                ws.cell(r_idx, 5, s_ci).alignment = align_center
+                ws.cell(r_idx, 6, round(e_pct, 2)).alignment = align_right
+                ws.cell(r_idx, 7, e_ci).alignment = align_center
+                for c in range(1, 8):
+                    ws.cell(r_idx, c).font = font_td
+                    ws.cell(r_idx, c).border = table_border
+        else:
+            ws.cell(5, 1, "Nationwide Aggregate").alignment = align_left
+            ws.cell(5, 2, round(g("GRID_ACC_NAT", 39.5), 2)).alignment = align_right
+            ws.cell(5, 4, round(g("SOLAR_ACC_NAT", 5.3), 2)).alignment = align_right
+            ws.cell(5, 6, round(g("ELEC_ACC_NAT", 33.2), 2)).alignment = align_right
+        auto_fit_cols(ws)
 
     # 3. Save Workbook
     out_file = custom_excel_out if custom_excel_out else output_dir / f"MTF_{country_clean}_Report_Figures_Data.xlsx"

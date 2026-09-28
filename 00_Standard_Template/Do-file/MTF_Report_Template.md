@@ -30,9 +30,12 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{CHART_UNDER_GRID}}           : Figure 3  — Under-the-Grid Densification Funnel (10_under_the_grid_funnel.png)
 {{CHART_ELEC_RADAR}}           : Figure 4  — Electricity Attribute Performance Radar (03_elec_attribute_radar.png)
 {{CHART_QUINTILE_CURVE}}       : Figure 5  — Access Across Expenditure Quintiles (04_quintile_access_curve.png)
-{{CHART_GRID_BARRIERS}}        : Figure 6  — Grid Connection Barriers & WTP Relief (06_grid_barriers_wtp.png)
-{{CHART_WTP_DEMAND}}           : Figure 7  — 3-in-1 Cumulative WTP Demand Curves (12_wtp_comparative_demand_curves.png)
-{{CHART_WTP_SEGMENTS}}         : Figure 8  — 100% Mutually Exclusive WTP Financing Segments (13_wtp_mutually_exclusive_stacked.png)
+{{CHART_GRID_BARRIERS}}        : Figure 6   — Grid Connection Barriers & WTP Relief (06_grid_barriers_wtp.png)
+{{CHART_WTP_GRID}}             : Figure 7a  — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
+{{CHART_WTP_SOLAR}}            : Figure 7b  — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
+{{CHART_WTP_COOKSTOVE}}        : Figure 7c  — Clean Cookstove WTP Cumulative Demand Curve (12c_wtp_cookstove.png)
+{{CHART_WTP_DEMAND}}           : Figure 7   — Fallback/Legacy WTP Demand Curve (12a_wtp_grid_connection.png)
+{{CHART_WTP_SEGMENTS}}         : Figure 8   — 100% Mutually Exclusive WTP Financing Segments (13_wtp_mutually_exclusive_stacked.png)
 {{CHART_STOVE_FUELS}}          : Figure 9  — Primary Cookstove Typology & Fuel Mix (07_stove_technology_fuels.png)
 {{CHART_COOKING_TIERS}}        : Figure 10 — MECS Cooking Tier Distribution (02_cooking_tier_distribution.png)
 {{CHART_STOVE_STACKING}}       : Figure 11 — Clean Cooking Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
@@ -607,10 +610,10 @@ The MTF survey conducted a contingent valuation bidding experiment to evaluate h
 1. **Cumulative Market Expansion (Demand Curves):** Shows the cumulative expansion of connected households as financing constraints are progressively relaxed.
 2. **Mutually Exclusive Financing Target Segments (100% Partition):** Categorizes unconnected households into distinct policy target groups based on the minimum level of financial support required.
 
-Figure 7 plots the comparative cumulative willingness-to-pay demand curves for grid connections, Solar Home Systems, and clean cookstoves.
+Figure 7a plots the cumulative willingness-to-pay demand curve for national grid connection among unconnected households.
 
-![Figure 7: Comparative Cumulative Willingness to Pay Demand Curves for Grid Connection, Solar Home Systems, and Clean Cookstoves]({{CHART_WTP_DEMAND}})
-*Figure 7: Comparative cumulative willingness to pay demand curves for grid connection, solar home systems, and clean cookstoves across financing modalities.*
+![Figure 7a: Grid Connection Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_GRID}})
+*Figure 7a: Grid connection willingness to pay cumulative demand curve across financing modalities (Upfront, 3-Month, 6-Month, 12-Month, and 100% Fee Waived).*
 
 Contingent valuation bidding examines household connection willingness across payment structures:
 * **Upfront Payment:** `{{WTP_GRID_UPFRONT_NAT}}%` of unconnected households express willingness to connect upfront (`{{WTP_GRID_UPFRONT_URB}}%` in urban areas and `{{WTP_GRID_UPFRONT_RUR}}%` in rural areas).
@@ -626,7 +629,11 @@ Figure 8 displays the 100% mutually exclusive financing segmentation for unconne
 *Figure 8: Mutually exclusive financing target segments for unconnected households (summing to 100%) based on minimum financing relief required.*
 
 #### Off-Grid Solar Market Dynamics
-For households residing in remote, topographically complex, or sparsely populated settlements beyond the economic reach of grid extension, decentralized off-grid solar solutions represent the primary electrification pathway. Stated willingness to pay for a Solar Home System (SHS) across financing modalities is:
+For households residing in remote, topographically complex, or sparsely populated settlements beyond the economic reach of grid extension, decentralized off-grid solar solutions represent the primary electrification pathway. Stated willingness to pay for a Solar Home System (SHS) across financing modalities is illustrated in Figure 7b:
+
+![Figure 7b: Off-Grid Solar Device Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_SOLAR}})
+*Figure 7b: Off-Grid Solar Home System willingness to pay cumulative demand curve across financing modalities (Upfront, 6-Month, 12-Month, and 24-Month PAYG).*
+
 * **Upfront Payment:** `{{WTP_SOLAR_UPFRONT_NAT}}%` of households nationally.
 * **6-Month Plan:** `{{WTP_SOLAR_6M_NAT}}%` of households nationally.
 * **12-Month Plan:** `{{WTP_SOLAR_12M_NAT}}%` of households nationally.
@@ -730,6 +737,13 @@ Draft Example:
 ] -->
 
 To overcome refill cash constraints, modern distribution models such as Pay-As-You-Cook smart LPG meters and mobile money micro-payments are emerging internationally, allowing consumers to purchase gas in daily increments matching their cash flow.
+
+Figure 7c plots household willingness to pay for improved and clean cooking appliances across structured installment modalities:
+
+![Figure 7c: Clean Cookstove Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_COOKSTOVE}})
+*Figure 7c: Clean cookstove willingness to pay cumulative demand curve across financing modalities (Upfront, 3-Month, 6-Month, and 12-Month Installments).*
+
+Contingent valuation for clean cookstoves indicates that stated adoption expands from `{{WTP_COOK_UPFRONT_NAT}}%` under upfront cash payment to `{{WTP_COOK_3M_NAT}}%` under a 3-month plan, `{{WTP_COOK_6M_NAT}}%` under a 6-month plan, and `{{WTP_COOK_12M_NAT}}%` under a 12-month installment plan.
 
 ---
 
@@ -932,8 +946,14 @@ The following publication-grade charts summarize the complete empirical diagnost
 * **Figure 6:** Primary Stated Barriers to Gaining Grid Connection and Willingness to Pay by Payment Modality
   ![Figure 6: Primary Stated Barriers to Gaining Grid Connection and Willingness to Pay by Payment Modality]({{CHART_GRID_BARRIERS}})
 
-* **Figure 7:** Comparative Cumulative Willingness to Pay Demand Curves for Grid Connection, Solar Home Systems, and Clean Cookstoves
-  ![Figure 7: Comparative Cumulative Willingness to Pay Demand Curves for Grid Connection, Solar Home Systems, and Clean Cookstoves]({{CHART_WTP_DEMAND}})
+* **Figure 7a:** Grid Connection Willingness to Pay Cumulative Demand Curve Across Financing Modalities
+  ![Figure 7a: Grid Connection Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_GRID}})
+
+* **Figure 7b:** Off-Grid Solar Home System Willingness to Pay Cumulative Demand Curve Across Financing Modalities
+  ![Figure 7b: Off-Grid Solar Home System Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_SOLAR}})
+
+* **Figure 7c:** Clean Cookstove Willingness to Pay Cumulative Demand Curve Across Financing Modalities
+  ![Figure 7c: Clean Cookstove Willingness to Pay Cumulative Demand Curve Across Financing Modalities]({{CHART_WTP_COOKSTOVE}})
 
 * **Figure 8:** Mutually Exclusive Financing Target Segments for Unconnected Households
   ![Figure 8: Mutually Exclusive Financing Target Segments for Unconnected Households]({{CHART_WTP_SEGMENTS}})

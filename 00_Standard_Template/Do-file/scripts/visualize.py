@@ -672,51 +672,153 @@ def chart_electricity_source_mix():
     save_fig(fig, "11_electricity_source_mix.png")
 
 
-# ─── CHART 12: 3-IN-1 WTP COMPARATIVE CUMULATIVE DEMAND CURVES ───────────────
-def chart_wtp_comparative_demand_curves():
+# ─── CHART 12a: GRID CONNECTION WTP CUMULATIVE DEMAND CURVE ──────────────────
+def chart_grid_wtp():
+    """
+    Grid Connection Willingness to Pay — cumulative demand curve.
+    Financing terms: Upfront → 3M → 6M → 12M → Fee Waived.
+    Saved as: 12a_wtp_grid_connection.png
+    """
     vals = load_json()
-    g_up = float(vals.get("WTP_GRID_UPFRONT_NAT", 19.6))
-    g_3m = float(vals.get("WTP_GRID_3M_NAT", 23.8))
-    g_6m = float(vals.get("WTP_GRID_6M_NAT", 32.7))
-    g_12m = float(vals.get("WTP_GRID_12M_NAT", 45.5))
-    g_wvd = float(vals.get("WTP_GRID_WAIVED_NAT", 73.7))
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
 
-    s_up = float(vals.get("WTP_SOLAR_UPFRONT_NAT", 20.5))
-    s_6m = float(vals.get("WTP_SOLAR_6M_NAT", 28.0))
-    s_12m = float(vals.get("WTP_SOLAR_12M_NAT", 42.2))
-
-    c_up = float(vals.get("WTP_COOK_UPFRONT_NAT", 18.7))
-    c_3m = float(vals.get("WTP_COOK_3M_NAT", 24.6))
-    c_6m = float(vals.get("WTP_COOK_6M_NAT", 36.4))
-    c_12m = float(vals.get("WTP_COOK_12M_NAT", 44.7))
-
-    fig, ax = plt.subplots(figsize=(10.5, 6), dpi=150)
-    x_labels = ["Upfront", "3 Months", "6 Months", "12 Months", "Fee Waived"]
+    wtp_grid = [
+        g("WTP_GRID_UPFRONT_NAT", 19.6),
+        g("WTP_GRID_3M_NAT",      23.8),
+        g("WTP_GRID_6M_NAT",      32.7),
+        g("WTP_GRID_12M_NAT",     45.5),
+        g("WTP_GRID_WAIVED_NAT",  73.7),
+    ]
+    x_labels = ["Upfront\n(Full Fee)", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan", "Fee\nWaived"]
     x = np.arange(len(x_labels))
 
-    ax.plot(x, [g_up, g_3m, g_6m, g_12m, g_wvd], marker="o", linewidth=2.8, markersize=8, color=WB_NAVY, label="Grid Connection (Unconnected HHs)")
-    ax.plot([0, 2, 3], [s_up, s_6m, s_12m], marker="s", linewidth=2.5, markersize=8, color=WB_AMBER, linestyle="--", label="Off-Grid Solar Device (All HHs)")
-    ax.plot([0, 1, 2, 3], [c_up, c_3m, c_6m, c_12m], marker="^", linewidth=2.5, markersize=8, color=WB_TEAL, linestyle="-.", label="Clean Cookstove (Eligible HHs)")
+    fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
+    ax.fill_between(x, wtp_grid, alpha=0.10, color=WB_NAVY)
+    ax.plot(x, wtp_grid, marker="o", linewidth=3.0, markersize=9,
+            color=WB_NAVY, label="Unconnected Households")
 
-    for i, val in enumerate([g_up, g_3m, g_6m, g_12m, g_wvd]):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9.5)
-    for i, val in zip([0, 2, 3], [s_up, s_6m, s_12m]):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color=WB_AMBER, fontsize=9.5)
-    for i, val in zip([0, 1, 2, 3], [c_up, c_3m, c_6m, c_12m]):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points", xytext=(-16, 5), ha="center", fontweight="bold", color=WB_TEAL, fontsize=9)
+    for i, val in enumerate(wtp_grid):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
+                    xytext=(0, 11), ha="center", fontweight="bold", color=WB_NAVY, fontsize=10)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
-    ax.set_ylim(0, 95)
-    ax.set_ylabel("Cumulative % Willing to Connect / Purchase", fontsize=10, fontweight="bold")
-    ax.set_xlabel("Financing Terms Offered to Household", fontsize=10, fontweight="bold")
-    ax.set_title("Willingness to Pay (WTP) Demand Curves Across Financing Terms\n(Shows Cumulative Market Expansion as Liquidity Constraints are Relaxed)",
-                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.set_ylim(0, min(100, max(wtp_grid) * 1.3))
+    ax.set_ylabel("Cumulative % Willing to Connect", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
+    ax.set_title(
+        "Grid Connection — Willingness to Pay by Financing Term\n"
+        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+        fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
     ax.legend(frameon=True, loc="upper left", fontsize=9.5)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.3, linestyle="--")
     plt.tight_layout()
-    save_fig(fig, "12_wtp_comparative_demand_curves.png")
+    save_fig(fig, "12a_wtp_grid_connection.png")
+
+
+# ─── CHART 12b: OFF-GRID SOLAR WTP CUMULATIVE DEMAND CURVE ───────────────────
+def chart_solar_wtp():
+    """
+    Off-Grid Solar Device Willingness to Pay — cumulative demand curve.
+    Financing terms: Upfront → 6M → 12M → 24M.
+    Saved as: 12b_wtp_solar_device.png
+    """
+    vals = load_json()
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
+
+    wtp_solar = [
+        g("WTP_SOLAR_UPFRONT_NAT", 20.5),
+        g("WTP_SOLAR_6M_NAT",      28.0),
+        g("WTP_SOLAR_12M_NAT",     42.2),
+        g("WTP_SOLAR_24M_NAT",     55.0),
+    ]
+    x_labels = ["Upfront\n(Full Price)", "6-Month\nPlan", "12-Month\nPlan", "24-Month\nPlan"]
+    x = np.arange(len(x_labels))
+
+    fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
+    ax.fill_between(x, wtp_solar, alpha=0.10, color=WB_AMBER)
+    ax.plot(x, wtp_solar, marker="s", linewidth=3.0, markersize=9,
+            color=WB_AMBER, label="All Households")
+
+    for i, val in enumerate(wtp_solar):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
+                    xytext=(0, 11), ha="center", fontweight="bold", color="#7D5A00", fontsize=10)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
+    ax.set_ylim(0, min(100, max(wtp_solar) * 1.3))
+    ax.set_ylabel("Cumulative % Willing to Purchase", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
+    ax.set_title(
+        "Off-Grid Solar Device — Willingness to Pay by Financing Term\n"
+        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+        fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "12b_wtp_solar_device.png")
+
+
+# ─── CHART 12c: CLEAN COOKSTOVE WTP CUMULATIVE DEMAND CURVE ──────────────────
+def chart_cookstove_wtp():
+    """
+    Clean Cookstove Willingness to Pay — cumulative demand curve.
+    Financing terms: Upfront → 3M → 6M → 12M.
+    Returns False (skips) if all four values are zero (cookstove module not run).
+    Saved as: 12c_wtp_cookstove.png
+    """
+    vals = load_json()
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
+
+    wtp_cook = [
+        g("WTP_COOK_UPFRONT_NAT", 18.7),
+        g("WTP_COOK_3M_NAT",      24.6),
+        g("WTP_COOK_6M_NAT",      36.4),
+        g("WTP_COOK_12M_NAT",     44.7),
+    ]
+    # Skip if cookstove WTP module was not collected (all zeros)
+    if max(wtp_cook) == 0.0:
+        print("  ⚠  chart_cookstove_wtp SKIPPED — no cookstove WTP data in JSON")
+        return False
+
+    x_labels = ["Upfront\n(Full Price)", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan"]
+    x = np.arange(len(x_labels))
+
+    fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
+    ax.fill_between(x, wtp_cook, alpha=0.10, color=WB_TEAL)
+    ax.plot(x, wtp_cook, marker="^", linewidth=3.0, markersize=9,
+            color=WB_TEAL, label="Eligible Households")
+
+    for i, val in enumerate(wtp_cook):
+        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
+                    xytext=(0, 11), ha="center", fontweight="bold", color="#006666", fontsize=10)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
+    ax.set_ylim(0, min(100, max(wtp_cook) * 1.3))
+    ax.set_ylabel("Cumulative % Willing to Purchase", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
+    ax.set_title(
+        "Clean Cookstove — Willingness to Pay by Financing Term\n"
+        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+        fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "12c_wtp_cookstove.png")
+    return True
 
 
 # ─── CHART 13: WTP MUTUALLY EXCLUSIVE SEGMENTS (SUMS TO 100%) ────────────────
@@ -812,7 +914,7 @@ def chart_stove_stacking_matrix():
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print(f"\n  ESMAP MTF — Visualization Pipeline (14 Publication Figures)")
+    print(f"\n  ESMAP MTF — Visualization Pipeline (Up to 16 Publication Figures)")
     print(f"  Reading:  {XLS_PATH}")
     print(f"  Output:   {CHARTS_DIR}\n")
 
@@ -828,11 +930,15 @@ if __name__ == "__main__":
     chart_grid_barriers_wtp()
     chart_stove_technology_fuels()
     chart_gender_demographics_access()
-    chart_regional_access_gap()
+    regional_saved = chart_regional_access_gap()
+    if not regional_saved:
+        print("  ℹ  Subnational chart omitted (too many regions or CI too wide — see thresholds above).")
     chart_under_the_grid_funnel()
     chart_electricity_source_mix()
-    chart_wtp_comparative_demand_curves()
+    chart_grid_wtp()
+    chart_solar_wtp()
+    chart_cookstove_wtp()
     chart_wtp_mutually_exclusive_stacked()
     chart_stove_stacking_matrix()
 
-    print(f"\n  All 14 publication charts successfully saved to: {CHARTS_DIR}\n")
+    print(f"\n  All publication charts saved to: {CHARTS_DIR}\n")
