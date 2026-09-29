@@ -190,20 +190,34 @@ python3 "00_MTF_Country_Pipeline_Standard/Tools/mtf_calibrator.py" \
 
 ---
 
-### Cookstove Calibration — Expert Review Required
+### Cookstove Calibration — Expert Review & Customization Guide
 
-Before running the calibrator for a new country, the coordinator must review `Tools/cookstove_calibration.csv`:
+In MTF country surveys, cookstove types vary significantly across countries (e.g. 9 categories in Liberia vs. 26 specific models in Nigeria). Therefore, **customizing the cookstove calibration CSV is required** before running the final cooking econometric analysis and report generation.
 
-```
-questionnaire_code, stove_description, iso_emission_tier, efficiency_tier, stove_group, primary_fuel
-```
+#### Where is the file located?
+1. **In your country workspace:** `<Country_Folder>/Do-file/scripts/cookstove_calibration.csv` *(Auto-generated when you run the calibrator!)*
+2. **In the central toolkit:** `00_Standard_Template/Tools/cookstove_calibration_<country>.csv`
 
-- **`questionnaire_code`**: The numeric value codes from the country's Section G stove question.
-- **`iso_emission_tier`**: ISO 19867 emission tier (0–5). **Must be confirmed with a cookstove expert.**
-- **`efficiency_tier`**: ISO efficiency tier (0–5). **Must be confirmed with a cookstove expert.**
-- **`stove_group`**: Internal category (`open_fire`, `traditional`, `ics`, `clean_gas`, `clean_electric`, `clean_solar`, `clean_bio`, `transitional_bio`, `other`).
+#### Which columns must be modified?
 
-The template CSV is pre-filled with standard Namibia/Liberia defaults. Modify the `questionnaire_code` column to match the new country's questionnaire. Request expert confirmation of `iso_emission_tier` before finalizing.
+Open the CSV in Excel or a text editor and review each row:
+
+| Column Name | Who Edits? | Required Action | Example |
+|:---|:---:|:---|:---|
+| **`questionnaire_code`** | **Data Analyst / Coordinator** | **MUST MATCH SURVEY QUESTIONNAIRE.** Enter the exact numeric option code(s) used in **Section G (Stove type question: `SEC_G_Q05` or `cookstoves.dta`)** of your country's CAPI survey. Multiple codes must be wrapped in quotes and comma-separated. | If three-stone fire is option `1`, traditional mud stove is options `2` and `3`, and LPG is `14,15,16`, update accordingly. |
+| **`iso_emission_tier`** | **Cookstove Specialist** | **EXPERT REVIEW REQUIRED.** ISO 19867 emission tier from `0` (worst) to `5` (best).<br>• `0`: Three-stone open fires, unvented traditional stoves<br>• `2`–`3`: Improved biomass & rocket stoves (ICS)<br>• `4`: Clean gas (LPG) & biofuels<br>• `5`: Electric stoves, solar cookers, biogas | A local manufactured wood stove may be certified as Tier 2 or Tier 3 depending on laboratory test reports. |
+| **`efficiency_tier`** | **Cookstove Specialist** | **EXPERT REVIEW REQUIRED.** ISO thermal efficiency tier from `0` to `5` based on thermal efficiency test benchmarks:<br>• `0`: < 10% (open fires)<br>• `1`: 10%–20%<br>• `2`: 20%–30%<br>• `3`: 30%–40%<br>• `4`: 40%–50%<br>• `5`: ≥ 50% (electric, high-efficiency gas) | Confirm efficiency rating with country technical partners. |
+| **`stove_description`** | **Coordinator** | Human-readable name that appears in **Report Table 3.1** and **Box 3**. | e.g. "Three-Stone / Open Fire", "Locally Built Mud Stove" |
+| **`primary_fuel`** | **Coordinator** | Main fuel type documented in the report summary table. | e.g. "Gathered firewood", "LPG cylinder", "Charcoal" |
+
+> ⚠️ **Columns that MUST NOT be changed:**
+> - **`stove_group`**: Internal keyword used by Stata to build aggregate cooking categories (`open_fire`, `traditional`, `ics`, `clean_gas`, `clean_electric`, `clean_solar`, `clean_bio`, `transitional_bio`, `other`). Do not alter these keyword strings.
+> - **`stat_key_nat / urb / rur`**: Target placeholder macros used by `07_export.do` to transfer calculated numbers into Table 3.1 of the Word/Markdown report.
+
+#### How to apply the updated calibration:
+1. Save the CSV in your country's `Do-file/scripts/cookstove_calibration.csv`.
+2. Run (or re-run) the calibrator or execute `<Country>_MTF_Master.do` in Stata.
+3. The pipeline will automatically patch `04_cooking_attributes.do` with the updated `mainstove`, `cs_emit_tier`, and `cs_efcy_tier` blocks, and inject the verified typology into the report.
 
 ---
 
