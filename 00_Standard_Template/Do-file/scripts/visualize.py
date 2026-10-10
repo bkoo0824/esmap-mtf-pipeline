@@ -26,12 +26,43 @@ import sys
 import os
 import re
 import json
+import subprocess
+from pathlib import Path
+
+# ─── OS-AWARE DEPENDENCY CHECK ────────────────────────────────────────────────
+_REQUIRED_PACKAGES = ["pandas", "matplotlib", "seaborn", "openpyxl"]
+_MISSING = []
+
+for _pkg in _REQUIRED_PACKAGES:
+    try:
+        __import__(_pkg)
+    except ImportError:
+        _MISSING.append(_pkg)
+
+if _MISSING:
+    print("\n" + "="*70, file=sys.stderr)
+    print(" [ESMAP MTF Pipeline Error] Missing required Python package(s):", file=sys.stderr)
+    for _m in _MISSING:
+        print(f"   ❌ {_m}", file=sys.stderr)
+    print("="*70, file=sys.stderr)
+    if os.name == "nt":  # Windows
+        print("\n [Windows OS Fix]:", file=sys.stderr)
+        print(" Run the following command in PowerShell / CMD:", file=sys.stderr)
+        print(f"   pip install {' '.join(_MISSING)}\n", file=sys.stderr)
+    else:  # Linux / macOS
+        print("\n [Linux / Ubuntu Fix]:", file=sys.stderr)
+        print(" On modern Linux (Ubuntu 24.04+ / Debian 12+ PEP 668), run either:", file=sys.stderr)
+        print(f"   pip install --break-system-packages {' '.join(_MISSING)}", file=sys.stderr)
+        print(" Or using apt:", file=sys.stderr)
+        print(f"   sudo apt install {' '.join(['python3-' + p for p in _MISSING])}\n", file=sys.stderr)
+    print("="*70 + "\n", file=sys.stderr)
+    sys.exit(1)
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 import seaborn as sns
-from pathlib import Path
 
 # ─── PATHS ─────────────────────────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).parent
