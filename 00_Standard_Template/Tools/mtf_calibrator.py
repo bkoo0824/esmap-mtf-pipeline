@@ -649,13 +649,20 @@ global usd_rate   {self.params.get('usd_rate', 192.5)}
 *======================    2. GLOBAL TOGGLES   ================================*
 global run_enhancements 1
 
-*======================    3. MAIN RUN   =====================================*
+*======================    3. MAIN RUN & LOGGING =============================*
 clear all
 set more off
 set maxvar 10000
 
+* Create log directory and open master log file
+capture log close master_log
+capture mkdir "$output/log"
+local log_date : display %tdCCYYNNDD date(c(current_date), "DMY")
+log using "$output/log/MTF_{country}_Master_`log_date'.log", name(master_log) text replace
+
 di "========================================================"
-di " MTF {country} Master Pipeline — $(c(current_date))"
+di " MTF {country} Master Pipeline — $(c(current_date)) $(c(current_time))"
+di " Log file: $output/log/MTF_{country}_Master_`log_date'.log"
 di "========================================================"
 
 di " [0/7] Master dataset compilation: raw modules & expenditure..."
@@ -686,7 +693,11 @@ do "$scripts/07_export.do"
 
 di "========================================================"
 di " Pipeline complete. Outputs in: $out_sl"
+di " Master log saved to: $output/log/MTF_{country}_Master_`log_date'.log"
+di " Completed at: $(c(current_date)) $(c(current_time))"
 di "========================================================"
+
+log close master_log
 """
         safe_write_text(target_file, content)
 
