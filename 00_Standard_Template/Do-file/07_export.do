@@ -688,6 +688,42 @@
 
 
 	*===========================================================================
+	*  SHEET 11: ENERGY POVERTY PENALTY & COPING EXPENDITURES (TABLE 2.2)
+	*===========================================================================
+
+	capture {
+		* Q1 Unelectrified
+		svy, subpop(if hh_exp_quintile == 1 & elec_access == 0): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q1_UNEL = e(b)[1,1]
+		scalar json_COPING_PCT_Q1_UNEL   = e(b)[1,2]
+
+		* Q1 Connected
+		svy, subpop(if hh_exp_quintile == 1 & elec_access == 1): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q1_CONN = e(b)[1,1]
+		scalar json_COPING_PCT_Q1_CONN   = e(b)[1,2]
+
+		* Q3 Unelectrified
+		svy, subpop(if hh_exp_quintile == 3 & elec_access == 0): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q3_UNEL = e(b)[1,1]
+		scalar json_COPING_PCT_Q3_UNEL   = e(b)[1,2]
+
+		* Q3 Connected
+		svy, subpop(if hh_exp_quintile == 3 & elec_access == 1): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q3_CONN = e(b)[1,1]
+		scalar json_COPING_PCT_Q3_CONN   = e(b)[1,2]
+
+		* Q5 Connected
+		svy, subpop(if hh_exp_quintile == 5 & elec_access == 1): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q5_CONN = e(b)[1,1]
+		scalar json_COPING_PCT_Q5_CONN   = e(b)[1,2]
+
+		* National Unelectrified Average
+		svy, subpop(if elec_access == 0): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_NAT_UNEL = e(b)[1,1]
+		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]
+	}
+
+	*===========================================================================
 	*  WRITE EXPANDED JSON FILE
 	*===========================================================================
 
@@ -760,7 +796,13 @@
 		REG_KHOMAS_ELEC REG_KUNENE_ELEC REG_OHANGWENA_ELEC REG_OMAHEKE_ELEC REG_OMUSATI_ELEC ///
 		REG_OSHANA_ELEC REG_OSHIKOTO_ELEC REG_OTJOZONDJUPA_ELEC REG_ZAMBEZI_ELEC ///
 		REG_KHOMAS_GRID REG_ERONGO_GRID REG_OHANGWENA_GRID REG_OMUSATI_GRID REG_KAVANGO_E_GRID REG_ZAMBEZI_GRID ///
-		REG_OHANGWENA_SOLAR REG_OMUSATI_SOLAR REG_KAVANGO_E_SOLAR REG_ZAMBEZI_SOLAR
+		REG_OHANGWENA_SOLAR REG_OMUSATI_SOLAR REG_KAVANGO_E_SOLAR REG_ZAMBEZI_SOLAR ///
+		COPING_SPEND_Q1_UNEL COPING_PCT_Q1_UNEL ///
+		COPING_SPEND_Q1_CONN COPING_PCT_Q1_CONN ///
+		COPING_SPEND_Q3_UNEL COPING_PCT_Q3_UNEL ///
+		COPING_SPEND_Q3_CONN COPING_PCT_Q3_CONN ///
+		COPING_SPEND_Q5_CONN COPING_PCT_Q5_CONN ///
+		COPING_SPEND_NAT_UNEL COPING_PCT_NAT_UNEL
 
 	local n : word count `scalars_list'
 	local i = 1

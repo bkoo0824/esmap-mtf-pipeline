@@ -5,7 +5,9 @@
 # 1. questionnaire_code (MUST EDIT):
 #    - Match the numeric option codes used in Section G of your survey
 #      (Question SEC_G_Q05 in Survey Solutions or cookstoves.dta).
-#    - Multiple codes must be comma-separated inside double quotes, e.g. "1,2" or "3,5,22".
+#    - NOTE ON ICS SPECTRUM: Improved Cookstoves span Tier 0 to Tier 5!
+#      You can and SHOULD separate different ICS options into separate rows
+#      (e.g., Mud rocket = Tier 1, Ceramic charcoal = Tier 2, Forced-draft gasifier = Tier 4).
 #
 # 2. iso_emission_tier & efficiency_tier (EXPERT REVIEW REQUIRED):
 #    - iso_emission_tier: ISO 19867 emission rating from 0 (open fire) to 5 (electric/solar).
@@ -24,7 +26,9 @@
 questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur
 "1,2","Three-Stone / Open Fire",0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R
 "3,5,22","Traditional / Local Stove",0,0,traditional,Wood / Charcoal,Uninsulated metal grate or brazier,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R
-"4,6,7,8,9,20,21","Improved Cookstove (ICS)",3,2,ics,Firewood / Charcoal,Enclosed combustion with insulation; confirm tier with expert,STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+4,"Basic Improved Mud/Rocket Stove",1,2,ics,Firewood,Enclosed mud combustion chamber (Tier 1 emission),STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+"6,8","Intermediate Ceramic Charcoal Stove (Jiko)",2,3,ics,Charcoal,Insulated ceramic liner with metal casing (Tier 2 emission),STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+"7,9,20,21","Advanced Biomass Gasifier / Fan Stove",4,4,ics,Pellets / Wood chips,Forced-draft gasifier with high combustion efficiency (Tier 4),STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
 "10,11,12,13,14,23","Clean Fuel: LPG / Biogas",4,4,clean_gas,Bottled LPG (Butane/Propane),Tier 4-5 depending on ventilation; confirm with expert,STOVE_CLEAN_N,STOVE_CLEAN_U,STOVE_CLEAN_R
 19,"Clean Fuel: Electric Stove",5,5,clean_electric,Grid electricity,Tier 5 when used as primary stove,STOVE_ELEC_N,STOVE_ELEC_U,STOVE_ELEC_R
 "17,18","Solar Cooker",5,5,clean_solar,Solar radiation,Typically available only in high-insolation areas,STOVE_SOLAR_N,STOVE_SOLAR_U,STOVE_SOLAR_R

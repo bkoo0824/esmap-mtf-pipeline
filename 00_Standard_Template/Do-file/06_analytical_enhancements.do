@@ -310,8 +310,41 @@
 	gen byte reg_zambezi      = (SEC_A_Q01 == 14)
 
 
+	*===========================================================================
+	*  ENHANCEMENT 12: ENERGY POVERTY PENALTY & COPING MECHANISM EXPENDITURES
+	*  Coping fuel expenditure (dry-cell batteries, candles, kerosene, phone charging)
+	*  and budget share relative to total household monthly consumption expenditure.
+	*===========================================================================
+
+	capture drop coping_spend coping_pct
+	* Calculate total monthly spending on lighting substitutes from Section H / Section C
+	gen double coping_spend = 0
+	capture confirm variable SEC_H_Q06
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q06 < ., SEC_H_Q06, 0) // Candles monthly spend
+	capture confirm variable SEC_H_Q12
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q12 < ., SEC_H_Q12, 0) // Dry-cell batteries monthly spend
+	capture confirm variable SEC_H_Q18
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q18 < ., SEC_H_Q18, 0) // Kerosene / liquid fuel monthly spend
+	capture confirm variable SEC_C_Q121
+	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0) // Fee-based mobile phone charging
+
+	* Monthly budget share (% of total monthly consumption expenditure)
+	gen double coping_pct = .
+	capture confirm variable hh_exp_monthly
+	if !_rc {
+		replace coping_pct = (coping_spend / hh_exp_monthly) * 100 if hh_exp_monthly > 0 & hh_exp_monthly < .
+	}
+	else {
+		capture confirm variable exp_total_month
+		if !_rc replace coping_pct = (coping_spend / exp_total_month) * 100 if exp_total_month > 0 & exp_total_month < .
+	}
+
+	lab var coping_spend "Monthly expenditure on alternative lighting & coping mechanisms"
+	lab var coping_pct   "Share of monthly household budget spent on coping mechanisms (%)"
+
+
 	*---------------------------------------------------------------------------
 	* Save
 	*---------------------------------------------------------------------------
 	save "$wip_hh/$master_dta", replace
-	di " 06_analytical_enhancements.do complete (Enhancements 1-11)"
+	di " 06_analytical_enhancements.do complete (Enhancements 1-12)"

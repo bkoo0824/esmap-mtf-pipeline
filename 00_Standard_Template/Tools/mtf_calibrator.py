@@ -170,13 +170,35 @@ class CookstoveLoader:
         return "\n".join(lines)
 
     def generate_emit_tier_stata(self) -> str:
-        """Returns Stata cs_emit_tier assignment block."""
+        """
+        Returns Stata cs_emit_tier assignment block.
+        Maps directly from CAPI option codes (SEC_G_Q05) for fine-grained tier assignments
+        across different ICS models (e.g. mud rocket vs forced-draft gasifier),
+        with fallback to mainstove categories.
+        """
+        lines = [
+            "capture drop cs_emit_tier",
+            "gen cs_emit_tier = .",
+            "* 1. Fine-grained assignment directly from CAPI questionnaire options (SEC_G_Q05)"
+        ]
+        assigned_qcodes = set()
+        for row in self.rows:
+            tier = row.get("iso_emission_tier", "").strip()
+            codes = row.get("questionnaire_code", "").strip()
+            if tier.isdigit() and codes:
+                code_nums = [c.strip() for c in codes.split(",") if c.strip().isdigit()]
+                if code_nums:
+                    assigned_qcodes.update(code_nums)
+                    c_str = ", ".join(code_nums)
+                    desc = row.get("stove_description", "Stove").strip()
+                    lines.append(f"\tcapture replace cs_emit_tier = {tier} if inlist(SEC_G_Q05, {c_str}) // {desc}")
+
+        # Fallback to mainstove grouping if SEC_G_Q05 is missing or for aggregated variables
         group_to_int = {
             "open_fire": 1, "traditional": 2, "ics": 3,
             "clean_gas": 4, "clean_electric": 5, "clean_solar": 6,
             "clean_bio": 7, "transitional_bio": 8, "other": 555
         }
-        # Build mainstove_val -> iso_tier mapping
         tier_map: dict = {}
         for row in self.rows:
             group = row.get("stove_group", "other").strip()
@@ -184,27 +206,43 @@ class CookstoveLoader:
             tier = row.get("iso_emission_tier", "").strip()
             if tier.isdigit() and val not in tier_map:
                 tier_map[val] = int(tier)
-        # Group by tier value
+
         from collections import defaultdict
         by_tier: dict = defaultdict(list)
         for mv, tv in tier_map.items():
             by_tier[tv].append(mv)
-        lines = ["capture drop cs_emit_tier", "gen cs_emit_tier = ."]
+
+        lines.append("\t* 2. Fallback assignment by mainstove group if cs_emit_tier is still unassigned")
         for tv in sorted(by_tier.keys()):
             mvs = by_tier[tv]
             codes = ", ".join(str(m) for m in sorted(mvs))
-            lines.append(f"\treplace cs_emit_tier = {tv} if inlist(mainstove, {codes})")
+            lines.append(f"\treplace cs_emit_tier = {tv} if inlist(mainstove, {codes}) & cs_emit_tier == .")
+
         lines.append('\tlab var cs_emit_tier "Stove ISO Emission Tier (0-5)"')
         return "\n".join(lines)
 
     def generate_efcy_tier_stata(self) -> str:
-        """Returns Stata cs_efcy_tier assignment block."""
+        """Returns Stata cs_efcy_tier assignment block directly from SEC_G_Q05 with mainstove fallback."""
+        lines = [
+            "capture drop cs_efcy_tier",
+            "gen cs_efcy_tier = .",
+            "* 1. Fine-grained thermal efficiency assignment from CAPI questionnaire options (SEC_G_Q05)"
+        ]
+        for row in self.rows:
+            tier = row.get("efficiency_tier", "").strip()
+            codes = row.get("questionnaire_code", "").strip()
+            if tier.isdigit() and codes:
+                code_nums = [c.strip() for c in codes.split(",") if c.strip().isdigit()]
+                if code_nums:
+                    c_str = ", ".join(code_nums)
+                    desc = row.get("stove_description", "Stove").strip()
+                    lines.append(f"\tcapture replace cs_efcy_tier = {tier} if inlist(SEC_G_Q05, {c_str}) // {desc}")
+
         group_to_int = {
             "open_fire": 1, "traditional": 2, "ics": 3,
             "clean_gas": 4, "clean_electric": 5, "clean_solar": 6,
             "clean_bio": 7, "transitional_bio": 8, "other": 555
         }
-        # Build mainstove_val -> efficiency_tier mapping
         tier_map: dict = {}
         for row in self.rows:
             group = row.get("stove_group", "other").strip()
@@ -212,16 +250,18 @@ class CookstoveLoader:
             tier = row.get("efficiency_tier", "").strip()
             if tier.isdigit() and val not in tier_map:
                 tier_map[val] = int(tier)
-        # Group by tier value
+
         from collections import defaultdict
         by_tier: dict = defaultdict(list)
         for mv, tv in tier_map.items():
             by_tier[tv].append(mv)
-        lines = ["capture drop cs_efcy_tier", "gen cs_efcy_tier = ."]
+
+        lines.append("\t* 2. Fallback assignment by mainstove group if cs_efcy_tier is still unassigned")
         for tv in sorted(by_tier.keys()):
             mvs = by_tier[tv]
             codes = ", ".join(str(m) for m in sorted(mvs))
-            lines.append(f"\treplace cs_efcy_tier = {tv} if inlist(mainstove, {codes})")
+            lines.append(f"\treplace cs_efcy_tier = {tv} if inlist(mainstove, {codes}) & cs_efcy_tier == .")
+
         lines.append('\tlab val cs_efcy_tier tier')
         lines.append('\tlab var cs_efcy_tier "Cooking: Efficiency Tier (ISO thermal efficiency)"')
         return "\n".join(lines)
