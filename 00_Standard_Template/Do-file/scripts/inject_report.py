@@ -258,34 +258,23 @@ def load_values(
         if token not in values:
             values[token] = "0.0"
 
-    # ─── TABLE 2.2: ENERGY POVERTY PENALTY & COPING MECHANISM DEFAULTS ────────
-    coping_defaults = {
-        "{{COPING_SPEND_Q1_UNEL}}": "1,450.0",
-        "{{COPING_PCT_Q1_UNEL}}":   "9.4",
-        "{{COPING_SPEND_Q1_CONN}}": "520.0",
-        "{{COPING_PCT_Q1_CONN}}":   "3.2",
-        "{{COPING_SPEND_Q3_UNEL}}": "1,820.0",
-        "{{COPING_PCT_Q3_UNEL}}":   "6.1",
-        "{{COPING_SPEND_Q3_CONN}}": "410.0",
-        "{{COPING_PCT_Q3_CONN}}":   "1.4",
-        "{{COPING_SPEND_Q5_CONN}}": "280.0",
-        "{{COPING_PCT_Q5_CONN}}":   "0.6",
-        "{{COPING_SPEND_NAT_UNEL}}": "1,640.0",
-        "{{COPING_PCT_NAT_UNEL}}":   "7.8",
-        "{{PCT_AFFORDABLE_NAT}}":    "64.2",
-        "{{PCT_AFFORDABLE_URB}}":    "78.5",
-        "{{PCT_AFFORDABLE_RUR}}":    "48.9",
-        "{{PCT_UNAFFORDABLE_Q1}}":   "71.4",
-        "{{WTP_COOK_UPFRONT_NAT}}":  "18.7",
-        "{{WTP_COOK_3M_NAT}}":       "24.6",
-        "{{WTP_COOK_6M_NAT}}":       "36.4",
-        "{{WTP_COOK_12M_NAT}}":      "44.7",
-        "{{WTP_COOK_NEVER_NAT}}":    "38.5",
-        "{{REFUSE_COOK_COST_NAT}}":  "42.1",
-    }
-    for c_token, c_def in coping_defaults.items():
-        if c_token not in values:
-            values[c_token] = c_def
+    # ─── TABLE 2.2: ENERGY POVERTY PENALTY, AFFORDABILITY & WTP PLACEHOLDERS ──
+    # If uncalculated or missing from survey data, strictly set to 'N/A' (do NOT use arbitrary synthetic estimates)
+    survey_metrics = [
+        "{{COPING_SPEND_Q1_UNEL}}", "{{COPING_PCT_Q1_UNEL}}",
+        "{{COPING_SPEND_Q1_CONN}}", "{{COPING_PCT_Q1_CONN}}",
+        "{{COPING_SPEND_Q3_UNEL}}", "{{COPING_PCT_Q3_UNEL}}",
+        "{{COPING_SPEND_Q3_CONN}}", "{{COPING_PCT_Q3_CONN}}",
+        "{{COPING_SPEND_Q5_CONN}}", "{{COPING_PCT_Q5_CONN}}",
+        "{{COPING_SPEND_NAT_UNEL}}", "{{COPING_PCT_NAT_UNEL}}",
+        "{{PCT_AFFORDABLE_NAT}}", "{{PCT_AFFORDABLE_URB}}", "{{PCT_AFFORDABLE_RUR}}",
+        "{{PCT_UNAFFORDABLE_Q1}}",
+        "{{WTP_COOK_UPFRONT_NAT}}", "{{WTP_COOK_3M_NAT}}", "{{WTP_COOK_6M_NAT}}",
+        "{{WTP_COOK_12M_NAT}}", "{{WTP_COOK_NEVER_NAT}}", "{{REFUSE_COOK_COST_NAT}}",
+    ]
+    for m_token in survey_metrics:
+        if m_token not in values:
+            values[m_token] = "N/A"
 
     # ─── DEMOGRAPHIC & GENDER PROFILE DERIVATIONS ─────────────────────────────
     if "{{MHH_SHARE}}" not in values or "{{FHH_SHARE}}" not in values:
