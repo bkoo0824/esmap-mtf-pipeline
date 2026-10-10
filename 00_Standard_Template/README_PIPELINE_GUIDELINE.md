@@ -1,3 +1,4 @@
+
 # 🌐 ESMAP Multi-Tier Framework (MTF) Country Survey Automation Blueprint
 ## Standard Operating Guideline: From Raw Microdata to Publication-Grade Diagnostics
 
@@ -275,8 +276,6 @@ The following report sections require **manual completion** by the coordinator �
 
 ---
 
-
-
 ## 5. Summary Matrix & Indicator Nomenclature
 
 The pipeline exports **260+ calibrated indicators** across 10 structured dimensions in `MTF_<Country>_Summary.xlsx`:
@@ -351,3 +350,19 @@ python3 git_sync.py --import-country "Nigeria_2024" --source "/path/to/07. Data 
    }
    ```
 3. **Branch & PR:** Always create a feature branch (`git checkout -b feature/country-fix`), commit changes, push, and open a Pull Request against `main`.
+### Cookstove Calibration — Expert Review Required
+
+Before running the calibrator for a new country, the coordinator must review `Tools/cookstove_calibration.csv`:
+
+```
+questionnaire_code, stove_description, iso_emission_tier, efficiency_tier, stove_group, primary_fuel
+```
+
+- **`questionnaire_code`**: The numeric value codes from the country's Section G stove question.
+- **`iso_emission_tier`**: ISO 19867 emission tier (0–5). **Must be confirmed with a cookstove expert.**
+- **`efficiency_tier`**: ISO efficiency tier (0–5). **Must be confirmed with a cookstove expert.**
+- **`stove_group`**: Internal category (`open_fire`, `traditional`, `ics`, `clean_gas`, `clean_electric`, `clean_solar`, `clean_bio`, `transitional_bio`, `other`).
+
+The template CSV is pre-filled with standard Namibia/Liberia defaults. Modify the `questionnaire_code` column to match the new country's questionnaire. Request expert confirmation of `iso_emission_tier` before finalizing.
+
+---

@@ -168,9 +168,8 @@ def chart_cooking_tiers():
 def chart_elec_radar():
     """
     Figure 3: Electricity Attribute Tiers (0–5 Scale)
-    Presented as a publication dual-panel radar chart:
-      - Panel A: Grid-Connected Households (Urban vs. Rural)
-      - Panel B: Off-Grid Solar Households (Urban vs. Rural)
+    Presented as a focused publication radar chart for Grid-Connected Households (Urban vs. Rural):
+    (Note: Off-Grid Solar is excluded as MTF evaluates stand-alone solar solely on Capacity & Availability)
     """
     df = load_sheet("Disagg_UrbanRural")
     attr_vars = {
@@ -205,39 +204,31 @@ def chart_elec_radar():
 
     grid_urb = get_vals("Grid Urban")
     grid_rur = get_vals("Grid Rural")
-    sol_urb  = get_vals("Off-Grid Urban")
-    sol_rur  = get_vals("Off-Grid Rural")
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.5, 6.8), subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(8.5, 7.2), subplot_kw=dict(polar=True), dpi=150)
 
-    panels = [
-        (ax1, "Panel A: Grid-Connected Households",
-         [("Urban Grid", grid_urb, WB_NAVY, "o-", 2.8, 0.14),
-          ("Rural Grid", grid_rur, WB_TEAL, "s--", 2.4, 0.10)]),
-        (ax2, "Panel B: Off-Grid Solar Households",
-         [("Urban Off-Grid Solar", sol_urb, WB_AMBER, "^-", 2.8, 0.14),
-          ("Rural Off-Grid Solar", sol_rur, WB_CORAL, "D--", 2.4, 0.10)])
+    series = [
+        ("Urban Grid", grid_urb, WB_NAVY, "o-", 2.8, 0.15),
+        ("Rural Grid", grid_rur, WB_TEAL, "s--", 2.4, 0.12)
     ]
 
-    for ax, title, series in panels:
-        for s_label, s_vals, s_color, s_style, s_lw, s_alpha in series:
-            ax.plot(angles, s_vals, s_style, linewidth=s_lw, markersize=6, color=s_color, label=s_label)
-            ax.fill(angles, s_vals, alpha=s_alpha, color=s_color)
+    for s_label, s_vals, s_color, s_style, s_lw, s_alpha in series:
+        ax.plot(angles, s_vals, s_style, linewidth=s_lw, markersize=7, color=s_color, label=s_label)
+        ax.fill(angles, s_vals, alpha=s_alpha, color=s_color)
 
-        ax.set_theta_offset(np.pi / 2)
-        ax.set_theta_direction(-1)
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(labels, size=9.5, fontweight="bold", color=WB_NAVY)
-        ax.set_ylim(0, 5.2)
-        ax.set_yticks([1, 2, 3, 4, 5])
-        ax.set_yticklabels(["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"], size=7.5, color="#555555")
-        ax.grid(color=WB_GREY, linestyle="--", linewidth=0.7, alpha=0.7)
-        ax.set_title(title, fontsize=12, fontweight="bold", color=WB_NAVY, pad=22)
-        ax.legend(loc="upper right", bbox_to_anchor=(1.26, 1.15), fontsize=9, framealpha=0.85)
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels, size=10, fontweight="bold", color=WB_NAVY)
+    ax.set_ylim(0, 5.2)
+    ax.set_yticks([1, 2, 3, 4, 5])
+    ax.set_yticklabels(["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"], size=8, color="#555555")
+    ax.grid(color=WB_GREY, linestyle="--", linewidth=0.7, alpha=0.7)
+    ax.set_title("Grid-Connected Household Electricity Service Across the 7 MTF Attributes",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=25)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.20, 1.12), fontsize=9.5, framealpha=0.9)
 
-    fig.suptitle("Electricity Access Attribute Tiers Across Technologies and Locations (0–5 Tier Scale)",
-                 fontsize=14, fontweight="bold", color=WB_NAVY, y=0.98)
-    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    plt.tight_layout()
     save_fig(fig, "03_elec_attribute_radar.png")
 
 
@@ -606,20 +597,25 @@ def chart_under_the_grid_funnel():
         h = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2, h + 1.8, f"{h:.1f}%", ha="center", va="bottom", fontsize=11, fontweight="bold", color=WB_NAVY)
 
-    # Annotation for Uptake Rate
-    ax.annotate("", xy=(2, grid_conn), xytext=(1, under_grid),
-                arrowprops=dict(arrowstyle="<->", color=WB_AMBER, lw=2.5, ls="--"))
-    ax.text(1.5, (under_grid + grid_conn)/2 + 4, f"Grid Uptake Rate:\n{uptake_rate:.1f}%\n({grid_conn:.1f}% / {under_grid:.1f}%)",
-            ha="center", va="center", bbox=dict(boxstyle="round,pad=0.5", facecolor="#FFF3CD", edgecolor=WB_AMBER, lw=1.5),
+    # 1. Bracket & text for unconnected deficit under the grid (between bar 1 and bar 2)
+    ax.annotate("", xy=(1, under_grid), xytext=(1, grid_conn),
+                arrowprops=dict(arrowstyle="<->", color=WB_RED, lw=2.2))
+    ax.text(1.08, (under_grid + grid_conn) / 2,
+            f"Under-Grid Deficit:\n{deficit_rate:.1f}% unconnected\n(~{unconnected_share:.1f}% of total pop)",
+            ha="left", va="center", fontweight="bold", fontsize=9, color=WB_RED,
+            bbox=dict(boxstyle="square,pad=0.3", facecolor="#FDEDEC", edgecolor=WB_RED, lw=1))
+
+    # 2. Annotation for Uptake Rate (Curved connection to above the grid connection bar)
+    ax.annotate("", xy=(2, grid_conn + 1.5), xytext=(1, under_grid + 1.5),
+                arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=-0.18",
+                                color=WB_AMBER, lw=2.5, ls="--"))
+    ax.text(1.62, max(under_grid, grid_conn) + 12,
+            f"Grid Uptake Rate: {uptake_rate:.1f}%\n({grid_conn:.1f}% / {under_grid:.1f}%)",
+            ha="center", va="center",
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="#FFF3CD", edgecolor=WB_AMBER, lw=1.5),
             fontweight="bold", fontsize=9.5, color="#856404")
 
-    # Bracket for unconnected deficit under the grid
-    ax.annotate("", xy=(1, under_grid), xytext=(1, grid_conn),
-                arrowprops=dict(arrowstyle="<->", color=WB_RED, lw=2))
-    ax.text(1.15, (under_grid + grid_conn)/2, f"Under-Grid Deficit:\n{deficit_rate:.1f}% unconnected\n(~{unconnected_share:.1f}% of total pop)",
-            ha="left", va="center", fontweight="bold", fontsize=8.5, color=WB_RED)
-
-    ax.set_ylim(0, 118)
+    ax.set_ylim(0, 125)
     ax.set_ylabel("% of National Population (Weighted)", fontsize=10, fontweight="bold")
     ax.set_title("Grid Infrastructure Coverage vs. Actual Household Uptake\n(EA Defined as Electrified if >=1 Connected Household)",
                  fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)

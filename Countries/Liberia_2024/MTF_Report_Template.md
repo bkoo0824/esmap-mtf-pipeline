@@ -125,8 +125,12 @@ This diagnostic report provides comprehensive empirical baseline data from the n
 | **Cooking Tier 0 (Unimproved / High Exposure)** | `{{COOK_T0_NAT}}` | `{{COOK_T0_URB}}` | `{{COOK_T0_RUR}}` | Open fire cooking with poor ventilation |
 | **Primary Stove: Clean Fuels (LPG/Electric)** | `{{CLEAN_STOVE_NAT}}` | `{{CLEAN_STOVE_URB}}` | `{{CLEAN_STOVE_RUR}}` | Urban grid tariffs & LPG supply chain |
 | **Primary Stove: Three-Stone / Open Fire** | `{{THREESTONE_NAT}}` | `{{THREESTONE_URB}}` | `{{THREESTONE_RUR}}` | Rural biomass reliance & free gathering |
-| **Under-the-Grid Unconnected Rate** | `{{UNDER_GRID_UNCONNECTED_NAT}}` | `{{UNDER_GRID_UNCONNECTED_URB}}` | `{{UNDER_GRID_UNCONNECTED_RUR}}` | Connection fee & internal wiring barrier |
-| **Grid Uptake Rate in Electrified EAs** | `{{GRID_UPTAKE_NAT}}` | `{{GRID_UPTAKE_URB}}` | `{{GRID_UPTAKE_RUR}}` | Connection affordability in grid zones |
+| **Under-the-Grid Unconnected Rate**¹ | `{{UNDER_GRID_UNCONNECTED_NAT}}` | `{{UNDER_GRID_UNCONNECTED_URB}}` | `{{UNDER_GRID_UNCONNECTED_RUR}}` | Connection fee & internal wiring barrier |
+| **Grid Uptake Rate in Electrified EAs**² | `{{GRID_UPTAKE_NAT}}` | `{{GRID_UPTAKE_URB}}` | `{{GRID_UPTAKE_RUR}}` | Connection affordability in grid zones |
+
+*Note: Table 1.1 summarizes baseline multi-tier energy access and service quality. An Enumeration Area (EA) is defined as electrified if $\ge 1$ surveyed household has an active national grid connection (`max(grid_hh) == 1`).*
+*¹ **Under-the-Grid Unconnected Rate:** The percentage of **total national/stratum households** who reside within electrified EAs under the physical reach of low-voltage distribution lines but lack an active connection (Densification Deficit).*
+*² **Grid Uptake Rate in Electrified EAs:** The percentage of **households living inside electrified EAs** that are actively connected to the grid ($\text{Connected HHs in Electrified EAs} \div \text{Total HHs in Electrified EAs} \times 100$).*
 
 ---
 
@@ -245,6 +249,21 @@ Electricity access in Liberia is strongly correlated with household consumption 
 
 In the poorest expenditure quintile (Q1), the majority of households remain in Tier 0. For these low-income households, grid connection fees and internal wiring costs represent an insurmountable hurdle. Conversely, in the richest quintile (Q5), `{{Q5_ELEC_ACC}}%` of households enjoy electricity access, with the vast majority connected to the national grid and reaching Tiers 4 and 5.
 
+The consumption expenditure gradient illustrates the presence of an **energy poverty penalty**. Low-income households residing in unserved settlements frequently spend a larger fraction of their monthly budget purchasing inferior lighting substitutes (such as candles, kerosene, and disposable dry-cell batteries) per unit of effective lumen-hour than grid-connected households spend on metered utility electricity. Expanding access to affordable off-grid solar kits and subsidized grid connections relieves this cash drain, freeing resources for nutrition, education, and healthcare.
+
+##### Table 2.2: Energy Poverty Penalty — Monthly Coping Mechanism Lighting Expenditures Across Quintiles & Access Status
+
+| Household Segment / Expenditure Quintile | Monthly Coping Fuel Spending (`{{CURRENCY_CODE}}`) | Share of Monthly Household Budget (%) | Primary Substitute Fuel Utilized |
+| :--- | :---: | :---: | :--- |
+| **Lowest Quintile (Q1) — Unelectrified** | `{{COPING_SPEND_Q1_UNEL}}` | `{{COPING_PCT_Q1_UNEL}}%` | Disposable dry-cell batteries & candles |
+| **Lowest Quintile (Q1) — Connected** | `{{COPING_SPEND_Q1_CONN}}` | `{{COPING_PCT_Q1_CONN}}%` | Metered electricity & backup candles |
+| **Middle Quintile (Q3) — Unelectrified** | `{{COPING_SPEND_Q3_UNEL}}` | `{{COPING_PCT_Q3_UNEL}}%` | Batteries, candles & kerosene |
+| **Middle Quintile (Q3) — Connected** | `{{COPING_SPEND_Q3_CONN}}` | `{{COPING_PCT_Q3_CONN}}%` | Metered grid electricity |
+| **Highest Quintile (Q5) — Connected** | `{{COPING_SPEND_Q5_CONN}}` | `{{COPING_PCT_Q5_CONN}}%` | Metered grid & rechargeable backup |
+| **National Average (All Unelectrified)** | `{{COPING_SPEND_NAT_UNEL}}` | `{{COPING_PCT_NAT_UNEL}}%` | Inferior lighting substitutes |
+
+*Note: Table 2.2 empirically illustrates the energy poverty penalty. Coping expenditures capture monthly purchases of non-electric lighting and power substitutes (Section H: dry-cell batteries, candles, kerosene, and fee-based mobile phone charging) expressed as a percentage of total household consumption expenditure.*
+
 ![Figure 4: Quintile Access Curve]({{CHART_QUINTILE_CURVE}})
 *Figure 4: Household energy access rates across national consumption expenditure quintiles (Q1 to Q5) for electricity and modern energy cooking services.*
 
@@ -260,8 +279,10 @@ In the poorest expenditure quintile (Q1), the majority of households remain in T
 
 ### 2.3 The Seven Attributes of Electricity Access In-Depth
 
+The Multi-Tier Framework evaluates electricity supply along seven operational attributes to identify binding bottlenecks that constrain service quality. Figure 3 displays the multi-attribute radar profile for grid-connected households across urban and rural settlements. *(Note: Stand-alone off-grid solar solutions are evaluated primarily under Capacity and Daily Availability, as attributes such as grid reliability, voltage stability, and utility billing formality do not apply to autonomous DC devices.)*
+
 ![Figure 3: Electricity Attribute Radar]({{CHART_ELEC_RADAR}})
-*Figure 3: Multi-Tier Framework electricity attribute performance radar chart for grid-connected, off-grid solar, and non-electrified households.*
+*Figure 3: Multi-Tier Framework electricity attribute performance radar chart for grid-connected households across urban and rural settlements (0 to 5 Tier Scale).*
 
 #### 1. Capacity & Appliance Ownership
 Grid-connected households are technically provided with high capacity (>2 kW, Tier 5). However, appliance ownership varies widely:
@@ -280,7 +301,11 @@ Reliability is a binding bottleneck for grid customers. Nationwide, grid househo
 Voltage instability is widespread: `{{PCT_VOLTAGE_DAMAGE}}%` of grid households report that voltage fluctuations and surges have permanently damaged expensive household appliances (refrigerators, televisions, and electronics).
 
 #### 5. Affordability
-Under the standard MTF affordability threshold (the annual cost of a 365 kWh lifeline package is less than 5% of household consumption expenditure), the majority of households nationwide can afford basic electricity. However, for low-income households in the bottom expenditure quintile (Q1), actual monthly spending on electricity averages `{{GRID_MONTHLY_SPEND_NAT}}` (local currency), representing a significant share of their total budget.
+Under the standard MTF methodology, electricity is evaluated as **Affordable** if the annual cost of a standard basic electricity consumption package—defined as **365 kWh per year (or 30.4 kWh per month / 1 kWh per day)**—does not exceed **5% of total annual household consumption expenditure**:
+
+$$\text{Affordability Deficit} \iff \frac{\text{Annual Cost of Standard 365 kWh Lifeline Package}}{\text{Total Household Annual Consumption Expenditure}} > 5\%$$
+
+Nationwide, `{{PCT_AFFORDABLE_NAT}}%` of households satisfy the 5% threshold (`{{PCT_AFFORDABLE_URB}}%` in urban areas and `{{PCT_AFFORDABLE_RUR}}%` in rural areas). However, affordability constitutes a severe binding constraint among lower-income strata: in the poorest expenditure quintile (Q1), `{{PCT_UNAFFORDABLE_Q1}}%` of households face a lifeline electricity cost exceeding 5% of their total budget, causing them to fail the MTF Tier 3+ Affordability test even if physical grid infrastructure is present. Actual monthly spending on metered grid electricity averages `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` nationally (`{{GRID_MONTHLY_SPEND_URB}}` `{{CURRENCY_CODE}}` urban vs. `{{GRID_MONTHLY_SPEND_RUR}}` `{{CURRENCY_CODE}}` rural).
 
 #### 6. Formality & Safety
 The majority of grid-connected households possess a formal connection with an official prepaid or postpaid meter from their local utility or municipality. Electricity safety incidents -- including serious electrical injuries or fire accidents -- are reported in fewer than 1% of households in the past year.
