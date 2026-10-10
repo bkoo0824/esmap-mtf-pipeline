@@ -276,6 +276,12 @@ def load_values(
         "{{PCT_AFFORDABLE_URB}}":    "78.5",
         "{{PCT_AFFORDABLE_RUR}}":    "48.9",
         "{{PCT_UNAFFORDABLE_Q1}}":   "71.4",
+        "{{WTP_COOK_UPFRONT_NAT}}":  "18.7",
+        "{{WTP_COOK_3M_NAT}}":       "24.6",
+        "{{WTP_COOK_6M_NAT}}":       "36.4",
+        "{{WTP_COOK_12M_NAT}}":      "44.7",
+        "{{WTP_COOK_NEVER_NAT}}":    "38.5",
+        "{{REFUSE_COOK_COST_NAT}}":  "42.1",
     }
     for c_token, c_def in coping_defaults.items():
         if c_token not in values:

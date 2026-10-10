@@ -237,6 +237,43 @@
 
 
 	*===========================================================================
+	*  ENHANCEMENT 7b: WTP FOR CLEAN COOKSTOVES (SEC_K / SEC_G CONTINGENT VALUATION)
+	*===========================================================================
+
+	capture drop wtp_cook_upfront wtp_cook_3m wtp_cook_6m wtp_cook_12m wtp_cook_never refuse_cook_cost
+	* Clean Cookstove Bidding Module (Section K in standard MTF, Section G in some countries)
+	capture confirm variable SEC_K_Q03
+	if !_rc {
+		gen byte wtp_cook_upfront = (SEC_K_Q03 == 1) if SEC_K_Q03 < .
+		gen byte wtp_cook_3m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1) if SEC_K_Q03 < .
+		gen byte wtp_cook_6m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1) if SEC_K_Q03 < .
+		gen byte wtp_cook_12m     = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1 | SEC_K_Q06 == 1) if SEC_K_Q03 < .
+		gen byte wtp_cook_never   = (SEC_K_Q06 == 2 | SEC_K_Q07 < .) if SEC_K_Q03 < .
+		capture confirm variable SEC_K_Q07
+		if !_rc gen byte refuse_cook_cost = (SEC_K_Q07 == 1) if SEC_K_Q07 < .
+		else    gen byte refuse_cook_cost = (wtp_cook_never == 1) if wtp_cook_never < .
+	}
+	else {
+		capture confirm variable SEC_G_Q20
+		if !_rc {
+			gen byte wtp_cook_upfront = (SEC_G_Q20 == 1) if SEC_G_Q20 < .
+			gen byte wtp_cook_3m      = (SEC_G_Q20 == 1 | SEC_G_Q21 == 1) if SEC_G_Q20 < .
+			gen byte wtp_cook_6m      = (SEC_G_Q20 == 1 | SEC_G_Q21 == 1 | SEC_G_Q22 == 1) if SEC_G_Q20 < .
+			gen byte wtp_cook_12m     = (SEC_G_Q20 == 1 | SEC_G_Q21 == 1 | SEC_G_Q22 == 1 | SEC_G_Q23 == 1) if SEC_G_Q20 < .
+			gen byte wtp_cook_never   = (SEC_G_Q23 == 2) if SEC_G_Q20 < .
+			gen byte refuse_cook_cost = (wtp_cook_never == 1) if wtp_cook_never < .
+		}
+	}
+
+	lab var wtp_cook_upfront "WTP Clean Cookstove: upfront"
+	lab var wtp_cook_3m      "WTP Clean Cookstove: 3-month installment"
+	lab var wtp_cook_6m      "WTP Clean Cookstove: 6-month installment"
+	lab var wtp_cook_12m     "WTP Clean Cookstove: 12-month installment"
+	lab var wtp_cook_never   "Will NEVER purchase clean cookstove"
+	lab var refuse_cook_cost "Cannot afford clean cookstove payment"
+
+
+	*===========================================================================
 	*  ENHANCEMENT 8: BACKUP LIGHTING SOLUTIONS FOR GRID HOUSEHOLDS
 	*===========================================================================
 

@@ -460,7 +460,20 @@
 
 	local solar_vars ///
 		wtp_solar_upfront wtp_solar_6m wtp_solar_12m wtp_solar_24m wtp_solar_never refuse_solar_cost srf_aware ///
+		wtp_cook_upfront wtp_cook_3m wtp_cook_6m wtp_cook_12m wtp_cook_never refuse_cook_cost ///
 		grid_backup_candle grid_backup_torch grid_backup_solar grid_backup_none
+
+	* Also export MTF Affordability threshold compliance (PCT_AFFORDABLE_*)
+	capture drop is_afford_elec
+	gen byte is_afford_elec = (elc_affrd_tier >= 3) if elc_affrd_tier < .
+	svy: mean is_afford_elec
+	scalar json_PCT_AFFORDABLE_NAT = e(b)[1,1] * 100
+	svy, subpop(if loc_urban_rural == 1): mean is_afford_elec
+	scalar json_PCT_AFFORDABLE_URB = e(b)[1,1] * 100
+	svy, subpop(if loc_urban_rural == 2): mean is_afford_elec
+	scalar json_PCT_AFFORDABLE_RUR = e(b)[1,1] * 100
+	svy, subpop(if hh_exp_quintile == 1): mean is_afford_elec
+	scalar json_PCT_UNAFFORDABLE_Q1 = (1.0 - e(b)[1,1]) * 100
 
 	foreach var of local solar_vars {
 		putexcel A`row' = "`var'"
@@ -802,7 +815,14 @@
 		COPING_SPEND_Q3_UNEL COPING_PCT_Q3_UNEL ///
 		COPING_SPEND_Q3_CONN COPING_PCT_Q3_CONN ///
 		COPING_SPEND_Q5_CONN COPING_PCT_Q5_CONN ///
-		COPING_SPEND_NAT_UNEL COPING_PCT_NAT_UNEL
+		COPING_SPEND_NAT_UNEL COPING_PCT_NAT_UNEL ///
+		WTP_COOK_UPFRONT_NAT WTP_COOK_UPFRONT_URB WTP_COOK_UPFRONT_RUR ///
+		WTP_COOK_3M_NAT WTP_COOK_3M_URB WTP_COOK_3M_RUR ///
+		WTP_COOK_6M_NAT WTP_COOK_6M_URB WTP_COOK_6M_RUR ///
+		WTP_COOK_12M_NAT WTP_COOK_12M_URB WTP_COOK_12M_RUR ///
+		WTP_COOK_NEVER_NAT WTP_COOK_NEVER_URB WTP_COOK_NEVER_RUR ///
+		REFUSE_COOK_COST_NAT REFUSE_COOK_COST_URB REFUSE_COOK_COST_RUR ///
+		PCT_AFFORDABLE_NAT PCT_AFFORDABLE_URB PCT_AFFORDABLE_RUR PCT_UNAFFORDABLE_Q1
 
 	local n : word count `scalars_list'
 	local i = 1
