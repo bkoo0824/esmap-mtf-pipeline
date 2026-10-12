@@ -80,7 +80,13 @@
 	*===========================================================================
 
 	preserve
-		use "$raw_hh/time_collecting.dta", clear
+		local fn_time_coll = cond("$fn_time_coll" != "", "$fn_time_coll", "time_collecting.dta")
+		use "$raw_hh/`fn_time_coll'", clear
+		capture confirm variable interview__id
+		if _rc {
+			capture confirm variable interview__key
+			if !_rc clonevar interview__id = interview__key
+		}
 
 		* Recode frequency
 		replace SEC_I_Q12 = 1440 if SEC_I_Q12 > 1440 & SEC_I_Q12 != .

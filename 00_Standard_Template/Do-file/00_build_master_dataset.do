@@ -34,8 +34,15 @@
 	*  1. DEMOGRAPHICS (FROM HHROSTER.DTA)
 	*===========================================================================
 
+	local fn_hhroster = cond("$fn_hhroster" != "", "$fn_hhroster", "hhroster.dta")
+
 	** Household size
-	use "$raw_hh/hhroster.dta", clear
+	use "$raw_hh/`fn_hhroster'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	bys interview__id: gen hhsize = _N
 	lab var hhsize "Household Size"
 	keep if SEC_A1_Q4 == 1               // keep household head
@@ -44,7 +51,12 @@
 	save "$wip_hh/hhsize.dta", replace
 
 	** Household head demographics from hhroster.dta
-	use "$raw_hh/hhroster.dta", clear
+	use "$raw_hh/`fn_hhroster'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	keep if SEC_A1_Q4 == 1
 	keep interview__id SEC_A1_Q3 SEC_A1_Q5 SEC_A1_Q7 SEC_A1_Q8 SEC_A1_Q10
 	
@@ -128,8 +140,17 @@
 	*  3. NON-ENERGY EXPENDITURE & CONSUMPTION
 	*===========================================================================
 
+	local fn_food = cond("$fn_food" != "", "$fn_food", "food.dta")
+	local fn_nonfood_1mon = cond("$fn_nonfood_1mon" != "", "$fn_nonfood_1mon", "nonfood_1mon.dta")
+	local fn_nonfood_12mon = cond("$fn_nonfood_12mon" != "", "$fn_nonfood_12mon", "nonfood_12mon.dta")
+
 	** A. Food (7-day recall)
-	use "$raw_hh/food.dta", clear
+	use "$raw_hh/`fn_food'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	replace SEC_O_Q02 = . if SEC_O_Q02 == 888
 	replace SEC_O_Q03 = . if SEC_O_Q03 == 888
 	replace SEC_O_Q04 = . if SEC_O_Q04 == 888
@@ -150,7 +171,12 @@
 	save "$wip_hh/food.dta", replace
 
 	** B. Non-food 1-month recall
-	use "$raw_hh/nonfood_1mon.dta", clear
+	use "$raw_hh/`fn_nonfood_1mon'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	replace SEC_O_Q1M_1 = . if SEC_O_Q1M_1 == 888
 	bys interview__id: egen nonfood_1mon_exp_m = total(SEC_O_Q1M_1)
 	gen nonfood_1mon_exp_yr = nonfood_1mon_exp_m * 12
@@ -161,7 +187,12 @@
 	save "$wip_hh/nonfood_1mon.dta", replace
 
 	** C. Non-food 12-month recall
-	use "$raw_hh/nonfood_12mon.dta", clear
+	use "$raw_hh/`fn_nonfood_12mon'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	replace SEC_O_Q12M_1 = . if SEC_O_Q12M_1 == 888
 	bys interview__id: egen nonfood_12mon_exp_yr = total(SEC_O_Q12M_1)
 	gen nonfood_12mon_exp_m = nonfood_12mon_exp_yr / 12
@@ -208,8 +239,16 @@
 
 	save "$wip_hh/$master_dta", replace
 
-	** C. Generator Expenditure (pre-aggregated from sec_c_generator.dta roster)
-	use "$raw_hh/sec_c_generator.dta", clear
+	local fn_generator = cond("$fn_generator" != "", "$fn_generator", "sec_c_generator.dta")
+	local fn_rechar_ba = cond("$fn_rechar_ba" != "", "$fn_rechar_ba", "sec_c_rechar_ba.dta")
+
+	** C. Generator Expenditure (pre-aggregated from generator roster)
+	use "$raw_hh/`fn_generator'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	replace SEC_C_Q88 = . if SEC_C_Q88 == 888
 	gen gen_exp_maint_yr = SEC_C_Q88
 	gen gen_exp_maint_m  = gen_exp_maint_yr / 12
@@ -234,8 +273,13 @@
 	duplicates drop
 	save "$wip_hh/generator_exp.dta", replace
 
-	** D. Rechargeable Battery Expenditure (pre-aggregated from sec_c_rechar_ba.dta roster)
-	use "$raw_hh/sec_c_rechar_ba.dta", clear
+	** D. Rechargeable Battery Expenditure (pre-aggregated from rechargeable battery roster)
+	use "$raw_hh/`fn_rechar_ba'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	egen nbr_mth_rech = rowtotal(SEC_C_Q103__1-SEC_C_Q103__12)
 	replace nbr_mth_rech = 12 if SEC_C_Q103__111 == 1
 
@@ -272,7 +316,13 @@
 	*  5. GENERAL & COOKING FUEL EXPENDITURE (FUEL_CONSUMPTION.DTA)
 	*===========================================================================
 
-	use "$raw_hh/fuel_consumption.dta", clear
+	local fn_fuel_consump = cond("$fn_fuel_consump" != "", "$fn_fuel_consump", "fuel_consumption.dta")
+	use "$raw_hh/`fn_fuel_consump'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 
 	gen nbr_month_fuel = SEC_I_Q04
 	gen fuel_buy_freq  = SEC_I_Q07
@@ -351,7 +401,13 @@
 	*  6. LIGHTING FUEL EXPENDITURE (FUEL_H11.DTA)
 	*===========================================================================
 
-	use "$raw_hh/fuel_h11.dta", clear
+	local fn_fuel_h11 = cond("$fn_fuel_h11" != "", "$fn_fuel_h11", "fuel_h11.dta")
+	use "$raw_hh/`fn_fuel_h11'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	capture confirm variable SEC_H_Q14
 	if !_rc {
 		* 4-question schema (Namibia): Q11=use, Q12=qty, Q13=freq, Q14=payment
@@ -445,7 +501,14 @@
 	*  8. SOLAR ROSTER CLEANING & MAIN SOLAR DEVICE MATCHING
 	*===========================================================================
 
-	use "$raw_hh/solar_c_device.dta", clear
+	local fn_solar_device = cond("$fn_solar_device" != "", "$fn_solar_device", "solar_c_device.dta")
+	use "$raw_hh/`fn_solar_device'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
+	capture drop if Solar_C_Device__id == .
 
 	replace SEC_C_Q123 = . if SEC_C_Q123 == 888
 
@@ -488,7 +551,7 @@
 	merge 1:m interview__id using "$wip_hh/Solar_C_Device_clean.dta"
 	keep if _merge == 3
 	drop _merge
-	keep if Solar_C_Device__id == SEC_C_Q141
+	keep if Solar_C_Device__id == SEC_C_Q141 & Solar_C_Device__id != .
 	save "$wip_hh/main_solar_matched.dta", replace
 
 	use "$wip_hh/$master_dta", clear
@@ -527,7 +590,15 @@
 	*  9. COOKSTOVES ROSTER & STACKING (COOKSTOVES.DTA)
 	*===========================================================================
 
-	use "$raw_hh/cookstoves.dta", clear
+	local fn_cookstoves = cond("$fn_cookstoves" != "", "$fn_cookstoves", "cookstoves.dta")
+	local fn_stovefuel  = cond("$fn_stovefuel" != "", "$fn_stovefuel", "stove_fuel.dta")
+	use "$raw_hh/`fn_cookstoves'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
+	capture drop if cookstoves__id == .
 
 	drop if SEC_G_Q03 == "Does not cook" | SEC_G_Q03 == "microwave oven"
 	capture confirm variable SEC_G_Q05_oth
@@ -553,7 +624,7 @@
 	merge 1:m interview__id using "$wip_hh/cookstoves_clean.dta"
 	keep if _merge == 3
 	drop _merge
-	keep if cookstoves__id == SEC_G_Q04
+	keep if cookstoves__id == SEC_G_Q04 & cookstoves__id != .
 	save "$wip_hh/mainstove_matched.dta", replace
 
 	use "$wip_hh/$master_dta", clear
@@ -575,7 +646,12 @@
 		keep interview__id SEC_G_Q04 SEC_G_Q16
 		save "$wip_hh/mainstove_key.dta", replace
 
-		use "$raw_hh/stove_fuel.dta", clear
+		use "$raw_hh/`fn_stovefuel'", clear
+		capture confirm variable interview__id
+		if _rc {
+			capture confirm variable interview__key
+			if !_rc clonevar interview__id = interview__key
+		}
 		merge m:1 interview__id using "$wip_hh/mainstove_key.dta"
 		keep if _merge == 3
 		keep if cookstoves__id == SEC_G_Q04 & stove_fuel__id == SEC_G_Q16 & SEC_G_Q16 != .
@@ -623,8 +699,16 @@
 	*  10. TIME USE: FUEL COLLECTION & COOKING TIME BY GENDER
 	*===========================================================================
 
+	local fn_time_coll = cond("$fn_time_coll" != "", "$fn_time_coll", "time_collecting.dta")
+	local fn_time_use  = cond("$fn_time_use" != "", "$fn_time_use", "time_use.dta")
+
 	** Fuel collection and prep time (time_collecting.dta)
-	use "$raw_hh/time_collecting.dta", clear
+	use "$raw_hh/`fn_time_coll'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 
 	capture confirm variable SEC_I_Q13_oth
 	if !_rc {
@@ -673,7 +757,12 @@
 	save "$wip_hh/fuel_time.dta", replace
 
 	** Cooking time by gender (time_use.dta)
-	use "$raw_hh/time_use.dta", clear
+	use "$raw_hh/`fn_time_use'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	drop if SEC_L_Q02 > 1440 & SEC_L_Q02 != .a
 	keep if inlist(time_use__id, 1, 2)   // women and girls
 	bys interview__id: egen cooktime_female = total(SEC_L_Q02)
@@ -681,7 +770,12 @@
 	duplicates drop
 	save "$wip_hh/cooktime_female.dta", replace
 
-	use "$raw_hh/time_use.dta", clear
+	use "$raw_hh/`fn_time_use'", clear
+	capture confirm variable interview__id
+	if _rc {
+		capture confirm variable interview__key
+		if !_rc clonevar interview__id = interview__key
+	}
 	drop if SEC_L_Q02 > 1440 & SEC_L_Q02 != .a
 	keep if inlist(time_use__id, 3, 4)   // men and boys
 	bys interview__id: egen cooktime_male = total(SEC_L_Q02)
@@ -691,14 +785,25 @@
 
 	** Appliances aggregation from appliance.dta / appliances.dta
 	preserve
-		capture confirm file "$raw_hh/appliances.dta"
-		if !_rc {
-			use "$raw_hh/appliances.dta", clear
+		local fn_app = cond("$fn_appliance" != "", "$fn_appliance", "")
+		if "`fn_app'" != "" {
+			use "$raw_hh/`fn_app'", clear
 		}
 		else {
-			use "$raw_hh/appliance.dta", clear
-			capture clonevar appliances__id = appliance__id
+			capture confirm file "$raw_hh/appliances.dta"
+			if !_rc {
+				use "$raw_hh/appliances.dta", clear
+			}
+			else {
+				use "$raw_hh/appliance.dta", clear
+			}
 		}
+		capture confirm variable interview__id
+		if _rc {
+			capture confirm variable interview__key
+			if !_rc clonevar interview__id = interview__key
+		}
+		capture clonevar appliances__id = appliance__id
 		keep if SEC_F_Q02a > 0 & SEC_F_Q02a < .
 		
 		gen byte is_verylow = inlist(appliances__id, 1, 2, 3, 4, 5, 6, 7, 28, 29)

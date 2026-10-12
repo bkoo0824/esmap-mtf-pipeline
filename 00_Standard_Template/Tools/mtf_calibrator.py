@@ -35,6 +35,24 @@ STANDARD_ROSTERS = [
     "time_use.dta", "nonfood_1mon.dta", "nonfood_12mon.dta"
 ]
 
+ROSTER_PATTERNS = {
+    "fn_hhroster": r"^(?:section_)?a1.*(?:hh_)?roster.*\.dta$|^hhroster.*\.dta$",
+    "fn_cookstoves": r"^(?:section_)?g.*cookstove.*roster.*\.dta$|^cookstoves?.*\.dta$",
+    "fn_stovefuel": r"^(?:section_)?g.*stovefuel.*roster.*\.dta$|^stove_?fuel.*\.dta$",
+    "fn_appliance": r"^(?:section_)?f.*appliance.*roster.*\.dta$|^appliances?.*\.dta$",
+    "fn_generator": r"^(?:section_)?c.*generator.*roster.*\.dta$|^sec_c_generator.*\.dta$",
+    "fn_rechar_ba": r"^(?:section_)?c.*rechargeable.*roster.*\.dta$|^sec_c_rechar_ba.*\.dta$",
+    "fn_solar_device": r"^(?:section_)?c.*solar.*device.*roster.*\.dta$|^solar_c_device.*\.dta$",
+    "fn_food": r"^(?:section_)?o.*_food_roster.*\.dta$|^food.*\.dta$",
+    "fn_nonfood_1mon": r"^(?:section_)?o.*nonfood_?1m.*roster.*\.dta$|^nonfood_?1mon.*\.dta$",
+    "fn_nonfood_12mon": r"^(?:section_)?o.*nonfood_?12m.*roster.*\.dta$|^nonfood_?12mon.*\.dta$",
+    "fn_fuel_consump": r"^(?:section_)?i.*fuel_?consump.*roster.*\.dta$|^fuel_?consumption.*\.dta$",
+    "fn_fuel_h11": r"^(?:section_)?h.*fuel_?h11.*roster.*\.dta$|^fuel_?h11.*\.dta$",
+    "fn_lighting_fuel": r"^(?:section_)?h.*lighting_?fuel.*roster.*\.dta$|^lighting_?fuel.*\.dta$",
+    "fn_time_coll": r"^(?:section_)?i.*time.*collect.*roster.*\.dta$|^time_?collecting.*\.dta$",
+    "fn_time_use": r"^(?:section_)?l\.dta$|^time_?use.*\.dta$",
+}
+
 
 def safe_write_text(file_path: Path, content: str, encoding: str = "utf-8"):
     """Robust file writer to avoid [Errno 9] Bad file descriptor on Windows OneDrive and PyInstaller."""
@@ -318,31 +336,38 @@ class MTFScanner:
         self.params: Dict[str, Any] = {}
 
     def locate_data_dir(self) -> bool:
-        """Find the clean household survey directory."""
-        candidates = []
-        # Search parent and current directory for survey clean data
-        search_roots = [self.country_dir]
-        if self.country_dir.parent != self.country_dir:
-            search_roots.append(self.country_dir.parent)
-
-        for s_root in search_roots:
-            for root, dirs, files in os.walk(s_root):
+        """Find the clean household survey directory strictly within the target country workspace first."""
+        def scan_tree(search_root: Path):
+            cands = []
+            for root, dirs, files in os.walk(search_root):
                 rpath = Path(root)
-                # Ignore wip, temp, and pilot folders
                 if any(x in str(rpath).lower() for x in ['/wip', 'wip_hh', 'pilot']):
                     continue
                 dta_files = [f for f in files if f.endswith('.dta')]
                 if len(dta_files) >= 5:
-                    matches = sum(1 for f in dta_files if f.lower() in STANDARD_ROSTERS)
+                    # Score matches using regex patterns as well as standard names
+                    matches = 0
+                    for rkey, rpat in ROSTER_PATTERNS.items():
+                        if any(re.search(rpat, f, re.IGNORECASE) for f in dta_files):
+                            matches += 1
                     is_clean = 1 if 'clean' in str(rpath).lower() else 0
                     is_hh = 1 if 'household' in str(rpath).lower() else 0
-                    candidates.append((rpath, is_clean, is_hh, matches, len(dta_files)))
+                    is_data = 1 if rpath.name.lower() == 'data' else 0
+                    cands.append((rpath, is_data, is_clean, is_hh, matches, len(dta_files)))
+            return cands
+
+        # 1. Search inside country_dir strictly first (NEVER bleed into sibling country folders)
+        candidates = scan_tree(self.country_dir)
+
+        # 2. If nothing found in country_dir, fallback to country_dir.parent only if country_dir has no DTAs
+        if not candidates and self.country_dir.parent != self.country_dir:
+            candidates = scan_tree(self.country_dir.parent)
 
         if not candidates:
             return False
 
-        # Prioritize: clean folder, household folder, roster matches, total files
-        candidates.sort(key=lambda x: (x[1], x[2], x[3], x[4]), reverse=True)
+        # Prioritize: 'Data' folder, clean folder, household folder, matched rosters, total files
+        candidates.sort(key=lambda x: (x[1], x[2], x[3], x[4], x[5]), reverse=True)
         self.raw_dir = candidates[0][0]
         return True
 
@@ -354,28 +379,43 @@ class MTFScanner:
         all_dta = list(self.raw_dir.glob("*.dta"))
         dta_names = [f.name.lower() for f in all_dta]
 
+        # Match rosters via regex patterns and legacy names
+        matched_rosters = {}
+        for rkey, rpat in ROSTER_PATTERNS.items():
+            for f in all_dta:
+                if re.search(rpat, f.name, re.IGNORECASE):
+                    matched_rosters[rkey] = f.name
+                    break
+
         found = []
         missing = []
         for r in STANDARD_ROSTERS:
-            if r == "appliance.dta":
-                if "appliance.dta" in dta_names:
-                    found.append("appliance.dta")
-                elif "appliances.dta" in dta_names:
-                    found.append("appliances.dta")
-                else:
-                    missing.append("appliance.dta")
-            elif r in dta_names:
+            rbase = r.replace(".dta", "")
+            matched = any(rbase in rf.lower() for rf in matched_rosters.values()) or (r in dta_names)
+            if matched:
                 found.append(r)
             else:
                 missing.append(r)
+
         self.rosters_found = found
         self.rosters_missing = missing
+        self.params["roster_mapping"] = matched_rosters
+
+        # Detect whether survey data is organized in split section files (e.g. admin_info.dta, section_c.dta)
+        has_admin_info = any(f.name.lower() == "admin_info.dta" for f in all_dta)
+        has_section_c = any(f.name.lower() == "section_c.dta" for f in all_dta)
+        self.params["is_split_sections"] = has_admin_info or has_section_c
 
         master_candidates = []
-        for f in all_dta:
-            fname = f.name.lower()
-            if any(k in fname for k in ["household", "master", "final"]):
-                master_candidates.append(f)
+        if has_admin_info:
+            master_candidates = [f for f in all_dta if f.name.lower() == "admin_info.dta"]
+        elif has_section_c:
+            master_candidates = [f for f in all_dta if f.name.lower() == "section_c.dta"]
+        else:
+            for f in all_dta:
+                fname = f.name.lower()
+                if any(k in fname for k in ["household", "master", "final"]):
+                    master_candidates.append(f)
 
         if not master_candidates:
             master_candidates = sorted(all_dta, key=lambda x: x.stat().st_size, reverse=True)
@@ -472,11 +512,13 @@ class MTFScanner:
             clean_names = [re.sub(r'[^a-zA-Z0-9_]', '', n.replace(' ', '_')) for n in names]
             codes = [n.upper() for n in clean_names]
             self.params["admin1_count"] = len(names)
+            self.params["admin1_keys"] = [int(k) for k in sorted_keys]
             self.params["admin1_names"] = clean_names
             self.params["admin1_codes"] = codes
             self.params["admin1_raw_labels"] = names
         else:
             self.params["admin1_count"] = 14
+            self.params["admin1_keys"] = list(range(1, 15))
             self.params["admin1_names"] = ["Region_" + str(i) for i in range(1, 15)]
             self.params["admin1_codes"] = ["REG_" + str(i) for i in range(1, 15)]
             self.params["admin1_raw_labels"] = self.params["admin1_names"]
@@ -544,6 +586,12 @@ class MTFGenerator:
         master_name = f"{country}_MTF_Master.do"
         target_file = dofile_out / master_name
 
+        rosters_dict = self.params.get("roster_mapping", {})
+        roster_lines = []
+        for r_macro, r_fname in sorted(rosters_dict.items()):
+            roster_lines.append(f'global {r_macro} "{r_fname}"')
+        roster_globals_block = "\n".join(roster_lines) if roster_lines else "* Default roster names used" 
+
         raw_hh_path = str(self.params["raw_dir"]).replace("\\", "/")
         user_path = str(self.target_dir).replace("\\", "/")
 
@@ -590,31 +638,37 @@ class MTFGenerator:
     }}
 """
 
+        rel_sub_str = rel_sub if ('/media/bryan/Bryan/MTF/' in user_path or '1_mtf_energy_global_survey/' in user_path) else ''
+        rel_raw_str = rel_raw if ('/media/bryan/Bryan/MTF/' in raw_hh_path or '1_mtf_energy_global_survey/' in raw_hh_path) else ''
+
         user_setup_str = f"""if c(os) == "Windows" {{
 {user_block_custom_win}    * --- Bryan: Windows (WBG OneDrive) ---
     if c(username) == "WB453090" {{
         global user "{win_user_default}"
+        global raw_hh "{win_raw_default}"
     }}
-    * --- Kat: Windows (WBG Desktop) ---
-    else if c(username) == "wb570814" {{
-        global user "C:/Users/wb570814/OneDrive - WBG/Desktop/MTF-desktop/{country}/Data analysis"
+    * --- Marina / Collaborators: Windows (WBG Desktop / OneDrive) ---
+    else if inlist(lower(c(username)), "marina", "wb570814") {{
+        global user "C:/Users/`c(username)'/OneDrive - WBG/1_mtf_energy_global_survey/{rel_sub_str}"
+        global raw_hh "C:/Users/`c(username)'/OneDrive - WBG/1_mtf_energy_global_survey/{rel_raw_str}"
     }}
-    * --- Fallback for other Windows users ---
+    * --- Universal fallback for other Windows users ---
     else {{
-        global user "{win_user_default}"
+        global user "C:/Users/`c(username)'/OneDrive - WBG/1_mtf_energy_global_survey/{rel_sub_str}"
+        global raw_hh "C:/Users/`c(username)'/OneDrive - WBG/1_mtf_energy_global_survey/{rel_raw_str}"
     }}
-    global raw_hh "{win_raw_default}"
 }}
 else if c(os) == "Unix" {{
 {user_block_custom_unix}    * --- Bryan: Linux (local machine) ---
     if c(username) == "bryan" {{
         global user "{unix_user_default}"
+        global raw_hh "{unix_raw_default}"
     }}
     * --- Fallback for other Unix users ---
     else {{
-        global user "{unix_user_default}"
+        global user "/media/`c(username)'/Bryan/MTF/{rel_sub_str}"
+        global raw_hh "/media/`c(username)'/Bryan/MTF/{rel_raw_str}"
     }}
-    global raw_hh "{unix_raw_default}"
 }}
 else {{
     global user "{user_path}"
@@ -645,6 +699,9 @@ global country    "{country}"
 global master_dta "MTF_2024_HH_{country}_Master.dta"
 global currency   "{self.params.get('currency_code', 'LRD')}"
 global usd_rate   {self.params.get('usd_rate', 192.5)}
+
+* Dynamic Roster Filename Definitions
+{roster_globals_block}
 
 *======================    2. GLOBAL TOGGLES   ================================*
 global run_enhancements 1
@@ -714,12 +771,78 @@ log close master_log
 
         text = re.sub(r'MTF_2024_HH_Namibia_Master\.dta', master_out, text)
 
-        if self.params.get("weight_source") == "embedded":
+        is_split = self.params.get("is_split_sections", False)
+        if is_split:
+            # Build assembly block merging single-HH sections
+            split_merge_code = """*===========================================================================
+*  2. MULTI-SECTION MASTER DATASET COMPILATION & SAMPLING WEIGHTS
+*===========================================================================
+
+use "$raw_hh/admin_info.dta", clear
+capture confirm variable interview__id
+if _rc {
+    capture confirm variable interview__key
+    if !_rc clonevar interview__id = interview__key
+}
+
+* Merge core single-household section files
+foreach sec in section_a2 section_b section_c section_d section_e section_g section_k section_o section_q section_r section_s {
+    capture confirm file "$raw_hh/`sec'.dta"
+    if !_rc {
+        preserve
+            use "$raw_hh/`sec'.dta", clear
+            capture confirm variable interview__id
+            if _rc {
+                capture confirm variable interview__key
+                if !_rc clonevar interview__id = interview__key
+            }
+            * Drop redundant overlapping columns before merging
+            capture drop SEC_A_Q05 hh_weight_final SEC_C_Q02 SEC_C_Q117
+            tempfile temp_`sec'
+            save "`temp_`sec''"
+        restore
+        merge 1:1 interview__id using "`temp_`sec''", nogen
+    }
+}
+
+* Sampling weights and stratification
+gen hh_wt = hh_weight_final
+lab var hh_wt "Final Calibrated Household Weight"
+
+* Merge household size and head characteristics
+merge 1:1 interview__id using "$wip_hh/hhsize.dta", nogen
+merge 1:1 interview__id using "$wip_hh/headgender.dta", nogen
+
+* Population weight:
+gen pop_wt = hh_wt * hhsize
+lab var pop_wt "Final Population Weight (hh_wt × hhsize)"
+
+* Locality (Urban / Rural):
+gen loc_urban_rural = .
+replace loc_urban_rural = 1 if SEC_A_Q05 == 1    // Urban
+replace loc_urban_rural = 2 if inlist(SEC_A_Q05, 2, 99)    // Rural
+lab define loc_urban_rural 1 "Urban" 2 "Rural", replace
+lab val loc_urban_rural loc_urban_rural
+lab var loc_urban_rural "Urban / Rural Locality"
+
+* Stratification variable: Admin 1 (SEC_A_Q01) × Locality (SEC_A_Q05)
+egen strata_id = group(SEC_A_Q01 SEC_A_Q05)
+lab var strata_id "Survey Stratum: Admin 1 × Locality"
+
+save "$wip_hh/{master_out}", replace"""
+            sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
+            text = sec2_pattern.sub(split_merge_code.strip(), text)
+        elif self.params.get("weight_source") == "embedded":
             weight_block = f"""*===========================================================================
 *  2. SAMPLING WEIGHTS & SURVEY STRATIFICATION ({country.upper()})
 *===========================================================================
 
 use "$raw_hh/{raw_master}", clear
+capture confirm variable interview__id
+if _rc {{
+    capture confirm variable interview__key
+    if !_rc clonevar interview__id = interview__key
+}}
 
 * Final calibrated household weight (embedded in clean microdata)
 gen hh_wt = {weight_var}
@@ -806,12 +929,13 @@ di " 01_setup.do complete — Master dataset validated."
         admin1_var = self.params.get("admin1_var", "SEC_A_Q01")
         admin1_names = self.params.get("admin1_names", [])
 
+        admin1_keys = self.params.get("admin1_keys", list(range(1, len(admin1_names) + 1)))
         lines = [f"*  ENHANCEMENT 11: {len(admin1_names)} SUBDIVISIONS OF {country.upper()} ({admin1_var})",
                  "*===========================================================================",
                  "capture drop reg_*"]
-        for idx, name in enumerate(admin1_names, start=1):
+        for k_val, name in zip(admin1_keys, admin1_names):
             var_name = f"reg_{name.lower()}"
-            lines.append(f"gen byte {var_name} = ({admin1_var} == {idx})")
+            lines.append(f"gen byte {var_name} = ({admin1_var} == {k_val})")
 
         enh11_block = "\n".join(lines)
         pattern = re.compile(r'\*  ENHANCEMENT 11:.*?(?=save "\$wip_hh)', re.DOTALL)
@@ -836,12 +960,19 @@ di " 01_setup.do complete — Master dataset validated."
         names_str = " ".join(admin1_names)
         codes_str = " ".join(admin1_codes)
 
+        admin1_keys = self.params.get("admin1_keys", list(range(1, count + 1)))
+        keys_str = " ".join(str(k) for k in admin1_keys)
         reg_setup = f"""local reg_names {names_str}
-	local reg_codes {codes_str}
+\tlocal reg_codes {codes_str}
+\tlocal reg_num_codes {keys_str}
 
-	forval r = 1/{count} {{"""
+\tlocal n_regs : word count `reg_names'
+\tforval idx = 1/`n_regs' {{
+\t\tlocal rname : word `idx' of `reg_names'
+\t\tlocal rcode : word `idx' of `reg_codes'
+\t\tlocal r     : word `idx' of `reg_num_codes'"""
 
-        text = re.sub(r'local reg_names Kharas.*?\n\s*local reg_codes KHARAS.*?\n\s*forval r = 1/\d+ \{',
+        text = re.sub(r'local reg_names Kharas.*?\n\s*local reg_codes KHARAS.*?\n\s*forval r = 1/\d+ \{\s*\n\s*local rname[^\n]*\n\s*local rcode[^\n]*',
                       reg_setup, text, flags=re.DOTALL)
 
         if admin1_var != "SEC_A_Q01":
@@ -1093,24 +1224,38 @@ def main():
     # Load cookstove calibration CSV
     # Search Priority:
     # 1. User explicit argument (--cookstove-config)
-    # 2. Country-specific in country workspace (country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv")
-    # 3. Country-specific in Tools/ (Tools / cookstove_calibration_<country>.csv)
-    # 4. Standard default in Tools/ (Tools / cookstove_calibration.csv)
+    # 2. Country-specific in Tools/ (Tools / cookstove_calibration_<country>.csv, hyphen or underscore)
+    # 3. Country-specific in country workspace (country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname}.csv")
+    # 4. Country scripts generic (country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv")
+    # 5. Standard default in Tools/ (Tools / cookstove_calibration.csv)
     cname_clean = params["country_name"].lower().strip()
+    cname_under = cname_clean.replace("-", "_")
     tools_dir = template_dir / "Tools"
     country_scripts_csv = country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname_clean}.csv"
+    country_scripts_csv_under = country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname_under}.csv"
     country_scripts_csv_generic = country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv"
     tools_country_csv = tools_dir / f"cookstove_calibration_{cname_clean}.csv"
+    tools_country_csv_under = tools_dir / f"cookstove_calibration_{cname_under}.csv"
     tools_default_csv = tools_dir / "cookstove_calibration.csv"
 
     if args.cookstove_config:
         cookstove_csv_path = Path(args.cookstove_config).resolve()
+    elif tools_country_csv.exists() and "MUST EDIT" not in tools_country_csv.read_text(encoding="utf-8")[:300]:
+        cookstove_csv_path = tools_country_csv
+    elif tools_country_csv_under.exists() and "MUST EDIT" not in tools_country_csv_under.read_text(encoding="utf-8")[:300]:
+        cookstove_csv_path = tools_country_csv_under
+    elif country_scripts_csv.exists() and "MUST EDIT" not in country_scripts_csv.read_text(encoding="utf-8")[:300]:
+        cookstove_csv_path = country_scripts_csv
+    elif country_scripts_csv_under.exists() and "MUST EDIT" not in country_scripts_csv_under.read_text(encoding="utf-8")[:300]:
+        cookstove_csv_path = country_scripts_csv_under
+    elif tools_country_csv.exists():
+        cookstove_csv_path = tools_country_csv
+    elif tools_country_csv_under.exists():
+        cookstove_csv_path = tools_country_csv_under
     elif country_scripts_csv.exists():
         cookstove_csv_path = country_scripts_csv
     elif country_scripts_csv_generic.exists():
         cookstove_csv_path = country_scripts_csv_generic
-    elif tools_country_csv.exists():
-        cookstove_csv_path = tools_country_csv
     elif tools_default_csv.exists():
         cookstove_csv_path = tools_default_csv
     else:
