@@ -284,12 +284,16 @@
 	*===========================================================================
 
 	capture drop grid_backup_candle grid_backup_torch grid_backup_solar grid_backup_none
-	gen byte grid_backup_candle = (SEC_H_Q03__1 == 1) if grid_hh == 1
+	capture confirm variable SEC_H_Q03__1
+	if !_rc gen byte grid_backup_candle = (SEC_H_Q03__1 == 1) if grid_hh == 1
+	else    gen byte grid_backup_candle = 0 if grid_hh == 1
 	capture confirm variable has_torch
 	if !_rc gen byte grid_backup_torch = (has_torch == 1) if grid_hh == 1
 	else    gen byte grid_backup_torch = 0 if grid_hh == 1
 	gen byte grid_backup_solar  = (solar_hh == 1) if grid_hh == 1
-	gen byte grid_backup_none   = (SEC_C_Q32 == 111) if grid_hh == 1
+	capture confirm variable SEC_C_Q32
+	if !_rc gen byte grid_backup_none   = (SEC_C_Q32 == 111) if grid_hh == 1
+	else    gen byte grid_backup_none   = 0 if grid_hh == 1
 
 	lab var grid_backup_candle "Grid HH uses candles as backup lighting"
 	lab var grid_backup_torch  "Grid HH uses torch / dry-cell as backup lighting"
