@@ -631,6 +631,7 @@
 	merge 1:1 interview__id using "$wip_hh/mainstove_matched.dta", nogen
 
 	** Primary fuel for main stove (SEC_G_Q16)
+	capture drop SEC_G_Q16
 	gen SEC_G_Q16 = .
 	forval f = 1/15 {
 		capture confirm var SEC_G_Q16__`f'
