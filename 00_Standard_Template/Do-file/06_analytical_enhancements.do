@@ -180,6 +180,13 @@
 	gen byte grid_uptake = grid_hh if ea_grid_present == 1
 	lab var grid_uptake "Household grid uptake rate among EAs with grid"
 
+	* Energy Poverty Penalty: Coping lighting expenditures (Table 2.2)
+	capture drop coping_spend coping_pct
+	gen coping_spend = lightfuel_exp_tot_m
+	gen coping_pct   = (coping_spend / exp_total_m) * 100 if exp_total_m > 0 & exp_total_m < .
+	lab var coping_spend "Monthly expenditure on coping lighting (candles/kerosene/batteries)"
+	lab var coping_pct   "Coping lighting expenditure as % of monthly total expenditure"
+
 	* Grid connection history & expenditure
 	capture drop grid_years grid_wait_days grid_monthly_spend
 	clonevar grid_years = SEC_C_Q06
@@ -203,7 +210,7 @@
 	gen byte wtp_grid_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if grid_hh == 0 & SEC_D_Q03 < .
 	gen byte wtp_grid_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if grid_hh == 0 & SEC_D_Q03 < .
 	gen byte wtp_grid_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if grid_hh == 0 & SEC_D_Q03 < .
-	gen byte wtp_grid_waived  = (SEC_D_Q07 == 1) if grid_hh == 0 & SEC_D_Q07 < .
+	gen byte wtp_grid_waived  = (wtp_grid_12m == 1 | SEC_D_Q07 == 1) if grid_hh == 0 & SEC_D_Q03 < .
 	gen byte wtp_grid_never   = (SEC_D_Q07 == 2) if grid_hh == 0 & SEC_D_Q07 < .
 	gen byte refuse_wiring_cost = (SEC_D_Q08 == 1) if SEC_D_Q08 < .
 

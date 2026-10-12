@@ -416,14 +416,23 @@ def chart_stove_technology_fuels():
         "Improved Cookstove (ICS)":[g("STOVE_ICS_N"), g("STOVE_ICS_U"), g("STOVE_ICS_R")],
         "Clean Fuel (LPG/Bio)":    [g("STOVE_CLEAN_N"), g("STOVE_CLEAN_U"), g("STOVE_CLEAN_R")],
         "Electric Stove":          [g("STOVE_ELEC_N"), g("STOVE_ELEC_U"), g("STOVE_ELEC_R")],
+        "Other / Unspecified":     [g("STOVE_OTHER_N"), g("STOVE_OTHER_U"), g("STOVE_OTHER_R")],
     }
-    colors = ["#C0392B", "#E67E22", "#F39C12", "#27AE60", "#1B4F72"]
+    colors = ["#C0392B", "#E67E22", "#F39C12", "#27AE60", "#1B4F72", "#7F8C8D"]
 
     fig, ax = plt.subplots(figsize=(9, 4.5))
     left = np.zeros(len(categories))
 
+    # Calculate residual for Other if STOVE_OTHER_* is 0 but sum < 100
+    for idx, cat in enumerate(categories):
+        tot_sum = sum(stoves[k][idx] for k in ["Three-Stone / Open Fire", "Traditional Stove", "Improved Cookstove (ICS)", "Clean Fuel (LPG/Bio)", "Electric Stove"])
+        if stoves["Other / Unspecified"][idx] == 0 and tot_sum > 0 and tot_sum < 99.5:
+            stoves["Other / Unspecified"][idx] = max(0.0, 100.0 - tot_sum)
+
     for (label, vals), color in zip(stoves.items(), colors):
         arr = np.array(vals)
+        if np.all(arr == 0):
+            continue
         ax.barh(categories, arr, left=left, color=color, label=label, height=0.45)
         for i, (v, l) in enumerate(zip(arr, left)):
             if v >= 6:

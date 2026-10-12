@@ -673,25 +673,27 @@
 		duplicates tag interview__id, gen(stacking)
 		keep interview__id cookstoves__id stove_type stacking
 		reshape wide stove_type stacking, i(interview__id) j(cookstoves__id)
-		capture drop stacking2 stacking3
+		capture drop stacking2 stacking3 stacking4 stacking5
 		gen stove_stacking = stacking1 + 1
 
 		gen clean_stove = inlist(3, stove_type1, stove_type2, stove_type3)
 		gen ics         = inlist(2, stove_type1, stove_type2, stove_type3)
 		gen trad_stove  = inlist(1, stove_type1, stove_type2, stove_type3)
+		gen multi_biomass_stacking = (stove_stacking >= 2 & clean_stove == 0)
 
 		lab var clean_stove    "Uses clean fuel stove (LPG/elec/biogas/solar)"
 		lab var ics            "Uses Improved Cookstove (ICS)"
 		lab var trad_stove     "Uses traditional stove / 3-stone fire"
 		lab var stove_stacking "Number of stoves owned"
+		lab var multi_biomass_stacking "Stacks multiple biomass stoves"
 
-		keep interview__id clean_stove ics trad_stove stove_stacking
+		keep interview__id clean_stove ics trad_stove stove_stacking multi_biomass_stacking
 		duplicates drop
 		save "$wip_hh/stoves_summary.dta", replace
 	restore
 
 	merge 1:1 interview__id using "$wip_hh/stoves_summary.dta", nogen
-	recode clean_stove ics trad_stove (. = 0)
+	recode clean_stove ics trad_stove multi_biomass_stacking (. = 0)
 	replace stove_stacking = 0 if stove_stacking == .
 	save "$wip_hh/$master_dta", replace
 
