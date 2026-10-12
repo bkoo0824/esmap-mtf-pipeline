@@ -276,6 +276,24 @@ def load_values(
         if m_token not in values:
             values[m_token] = "N/A"
 
+    # ─── BOX 1.1: SDG 7 METHODOLOGICAL HARMONIZATION & VALIDATION PLACEHOLDERS ─
+    # If not provided by custom country calibration, establish clean defaults
+    sdg7_metrics = [
+        "{{SDG7_HIST_NAT}}", "{{SDG7_HIST_URB}}", "{{SDG7_HIST_RUR}}",
+        "{{SDG7_RECENT_NAT}}", "{{SDG7_RECENT_URB}}", "{{SDG7_RECENT_RUR}}",
+        "{{SDG7_RECENT_SOLAR}}",
+    ]
+    for s_token in sdg7_metrics:
+        if s_token not in values:
+            values[s_token] = "N/A"
+
+    if "{{ELEC_TIER1_PLUS_NAT}}" not in values and "{{ELEC_ACC_NAT}}" in values:
+        values["{{ELEC_TIER1_PLUS_NAT}}"] = values["{{ELEC_ACC_NAT}}"]
+    if "{{ELEC_TIER1_PLUS_URB}}" not in values and "{{ELEC_ACC_URB}}" in values:
+        values["{{ELEC_TIER1_PLUS_URB}}"] = values["{{ELEC_ACC_URB}}"]
+    if "{{ELEC_TIER1_PLUS_RUR}}" not in values and "{{ELEC_ACC_RUR}}" in values:
+        values["{{ELEC_TIER1_PLUS_RUR}}"] = values["{{ELEC_ACC_RUR}}"]
+
     # ─── DEMOGRAPHIC & GENDER PROFILE DERIVATIONS ─────────────────────────────
     if "{{MHH_SHARE}}" not in values or "{{FHH_SHARE}}" not in values:
         try:

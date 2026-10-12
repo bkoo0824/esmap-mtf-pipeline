@@ -454,10 +454,28 @@ Suggested content:
 
 - Any relevant electricity access program (ASCENT, RREA, mini-grid program, M300 Compact)
 
-Example opening:
-"Access to modern, reliable, and affordable energy is essential for economic diversification, job creation, and poverty reduction. Sustainable Development Goal 7 (SDG 7.1) calls for universal access to affordable, reliable, sustainable, and modern energy services by 2030. In {{COUNTRY_NAME}}, energy access is central to national development under [National Development Plan name].
+---
 
-{{COUNTRY_NAME}}'s power sector is organized under the regulatory oversight of the [Regulatory Body]. Bulk power generation and transmission are managed by [National Utility]. Distribution is organized through [distribution structure]..." -->
+### Box 1.1: Historical Survey Validation & SDG 7 Methodological Harmonization
+
+Tracking progress toward Sustainable Development Goal 7 (Target 7.1.1) requires contextualizing MTF diagnostic findings within the broader trajectory of national empirical surveys documented in the **SDG 7 Global Electrification Database**. In evaluating historical trends, **modeled trend projections and econometric extrapolations must be strictly demarcated from empirical household surveys**, as modeling assumptions frequently smooth over sharp technology shifts or mischaracterize off-grid solar uptake.
+
+Historically, national electrification tracking in {{COUNTRY_NAME}} relied predominantly on binary gatekeeper questions (*"Does your household have electricity?"*) in national censuses and living standards surveys. These historical inquiries captured physical connectivity to the centralized utility grid, leaving decentralized off-grid solutions unmeasured or classified strictly as alternative lighting sources.
+
+| Survey Year & Benchmark Source | National Access (%) | Urban Access (%) | Rural Access (%) | Questionnaire Definition & Technology Scope | Treatment of Off-Grid Solar |
+| :--- | :---: | :---: | :---: | :--- | :--- |
+| **Historical Empirical Surveys** (Pre-MTF) | `{{SDG7_HIST_NAT}}%` | `{{SDG7_HIST_URB}}%` | `{{SDG7_HIST_RUR}}%` | Binary grid connection gate questions (*"Connected to electricity grid / mains"*). Concentrated in major urban centers. | Excluded from electrification metrics or treated as secondary lighting. |
+| **Recent Multi-Topic Surveys** (Afrobarometer / MICS) | `{{SDG7_RECENT_NAT}}%` | `{{SDG7_RECENT_URB}}%` | `{{SDG7_RECENT_RUR}}%` | Primary household power source (*"Main electricity source"*). Partial capture of off-grid solar. | Partial capture (`{{SDG7_RECENT_SOLAR}}%`); excludes pico-solar and small lanterns. |
+| **{{SURVEY_YEAR}} MTF Household Survey** (Physical Ownership) | `{{ELEC_ACC_NAT}}%` | `{{ELEC_ACC_URB}}%` | `{{ELEC_ACC_RUR}}%` | Exhaustive multi-device roster across 6 modern qualifying sources. Complete capture of Solar Home Systems (SHS) and solar lanterns (`{{SOLAR_ACC_NAT}}%` solar adoption). | Fully captured via device-specific technical modules (`SEC_C`). |
+| **{{SURVEY_YEAR}} MTF Tier 1+ Multi-Tier Access** (Service Delivery) | `{{ELEC_TIER1_PLUS_NAT}}%` | `{{ELEC_TIER1_PLUS_URB}}%` | `{{ELEC_TIER1_PLUS_RUR}}%` | Minimum performance threshold across 7 technical attributes (capacity $\ge$ 3W, availability $\ge$ 4 hrs/day, 1 hr evening). | Filters out sub-Tier 1 pico-solar; converges toward functional service standards. |
+
+> **Key Diagnostic Takeaways:**
+> 1. **Grid Stability vs. Off-Grid Surge:** While national grid connectivity (`{{GRID_ACC_NAT}}%`) exhibits gradual expansion aligned with historical utility trajectories, total modern electricity access has expanded significantly to `{{ELEC_ACC_NAT}}%`, driven predominantly by decentralized solar penetration in rural areas (`{{SOLAR_ACC_RUR}}%`).
+> 2. **Resolving Discrepancies with General Perception Surveys:** Generic opinion and multi-topic surveys (such as Afrobarometer) often report lower off-grid figures because respondents do not identify small plug-and-play solar lanterns or 10–20W kits as formal "electricity" when asked a single question. In contrast, the MTF granular appliance and device inventory uncovers widespread decentralized adoption.
+> 3. **The Ownership vs. Service Gap:** When evaluated against MTF Multi-Tier service standards, raw device ownership narrows to Tier 1+ qualified access, demonstrating that closing the energy access deficit requires advancing beyond basic task lighting toward high-capacity, reliable Tier 2+ systems.
+
+---
+
 ### 1.2 The Multi-Tier Framework (MTF) Global Methodology
 
 Conventional global energy tracking has historically relied on binary indicators that record whether a household possesses a physical connection to an electricity grid or relies on clean cooking fuels. While binary metrics are straightforward to compile from standard census data, they fail to reflect the actual utility and reliability of energy services delivered to households. In many developing economies, households connected to the grid endure chronic power shedding, severe voltage drops that render appliances inoperable, and prolonged blackouts during evening peak hours. Such households cannot genuinely be considered to enjoy modern energy access.

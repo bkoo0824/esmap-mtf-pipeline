@@ -231,7 +231,20 @@ By default, the report template **does not include** Admin 1 regional disaggrega
 
 **To include the regional module:**
 - Option 1 (Automatic): Add `--include-regional` to the calibrator command. The module is auto-populated with detected Admin 1 units and injected into Section 2.2.
-- Option 2 (Manual): After running the calibrator, copy the relevant sections from `Do-file/MTF_Regional_Analysis_Module.md` and paste them into Section 2.2 of the deployed report template.
+---
+
+### SDG 7 Historical Survey Validation Protocol (`Box 1.1`)
+
+To ensure methodological coherence with global tracking custodian agencies (World Bank, IEA, IRENA, UNSD, WHO), the pipeline integrates an empirical survey validation protocol:
+
+1. **Strict Exclusion of Model Projections:**
+   - Reference checks **must exclude modeled extrapolations** (such as UN trend projections). Benchmarks are derived strictly from empirical household surveys (e.g. MICS, Living Conditions Censuses, Afrobarometer).
+2. **Harmonizing Grid vs. Off-Grid Definitions:**
+   - **Centralized Grid Connectivity:** Verified against historical binary gatekeeper questions (*"Does your household have electricity?"*), tracking long-term utility grid reach.
+   - **Off-Grid Solar Penetration:** Explains why generic multi-topic surveys (e.g. Afrobarometer at ~18%) appear lower than MTF device rosters (MTF physical ownership at ~42%). General surveys capture self-reported primary power, missing sub-Tier 1 pico-solar and small lanterns.
+   - **Convergence to Tier 1+:** When MTF multi-tier performance rules (capacity $\ge$ 3W, availability $\ge$ 4 hrs/day) are applied, qualified Tier 1+ access naturally converges toward functional survey benchmarks.
+3. **Automated Report Population:**
+   - Pre-rendered into **Box 1.1** of `MTF_Report_Template.md` using `{{SDG7_HIST_*}}` and `{{SDG7_RECENT_*}}` metadata tags.
 
 ---
 
