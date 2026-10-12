@@ -829,7 +829,7 @@ lab var loc_urban_rural "Urban / Rural Locality"
 egen strata_id = group(SEC_A_Q01 SEC_A_Q05)
 lab var strata_id "Survey Stratum: Admin 1 × Locality"
 
-save "$wip_hh/{master_out}", replace"""
+save "$wip_hh/$master_dta", replace"""
             sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
             text = sec2_pattern.sub(split_merge_code.strip(), text)
         elif self.params.get("weight_source") == "embedded":
@@ -866,9 +866,7 @@ lab var loc_urban_rural "Urban / Rural Locality"
 
 * Stratification variable: Admin 1 ({admin1_var}) × Locality ({ur_var})
 egen strata_id = group({admin1_var} {ur_var})
-lab var strata_id "Survey Stratum: Admin 1 × Locality"
-
-save "$wip_hh/{master_out}", replace
+save "$wip_hh/$master_dta", replace
 """
             sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
             text = sec2_pattern.sub(weight_block.strip(), text)
