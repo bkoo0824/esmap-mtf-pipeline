@@ -99,6 +99,7 @@
 	lab var cs_emit_tier "Stove ISO Emission Tier (0–5)"
 
 	** Exhaust system (SEC_G_Q15)
+	capture drop SEC_G_Q15
 	gen SEC_G_Q15 = .
 	replace SEC_G_Q15 = 1   if SEC_G_Q15__1 == 1
 	replace SEC_G_Q15 = 2   if SEC_G_Q15__2 == 1
