@@ -404,7 +404,7 @@
 
 	local grid_vars ///
 		barrier_cost barrier_dist barrier_tariff barrier_landlord barrier_unrel barrier_admin ///
-		under_grid_unconnected grid_uptake ///
+		under_the_grid under_grid_unconnected grid_uptake ///
 		wtp_grid_upfront wtp_grid_3m wtp_grid_6m wtp_grid_12m wtp_grid_waived wtp_grid_never refuse_wiring_cost
 
 	foreach var of local grid_vars {
@@ -780,6 +780,7 @@
 		BARRIER_LANDLORD_NAT BARRIER_LANDLORD_URB BARRIER_LANDLORD_RUR ///
 		BARRIER_UNREL_NAT BARRIER_UNREL_URB BARRIER_UNREL_RUR ///
 		BARRIER_ADMIN_NAT BARRIER_ADMIN_URB BARRIER_ADMIN_RUR ///
+		UNDER_THE_GRID_NAT UNDER_THE_GRID_URB UNDER_THE_GRID_RUR ///
 		UNDER_GRID_UNCONNECTED_NAT UNDER_GRID_UNCONNECTED_URB UNDER_GRID_UNCONNECTED_RUR ///
 		GRID_UPTAKE_NAT GRID_UPTAKE_URB GRID_UPTAKE_RUR ///
 		GRID_YEARS_NAT GRID_YEARS_URB GRID_YEARS_RUR ///

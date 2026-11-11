@@ -28,6 +28,17 @@ try:
 except ImportError:
     HAS_PANDAS = False
 
+try:
+    from build_country_calibration import build_calibration_workbook, compile_stata_harmonization_do
+    HAS_CALIBRATION_BUILDER = True
+except ImportError:
+    try:
+        from Tools.build_country_calibration import build_calibration_workbook, compile_stata_harmonization_do
+        HAS_CALIBRATION_BUILDER = True
+    except ImportError:
+        HAS_CALIBRATION_BUILDER = False
+
+
 
 STANDARD_ROSTERS = [
     "hhroster.dta", "cookstoves.dta", "appliance.dta", "food.dta",
@@ -725,6 +736,12 @@ di "========================================================"
 di " [0/7] Master dataset compilation: raw modules & expenditure..."
 do "$scripts/00_build_master_dataset.do"
 
+capture confirm file "$scripts/00_country_harmonization.do"
+if !_rc {
+    di " [0b/7] Country-specific harmonization & recoding..."
+    do "$scripts/00_country_harmonization.do"
+}
+
 di " [1/7] Setup & survey design validation..."
 do "$scripts/01_setup.do"
 
@@ -1152,6 +1169,10 @@ def main():
                         help="Operating system / Stata username override (auto-detected if omitted)")
     parser.add_argument("--auto-confirm", "-y", action="store_true",
                         help="Automatically apply without interactive prompt")
+    parser.add_argument("--calibrate-country", action="store_true",
+                        help="Scan raw datasets, generate MTF_<Country>_Calibration.xlsx, and compile 00_country_harmonization.do")
+    parser.add_argument("--compile-harmonization", type=str, default=None,
+                        help="Path to MTF_<Country>_Calibration.xlsx to compile into 00_country_harmonization.do")
 
     args = parser.parse_args()
 
@@ -1314,6 +1335,28 @@ def main():
     print("  ✓ Cookstove calibration: 04_cooking_attributes.do updated from cookstove_calibration.csv")
     print("  ✓ Report template: country name, cookstove table, and regional module injected.")
     print("  ✓ Automation scripts and report templates configured.")
+
+    if getattr(args, "calibrate_country", False):
+        print("\n [Country Calibration] Building country metadata codebook & harmonization...")
+        if HAS_CALIBRATION_BUILDER:
+            calib_out = country_dir / f"MTF_{params['country_name']}_Calibration.xlsx"
+            build_calibration_workbook(scanner.raw_dir, calib_out, params['country_name'])
+            dofile_dir = country_dir / "Do-file"
+            dofile_dir.mkdir(parents=True, exist_ok=True)
+            compile_stata_harmonization_do(calib_out, dofile_dir / "00_country_harmonization.do", params['country_name'])
+            print(f"  ★ Generated Country Calibration Workbook: {calib_out.name}")
+            print(f"  ★ Compiled Harmonization Do-file: Do-file/00_country_harmonization.do")
+        else:
+            print("  [WARN] build_country_calibration module not found — skipping harmonization.")
+
+    if getattr(args, "compile_harmonization", None):
+        xlsx_path = Path(args.compile_harmonization).resolve()
+        if xlsx_path.exists() and HAS_CALIBRATION_BUILDER:
+            dofile_dir = country_dir / "Do-file"
+            dofile_dir.mkdir(parents=True, exist_ok=True)
+            compile_stata_harmonization_do(xlsx_path, dofile_dir / "00_country_harmonization.do", params['country_name'])
+            print(f"  ★ Compiled Harmonization Do-file from {xlsx_path.name}")
+
     print("==================================================================\n")
 
 

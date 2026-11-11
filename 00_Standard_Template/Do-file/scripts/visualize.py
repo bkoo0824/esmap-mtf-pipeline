@@ -861,12 +861,54 @@ def chart_cookstove_wtp():
 def chart_wtp_mutually_exclusive_stacked():
     fig, ax = plt.subplots(figsize=(11, 5.5), dpi=150)
     categories = ["National Grid\nConnection", "Off-Grid Solar\nDevice", "Clean Cooking\nStove"]
-    upfront_vals = [19.6, 20.5, 18.7]
-    m3_vals      = [ 4.2,  0.0,  5.8]
-    m6_vals      = [ 8.9,  7.5, 11.8]
-    m12_vals     = [12.8, 14.2,  8.4]
-    waived_vals  = [28.2,  0.0,  0.0]
-    never_vals   = [26.3, 57.8, 55.3]
+    vals = load_json()
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
+
+    # 1. Grid connection
+    g_upfront = g("WTP_GRID_UPFRONT_NAT", 19.6)
+    g_3m_cum  = g("WTP_GRID_3M_NAT", 23.8)
+    g_6m_cum  = g("WTP_GRID_6M_NAT", 32.7)
+    g_12m_cum = g("WTP_GRID_12M_NAT", 45.5)
+    g_waived  = g("WTP_GRID_WAIVED_NAT", 73.7)
+
+    g_m3  = max(0.0, g_3m_cum - g_upfront)
+    g_m6  = max(0.0, g_6m_cum - max(g_3m_cum, g_upfront))
+    g_m12 = max(0.0, g_12m_cum - max(g_6m_cum, g_3m_cum, g_upfront))
+    g_wvd = max(0.0, g_waived - max(g_12m_cum, g_6m_cum, g_3m_cum, g_upfront))
+    g_nvr = max(0.0, 100.0 - (g_upfront + g_m3 + g_m6 + g_m12 + g_wvd))
+
+    # 2. Solar device
+    s_upfront = g("WTP_SOLAR_UPFRONT_NAT", 20.5)
+    s_6m_cum  = g("WTP_SOLAR_6M_NAT", 28.0)
+    s_12m_cum = g("WTP_SOLAR_12M_NAT", 42.2)
+    s_24m_cum = g("WTP_SOLAR_24M_NAT", 55.0)
+
+    s_m3  = 0.0
+    s_m6  = max(0.0, s_6m_cum - s_upfront)
+    s_m12 = max(0.0, s_12m_cum - max(s_6m_cum, s_upfront))
+    s_m24 = max(0.0, s_24m_cum - max(s_12m_cum, s_6m_cum, s_upfront))
+    s_nvr = max(0.0, 100.0 - (s_upfront + s_m6 + s_m12 + s_m24))
+
+    # 3. Clean cooking stove
+    c_upfront = g("WTP_COOK_UPFRONT_NAT", 18.7)
+    c_3m_cum  = g("WTP_COOK_3M_NAT", 24.6)
+    c_6m_cum  = g("WTP_COOK_6M_NAT", 36.4)
+    c_12m_cum = g("WTP_COOK_12M_NAT", 44.7)
+
+    c_m3  = max(0.0, c_3m_cum - c_upfront)
+    c_m6  = max(0.0, c_6m_cum - max(c_3m_cum, c_upfront))
+    c_m12 = max(0.0, c_12m_cum - max(c_6m_cum, c_3m_cum, c_upfront))
+    c_nvr = max(0.0, 100.0 - (c_upfront + c_m3 + c_m6 + c_m12))
+
+    upfront_vals = [round(g_upfront, 1), round(s_upfront, 1), round(c_upfront, 1)]
+    m3_vals      = [round(g_m3, 1), round(s_m3, 1), round(c_m3, 1)]
+    m6_vals      = [round(g_m6, 1), round(s_m6, 1), round(c_m6, 1)]
+    m12_vals     = [round(g_m12, 1), round(s_m12 + s_m24, 1), round(c_m12, 1)]
+    waived_vals  = [round(g_wvd, 1), 0.0, 0.0]
+    never_vals   = [round(g_nvr, 1), round(s_nvr, 1), round(c_nvr, 1)]
 
     y = np.arange(len(categories))
     height = 0.52

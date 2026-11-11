@@ -18,12 +18,12 @@ import unittest
 import subprocess
 from pathlib import Path
 
-REPO_ROOT = Path("/media/bryan/Bryan/MTF/esmap-mtf-pipeline_git").resolve()
+REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = REPO_ROOT / "00_Standard_Template" / "Do-file" / "MTF_Report_Template.md"
 INJECT_SCRIPT = REPO_ROOT / "00_Standard_Template" / "Do-file" / "scripts" / "inject_report.py"
 LIBERIA_BASE_DIR = Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/35_Liberia(2024)/06. Data Analysis")
 LIBERIA_MD_OUTPUT = LIBERIA_BASE_DIR / "Output" / "MTF_Liberia_Report.md"
-PYTHON_VENV = "/home/bryan/venv/bin/python3"
+PYTHON_VENV = sys.executable
 
 
 class TestAdversarialFigureNumbering(unittest.TestCase):

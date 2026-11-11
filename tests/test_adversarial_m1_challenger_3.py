@@ -22,8 +22,9 @@ import subprocess
 import unittest
 from pathlib import Path
 
-SCRIPT_PATH = Path("/media/bryan/Bryan/MTF/esmap-mtf-pipeline_git/00_Standard_Template/Do-file/scripts/inject_report.py").resolve()
-PYTHON_VENV = "/home/bryan/venv/bin/python3"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPT_PATH = (REPO_ROOT / "00_Standard_Template" / "Do-file" / "scripts" / "inject_report.py").resolve()
+PYTHON_VENV = sys.executable
 
 sys.path.insert(0, str(SCRIPT_PATH.parent))
 import inject_report

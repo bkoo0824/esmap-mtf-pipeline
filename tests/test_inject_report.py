@@ -24,12 +24,13 @@ from pathlib import Path
 from PIL import Image
 
 # Add script directory to sys.path for direct function imports
-SCRIPT_PATH = Path("/media/bryan/Bryan/MTF/esmap-mtf-pipeline_git/00_Standard_Template/Do-file/scripts/inject_report.py").resolve()
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPT_PATH = (REPO_ROOT / "00_Standard_Template" / "Do-file" / "scripts" / "inject_report.py").resolve()
 sys.path.insert(0, str(SCRIPT_PATH.parent))
 
 import inject_report
 
-PYTHON_VENV = "/home/bryan/venv/bin/python3"
+PYTHON_VENV = sys.executable
 LIBERIA_BASE_DIR = "/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/35_Liberia(2024)/06. Data Analysis"
 
 
@@ -122,6 +123,7 @@ class TestCLI(unittest.TestCase):
                     "--country", "TestCountry",
                     "--json", str(json_file),
                     "--template", str(template_file),
+                    "--output-dir", str(tmp_path),
                     "--output-md", str(out_md),
                     "--output-docx", str(out_docx),
                 ],
@@ -432,7 +434,7 @@ class TestMissingInputs(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(res.returncode, 0, f"Error: {res.stderr}")
-            self.assertIn("(0/14 images verified)", res.stdout)
+            self.assertIn(f"(0/{len(inject_report.CHART_FILENAMES)} images verified)", res.stdout)
 
             md_out = out_dir / "MTF_NoChartsLand_Report.md"
             self.assertTrue(md_out.exists())
@@ -606,18 +608,21 @@ class TestAll14ChartsMapping(unittest.TestCase):
             ("CHART_REGIONAL_GAP", "09_regional_access_gap.png"),
             ("CHART_UNDER_GRID", "10_under_the_grid_funnel.png"),
             ("CHART_SOURCE_MIX", "11_electricity_source_mix.png"),
-            ("CHART_WTP_DEMAND", "12_wtp_comparative_demand_curves.png"),
+            ("CHART_WTP_DEMAND", "12a_wtp_grid_connection.png"),
+            ("CHART_WTP_GRID", "12a_wtp_grid_connection.png"),
+            ("CHART_WTP_SOLAR", "12b_wtp_solar_device.png"),
+            ("CHART_WTP_COOKSTOVE", "12c_wtp_cookstove.png"),
             ("CHART_WTP_SEGMENTS", "13_wtp_mutually_exclusive_stacked.png"),
             ("CHART_STOVE_STACKING", "14_stove_stacking_matrix.png"),
         ]
-        self.assertEqual(len(inject_report.CHART_FILENAMES), 14)
+        self.assertEqual(len(inject_report.CHART_FILENAMES), 17)
         for key, fname in expected_charts:
             self.assertIn(key, inject_report.CHART_FILENAMES)
             self.assertEqual(inject_report.CHART_FILENAMES[key], fname)
 
         dummy_dir = Path("/tmp/charts_test")
         cdict = inject_report.get_charts_dict(dummy_dir)
-        self.assertEqual(len(cdict), 14)
+        self.assertEqual(len(cdict), 17)
         for key, fname in expected_charts:
             self.assertEqual(cdict[key], dummy_dir / fname)
 
@@ -626,7 +631,7 @@ class TestNoDocxDegradation(unittest.TestCase):
     """Verify that if python-docx is unavailable, markdown generation still succeeds."""
 
     def test_system_python_without_docx(self):
-        """Run inject_report.py using system python3 (which lacks python-docx)."""
+        """Run inject_report.py using python3 with docx import mocked or suppressed."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             json_file = tmp_path / "values.json"
@@ -639,14 +644,18 @@ class TestNoDocxDegradation(unittest.TestCase):
 
             env = os.environ.copy()
             env.pop("PYTHONPATH", None)
+            env["PYTHONNOUSERSITE"] = "1"
 
             res = subprocess.run(
                 [
-                    "/usr/bin/python3", str(SCRIPT_PATH),
-                    "--country", "NoDocxCountry",
-                    "--json", str(json_file),
-                    "--template", str(tmpl_file),
-                    "--output-dir", str(out_dir),
+                    "/usr/bin/python3", "-c",
+                    "import sys\n"
+                    "sys.modules['docx'] = None\n"
+                    "from pathlib import Path\n"
+                    f"sys.path.insert(0, '{SCRIPT_PATH.parent}')\n"
+                    f"sys.argv = ['inject_report.py', '--country', 'NoDocxCountry', '--json', '{json_file}', '--template', '{tmpl_file}', '--output-dir', '{out_dir}']\n"
+                    "import inject_report\n"
+                    "inject_report.main()\n"
                 ],
                 capture_output=True,
                 text=True,
@@ -673,7 +682,7 @@ class TestRealSurveyDataLiberia(unittest.TestCase):
         )
         self.assertEqual(res.returncode, 0, f"Liberia run failed: {res.stderr}")
         self.assertIn("Target Country:      Liberia", res.stdout)
-        self.assertIn("14/14 images verified", res.stdout)
+        self.assertIn("17/17 images verified", res.stdout)
         self.assertIn("Markdown report generated: MTF_Liberia_Report.md", res.stdout)
         self.assertIn("Word report: MTF_Liberia_Report.docx", res.stdout)
 
