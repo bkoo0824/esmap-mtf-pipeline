@@ -243,6 +243,80 @@
 	lab var wtp_grid_never   "Will NEVER connect to grid under any terms"
 	lab var refuse_wiring_cost "Refuses grid because cannot afford internal wiring"
 
+	*===========================================================================
+	*  ENHANCEMENT 6b: DISAGGREGATED WTP BY PRICE SPLIT (GRID CONNECTION)
+	*  Allows plotting multi-curve panels crossing connection fee price points
+	*  (100%, 57%, 29%, 14%) with installment financing horizons (Upfront, 3M, 6M, 12M, Waived).
+	*===========================================================================
+
+	capture drop wtp_grid_p100_upfront wtp_grid_p100_3m wtp_grid_p100_6m wtp_grid_p100_12m wtp_grid_p100_waived
+	capture drop wtp_grid_p57_upfront  wtp_grid_p57_3m  wtp_grid_p57_6m  wtp_grid_p57_12m  wtp_grid_p57_waived
+	capture drop wtp_grid_p29_upfront  wtp_grid_p29_3m  wtp_grid_p29_6m  wtp_grid_p29_12m  wtp_grid_p29_waived
+	capture drop wtp_grid_p14_upfront  wtp_grid_p14_3m  wtp_grid_p14_6m  wtp_grid_p14_12m  wtp_grid_p14_waived
+
+	capture confirm variable random_percentage
+	if !_rc {
+		* 100% full fee
+		gen byte wtp_grid_p100_upfront = (SEC_D_Q03 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_waived  = (wtp_grid_p100_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 57% fee
+		gen byte wtp_grid_p57_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_waived   = (wtp_grid_p57_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 29% fee
+		gen byte wtp_grid_p29_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_waived   = (wtp_grid_p29_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 14% fee
+		gen byte wtp_grid_p14_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_waived   = (wtp_grid_p14_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+	}
+	else {
+		capture confirm variable index_random
+		if !_rc {
+			* 100% full fee (index_random == 5)
+			gen byte wtp_grid_p100_upfront = (SEC_D_Q03 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_waived  = (wtp_grid_p100_12m == 1 | SEC_D_Q07 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 57% fee (index_random == 3)
+			gen byte wtp_grid_p57_upfront  = (SEC_D_Q03 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_waived   = (wtp_grid_p57_12m == 1 | SEC_D_Q07 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 29% fee (index_random == 1)
+			gen byte wtp_grid_p29_upfront  = (SEC_D_Q03 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_waived   = (wtp_grid_p29_12m == 1 | SEC_D_Q07 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 14% fee (index_random == 0)
+			gen byte wtp_grid_p14_upfront  = (SEC_D_Q03 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_waived   = (wtp_grid_p14_12m == 1 | SEC_D_Q07 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+		}
+	}
+
 
 	*===========================================================================
 	*  ENHANCEMENT 7: WTP FOR SOLAR & SOLAR REVOLVING FUND (SEC_E)

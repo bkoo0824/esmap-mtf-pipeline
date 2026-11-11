@@ -772,6 +772,37 @@
 		scalar json_ELEC_STOVE_GRID_RUR = e(b)[1,1] * 100
 	}
 
+	* Disaggregated Grid WTP by Price Tier
+	capture {
+		svy, subpop(if wtp_grid_p100_upfront < .): mean wtp_grid_p100_upfront wtp_grid_p100_3m wtp_grid_p100_6m wtp_grid_p100_12m wtp_grid_p100_waived
+		scalar json_WTP_GRID_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P100_3M      = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P100_6M      = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P100_12M     = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P100_WAIVED  = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p57_upfront < .): mean wtp_grid_p57_upfront wtp_grid_p57_3m wtp_grid_p57_6m wtp_grid_p57_12m wtp_grid_p57_waived
+		scalar json_WTP_GRID_P57_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P57_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P57_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P57_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P57_WAIVED   = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p29_upfront < .): mean wtp_grid_p29_upfront wtp_grid_p29_3m wtp_grid_p29_6m wtp_grid_p29_12m wtp_grid_p29_waived
+		scalar json_WTP_GRID_P29_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P29_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P29_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P29_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P29_WAIVED   = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p14_upfront < .): mean wtp_grid_p14_upfront wtp_grid_p14_3m wtp_grid_p14_6m wtp_grid_p14_12m wtp_grid_p14_waived
+		scalar json_WTP_GRID_P14_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P14_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P14_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P14_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P14_WAIVED   = e(b)[1,5] * 100
+	}
+
 	* Disaggregated Solar WTP by Price Tier
 	capture {
 		svy, subpop(if index_random_3 == 2): mean wtp_solar_p100_upfront wtp_solar_p100_6m wtp_solar_p100_12m wtp_solar_p100_24m
@@ -906,6 +937,10 @@
 		HAS_ELECTRIC_LIGHTS_NAT HAS_SOLAR_LIGHTS_NAT HAS_ANY_LIGHTS_NAT ///
 		HR_3STONE_NAT HR_TRAD_NAT HR_ICS_NAT HR_LPG_NAT HR_ELEC_NAT ///
 		ELEC_STOVE_GRID_NAT ELEC_STOVE_GRID_URB ELEC_STOVE_GRID_RUR ///
+		WTP_GRID_P100_UPFRONT WTP_GRID_P100_3M WTP_GRID_P100_6M WTP_GRID_P100_12M WTP_GRID_P100_WAIVED ///
+		WTP_GRID_P57_UPFRONT WTP_GRID_P57_3M WTP_GRID_P57_6M WTP_GRID_P57_12M WTP_GRID_P57_WAIVED ///
+		WTP_GRID_P29_UPFRONT WTP_GRID_P29_3M WTP_GRID_P29_6M WTP_GRID_P29_12M WTP_GRID_P29_WAIVED ///
+		WTP_GRID_P14_UPFRONT WTP_GRID_P14_3M WTP_GRID_P14_6M WTP_GRID_P14_12M WTP_GRID_P14_WAIVED ///
 		WTP_SOLAR_P100_UPFRONT WTP_SOLAR_P100_6M WTP_SOLAR_P100_12M WTP_SOLAR_P100_24M ///
 		WTP_SOLAR_P66_UPFRONT WTP_SOLAR_P66_6M WTP_SOLAR_P66_12M WTP_SOLAR_P66_24M ///
 		WTP_SOLAR_P33_UPFRONT WTP_SOLAR_P33_6M WTP_SOLAR_P33_12M WTP_SOLAR_P33_24M ///

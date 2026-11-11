@@ -711,8 +711,9 @@ def chart_electricity_source_mix():
 # ─── CHART 12a: GRID CONNECTION WTP CUMULATIVE DEMAND CURVE ──────────────────
 def chart_grid_wtp():
     """
-    Grid Connection Willingness to Pay — cumulative demand curve.
-    Financing terms: Upfront → 3M → 6M → 12M → Fee Waived.
+    Grid Connection Willingness to Pay — multi-curve panel across benchmark price tiers and financing horizons (Option B),
+    with adaptive fallback to single pooled curve if granular price splits are unavailable.
+    Financing terms: Upfront Cash → 3M → 6M → 12M → Fee Waived.
     Saved as: 12a_wtp_grid_connection.png
     """
     vals = load_json()
@@ -721,35 +722,87 @@ def chart_grid_wtp():
         try: return float(v)
         except: return default
 
-    wtp_grid = [
-        g("WTP_GRID_UPFRONT_NAT", 19.6),
-        g("WTP_GRID_3M_NAT",      23.8),
-        g("WTP_GRID_6M_NAT",      32.7),
-        g("WTP_GRID_12M_NAT",     45.5),
-        g("WTP_GRID_WAIVED_NAT",  73.7),
-    ]
-    x_labels = ["Upfront\n(Full Fee)", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan", "Fee\nWaived"]
+    p100_upfront = g("WTP_GRID_P100_UPFRONT", 0.0)
+    p14_upfront  = g("WTP_GRID_P14_UPFRONT", 0.0)
+
+    x_labels = ["Upfront\nCash", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan", "Fee\nWaived"]
     x = np.arange(len(x_labels))
 
     fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
-    ax.fill_between(x, wtp_grid, alpha=0.10, color=WB_NAVY)
-    ax.plot(x, wtp_grid, marker="o", linewidth=3.0, markersize=9,
-            color=WB_NAVY, label="Unconnected Households")
 
-    for i, val in enumerate(wtp_grid):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
-                    xytext=(0, 11), ha="center", fontweight="bold", color=WB_NAVY, fontsize=10)
+    # Check if granular price points exist (Option B: 4 benchmark curves)
+    if p100_upfront > 0.0 or p14_upfront > 0.0:
+        p100 = [
+            g("WTP_GRID_P100_UPFRONT", 35.4),
+            g("WTP_GRID_P100_3M",      67.3),
+            g("WTP_GRID_P100_6M",      78.1),
+            g("WTP_GRID_P100_12M",     89.4),
+            g("WTP_GRID_P100_WAIVED",  92.2),
+        ]
+        p57 = [
+            g("WTP_GRID_P57_UPFRONT", 51.1),
+            g("WTP_GRID_P57_3M",      69.1),
+            g("WTP_GRID_P57_6M",      81.2),
+            g("WTP_GRID_P57_12M",     91.3),
+            g("WTP_GRID_P57_WAIVED",  94.3),
+        ]
+        p29 = [
+            g("WTP_GRID_P29_UPFRONT", 67.9),
+            g("WTP_GRID_P29_3M",      81.1),
+            g("WTP_GRID_P29_6M",      89.8),
+            g("WTP_GRID_P29_12M",     94.1),
+            g("WTP_GRID_P29_WAIVED",  95.5),
+        ]
+        p14 = [
+            g("WTP_GRID_P14_UPFRONT", 73.1),
+            g("WTP_GRID_P14_3M",      89.8),
+            g("WTP_GRID_P14_6M",      91.8),
+            g("WTP_GRID_P14_12M",     93.3),
+            g("WTP_GRID_P14_WAIVED",  93.9),
+        ]
+
+        # Plot 4 benchmark curves
+        ax.plot(x, p14,  marker="^", linewidth=2.8, markersize=8, color="#27AE60", label="14% Price (86% Deep Subsidy)")
+        ax.plot(x, p29,  marker="D", linewidth=2.5, markersize=7, color=WB_TEAL,   label="29% Price (71% High Subsidy)")
+        ax.plot(x, p57,  marker="s", linewidth=2.5, markersize=7, color=WB_AMBER,  label="57% Price (43% Mod. Subsidy)")
+        ax.plot(x, p100, marker="o", linewidth=2.8, markersize=8, color=WB_NAVY,   label="100% Full Connection Fee")
+
+        for i in range(len(x)):
+            ax.annotate(f"{p14[i]:.1f}%", (x[i], p14[i]), textcoords="offset points", xytext=(0, 7), ha="center", fontweight="bold", color="#1E8449", fontsize=8.5)
+            ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, -13), ha="center", fontweight="bold", color=WB_NAVY, fontsize=8.5)
+
+        ax.set_ylim(25, 102)
+        ax.set_title(
+            "Grid Connection — Willingness to Pay by Price Tier & Financing Term\n"
+            "(Cumulative Demand: Connection Fee Subsidies vs. Installment Financing Horizons)",
+            fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+        ax.legend(frameon=True, loc="lower right", fontsize=9)
+    else:
+        # Fallback to single pooled curve
+        wtp_grid = [
+            g("WTP_GRID_UPFRONT_NAT", 19.6),
+            g("WTP_GRID_3M_NAT",      23.8),
+            g("WTP_GRID_6M_NAT",      32.7),
+            g("WTP_GRID_12M_NAT",     45.5),
+            g("WTP_GRID_WAIVED_NAT",  73.7),
+        ]
+        ax.fill_between(x, wtp_grid, alpha=0.10, color=WB_NAVY)
+        ax.plot(x, wtp_grid, marker="o", linewidth=3.0, markersize=9,
+                color=WB_NAVY, label="Unconnected Households (Pooled)")
+        for i, val in enumerate(wtp_grid):
+            ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
+                        xytext=(0, 11), ha="center", fontweight="bold", color=WB_NAVY, fontsize=10)
+        ax.set_ylim(0, min(100, max(wtp_grid) * 1.3))
+        ax.set_title(
+            "Grid Connection — Willingness to Pay by Financing Term\n"
+            "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+            fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+        ax.legend(frameon=True, loc="upper left", fontsize=9.5)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
-    ax.set_ylim(0, min(100, max(wtp_grid) * 1.3))
     ax.set_ylabel("Cumulative % Willing to Connect", fontsize=11, fontweight="bold")
     ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
-    ax.set_title(
-        "Grid Connection — Willingness to Pay by Financing Term\n"
-        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
-        fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
-    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.3, linestyle="--")
     plt.tight_layout()
