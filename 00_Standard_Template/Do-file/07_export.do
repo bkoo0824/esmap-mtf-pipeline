@@ -736,6 +736,84 @@
 		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]
 	}
 
+	* Outages by Interval (<3, 3-14, >14 per week)
+	capture {
+		svy, subpop(if grid_hh == 1 & outages_per_wk < .): mean outages_lt3_wk outages_3to14_wk outages_gt14_wk
+		scalar json_OUTAGES_LT3_WK   = e(b)[1,1] * 100
+		scalar json_OUTAGES_3TO14_WK = e(b)[1,2] * 100
+		scalar json_OUTAGES_GT14_WK  = e(b)[1,3] * 100
+	}
+
+	* Comprehensive Lighting Points
+	capture {
+		svy: mean has_electric_lights has_solar_lights has_any_lights
+		scalar json_HAS_ELECTRIC_LIGHTS_NAT = e(b)[1,1] * 100
+		scalar json_HAS_SOLAR_LIGHTS_NAT    = e(b)[1,2] * 100
+		scalar json_HAS_ANY_LIGHTS_NAT      = e(b)[1,3] * 100
+	}
+
+	* Cookstove Time-Use & Weekly Hours
+	capture {
+		svy: mean hr_3stone_hh hr_trad_hh hr_ics_hh hr_lpg_hh hr_elec_hh
+		scalar json_HR_3STONE_NAT = e(b)[1,1]
+		scalar json_HR_TRAD_NAT   = e(b)[1,2]
+		scalar json_HR_ICS_NAT    = e(b)[1,3]
+		scalar json_HR_LPG_NAT    = e(b)[1,4]
+		scalar json_HR_ELEC_NAT   = e(b)[1,5]
+	}
+
+	* Grid Electric Cooking Adoption
+	capture {
+		svy, subpop(if grid_hh == 1): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_NAT = e(b)[1,1] * 100
+		svy, subpop(if grid_hh == 1 & loc_urban_rural == 1): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_URB = e(b)[1,1] * 100
+		svy, subpop(if grid_hh == 1 & loc_urban_rural == 2): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_RUR = e(b)[1,1] * 100
+	}
+
+	* Disaggregated Solar WTP by Price Tier
+	capture {
+		svy, subpop(if index_random_3 == 2): mean wtp_solar_p100_upfront wtp_solar_p100_6m wtp_solar_p100_12m wtp_solar_p100_24m
+		scalar json_WTP_SOLAR_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P100_6M      = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P100_12M     = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P100_24M     = e(b)[1,4] * 100
+
+		svy, subpop(if index_random_3 == 1): mean wtp_solar_p66_upfront wtp_solar_p66_6m wtp_solar_p66_12m wtp_solar_p66_24m
+		scalar json_WTP_SOLAR_P66_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P66_6M       = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P66_12M      = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P66_24M      = e(b)[1,4] * 100
+
+		svy, subpop(if index_random_3 == 0): mean wtp_solar_p33_upfront wtp_solar_p33_6m wtp_solar_p33_12m wtp_solar_p33_24m
+		scalar json_WTP_SOLAR_P33_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P33_6M       = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P33_12M      = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P33_24M      = e(b)[1,4] * 100
+	}
+
+	* Disaggregated Cooking WTP by Price Tier
+	capture {
+		svy, subpop(if random_perc_k >= 0.99 & random_perc_k <= 1.01): mean wtp_cook_p100_upfront wtp_cook_p100_6m wtp_cook_p100_12m wtp_cook_p100_24m
+		scalar json_WTP_COOK_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P100_6M      = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P100_12M     = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P100_24M     = e(b)[1,4] * 100
+
+		svy, subpop(if random_perc_k >= 0.60 & random_perc_k <= 0.70): mean wtp_cook_p66_upfront wtp_cook_p66_6m wtp_cook_p66_12m wtp_cook_p66_24m
+		scalar json_WTP_COOK_P66_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P66_6M       = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P66_12M      = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P66_24M      = e(b)[1,4] * 100
+
+		svy, subpop(if random_perc_k >= 0.30 & random_perc_k <= 0.40): mean wtp_cook_p33_upfront wtp_cook_p33_6m wtp_cook_p33_12m wtp_cook_p33_24m
+		scalar json_WTP_COOK_P33_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P33_6M       = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P33_12M      = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P33_24M      = e(b)[1,4] * 100
+	}
+
 	*===========================================================================
 	*  WRITE EXPANDED JSON FILE
 	*===========================================================================
@@ -823,7 +901,17 @@
 		WTP_COOK_12M_NAT WTP_COOK_12M_URB WTP_COOK_12M_RUR ///
 		WTP_COOK_NEVER_NAT WTP_COOK_NEVER_URB WTP_COOK_NEVER_RUR ///
 		REFUSE_COOK_COST_NAT REFUSE_COOK_COST_URB REFUSE_COOK_COST_RUR ///
-		PCT_AFFORDABLE_NAT PCT_AFFORDABLE_URB PCT_AFFORDABLE_RUR PCT_UNAFFORDABLE_Q1
+		PCT_AFFORDABLE_NAT PCT_AFFORDABLE_URB PCT_AFFORDABLE_RUR PCT_UNAFFORDABLE_Q1 ///
+		OUTAGES_LT3_WK OUTAGES_3TO14_WK OUTAGES_GT14_WK ///
+		HAS_ELECTRIC_LIGHTS_NAT HAS_SOLAR_LIGHTS_NAT HAS_ANY_LIGHTS_NAT ///
+		HR_3STONE_NAT HR_TRAD_NAT HR_ICS_NAT HR_LPG_NAT HR_ELEC_NAT ///
+		ELEC_STOVE_GRID_NAT ELEC_STOVE_GRID_URB ELEC_STOVE_GRID_RUR ///
+		WTP_SOLAR_P100_UPFRONT WTP_SOLAR_P100_6M WTP_SOLAR_P100_12M WTP_SOLAR_P100_24M ///
+		WTP_SOLAR_P66_UPFRONT WTP_SOLAR_P66_6M WTP_SOLAR_P66_12M WTP_SOLAR_P66_24M ///
+		WTP_SOLAR_P33_UPFRONT WTP_SOLAR_P33_6M WTP_SOLAR_P33_12M WTP_SOLAR_P33_24M ///
+		WTP_COOK_P100_UPFRONT WTP_COOK_P100_6M WTP_COOK_P100_12M WTP_COOK_P100_24M ///
+		WTP_COOK_P66_UPFRONT WTP_COOK_P66_6M WTP_COOK_P66_12M WTP_COOK_P66_24M ///
+		WTP_COOK_P33_UPFRONT WTP_COOK_P33_6M WTP_COOK_P33_12M WTP_COOK_P33_24M
 
 	local n : word count `scalars_list'
 	local i = 1

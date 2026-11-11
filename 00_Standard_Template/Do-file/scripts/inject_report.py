@@ -118,11 +118,21 @@ CHART_FILENAMES = {
     "CHART_STOVE_STACKING" : "14_stove_stacking_matrix.png",
 }
 
+EXTENDED_CHART_FILENAMES = {
+    "CHART_OUTAGES"        : "15_grid_outage_intervals.png",
+    "CHART_COOK_TIME"      : "16_cookstove_time_use.png",
+}
+
 
 def get_charts_dict(charts_dir: Path) -> dict:
     """Returns mapping of chart placeholder tokens to image file paths for all 14 charts."""
     cdir = Path(charts_dir)
-    return {k: cdir / fname for k, fname in CHART_FILENAMES.items()}
+    res = {k: cdir / fname for k, fname in CHART_FILENAMES.items()}
+    for k, fname in EXTENDED_CHART_FILENAMES.items():
+        ext_p = cdir / fname
+        if ext_p.exists():
+            res[k] = ext_p
+    return res
 
 
 # Retain module-level CHARTS for backward compatibility
@@ -1932,7 +1942,10 @@ def main():
     else:
         streamlined = base_dir / "Output" / "streamlined"
         output_dir = streamlined if streamlined.exists() else base_dir / "Output"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
 
     # 3. Resolve JSON Path
     if args.json:

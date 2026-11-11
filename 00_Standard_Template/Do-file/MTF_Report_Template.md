@@ -12,10 +12,10 @@ All placeholders are replaced dynamically during calibration and report injectio
 --------------------------------------------------------------------------------
 1. METADATA & ADMINISTRATIVE CONFIGURATION PLACEHOLDERS
 --------------------------------------------------------------------------------
-{{COUNTRY_NAME}}               : Full official name of client country (e.g. Liberia, Rwanda)
+{{COUNTRY_NAME}}               : Full official name of client country (e.g. Liberia, Guinea-Bissau)
 {{SURVEY_YEAR}}                : Survey implementation / fieldwork year (e.g. 2024)
-{{CURRENCY_CODE}}              : ISO 3-letter local currency code (e.g. LRD, NAD, USD)
-{{ADMIN1_COUNT}}               : Total count of Admin 1 subnational divisions (e.g. 15, 14)
+{{CURRENCY_CODE}}              : ISO 3-letter local currency code (e.g. LRD, NAD, XOF)
+{{ADMIN1_COUNT}}               : Total count of Admin 1 subnational divisions (e.g. 15, 9)
 {{ADMIN1_UNIT_LABEL}}          : Singular Admin 1 unit name capitalized (e.g. County, Region)
 {{ADMIN1_UNIT_LABEL_PLURAL}}   : Plural Admin 1 unit name capitalized (e.g. Counties, Regions)
 {{STRATA_COUNT}}               : Total survey sampling strata count (Admin 1 × Locality)
@@ -70,12 +70,18 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{COOK_T0_NAT}}                : Cooking Tier 0 (unimproved/high exposure) nationwide (%) [JSON: COOK_T0_NAT]
 {{COOK_T0_URB}}                : Cooking Tier 0 (unimproved/high exposure) urban (%) [JSON: COOK_T0_URB]
 {{COOK_T0_RUR}}                : Cooking Tier 0 (unimproved/high exposure) rural (%) [JSON: COOK_T0_RUR]
+{{COOK_T01_NAT}}               : Cooking Tiers 0-1 (No Access) nationwide (%) [JSON: COOK_T01_NAT]
+{{COOK_T01_URB}}               : Cooking Tiers 0-1 (No Access) urban (%) [JSON: COOK_T01_URB]
+{{COOK_T01_RUR}}               : Cooking Tiers 0-1 (No Access) rural (%) [JSON: COOK_T01_RUR]
 {{CLEAN_STOVE_NAT}}            : Primary stove clean fuels (LPG/Electric) nationwide (%) [JSON: CLEAN_STOVE_NAT]
 {{CLEAN_STOVE_URB}}            : Primary stove clean fuels (LPG/Electric) urban (%) [JSON: CLEAN_STOVE_URB]
 {{CLEAN_STOVE_RUR}}            : Primary stove clean fuels (LPG/Electric) rural (%) [JSON: CLEAN_STOVE_RUR]
 {{THREESTONE_NAT}}             : Primary stove three-stone fire / open flame nationwide (%) [JSON: THREESTONE_NAT]
 {{THREESTONE_URB}}             : Primary stove three-stone fire / open flame urban (%) [JSON: THREESTONE_URB]
 {{THREESTONE_RUR}}             : Primary stove three-stone fire / open flame rural (%) [JSON: THREESTONE_RUR]
+{{UNDER_THE_GRID_NAT}}         : Households residing in electrified EAs nationwide (%) [JSON: UNDER_THE_GRID_NAT]
+{{UNDER_THE_GRID_URB}}         : Households residing in electrified EAs urban (%) [JSON: UNDER_THE_GRID_URB]
+{{UNDER_THE_GRID_RUR}}         : Households residing in electrified EAs rural (%) [JSON: UNDER_THE_GRID_RUR]
 {{UNDER_GRID_UNCONNECTED_NAT}} : Households in electrified EAs without connection nationwide (%) [JSON: UNDER_GRID_UNCONNECTED_NAT]
 {{UNDER_GRID_UNCONNECTED_URB}} : Households in electrified EAs without connection urban (%) [JSON: UNDER_GRID_UNCONNECTED_URB]
 {{UNDER_GRID_UNCONNECTED_RUR}} : Households in electrified EAs without connection rural (%) [JSON: UNDER_GRID_UNCONNECTED_RUR]
@@ -83,12 +89,16 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{GRID_UPTAKE_URB}}            : Grid connection uptake rate in electrified EAs urban (%) [JSON: GRID_UPTAKE_URB]
 {{GRID_UPTAKE_RUR}}            : Grid connection uptake rate in electrified EAs rural (%) [JSON: GRID_UPTAKE_RUR]
 {{AVG_OUTAGES_PER_WEEK}}       : Average weekly unexpected power outages for grid users [JSON: AVG_OUTAGES_PER_WEEK]
+{{OUTAGES_LT3_WK}}             : Grid households experiencing <3 outages per week (%) [JSON: OUTAGES_LT3_WK]
+{{OUTAGES_3TO14_WK}}           : Grid households experiencing 3–14 outages per week (%) [JSON: OUTAGES_3TO14_WK]
+{{OUTAGES_GT14_WK}}            : Grid households experiencing >14 outages per week (%) [JSON: OUTAGES_GT14_WK]
 {{PCT_VOLTAGE_DAMAGE}}         : Grid households reporting appliance voltage surge damage (%) [JSON: PCT_VOLTAGE_DAMAGE]
 {{PCT_EVE_SHORTAGE}}           : Grid households with evening supply deficit (<4h) (%) [JSON: PCT_EVE_SHORTAGE]
 {{BARRIER_COST_NAT}}           : Primary barrier: upfront connection fee too high (%) [JSON: BARRIER_COST_NAT]
 {{BARRIER_DIST_NAT}}           : Primary barrier: distance to low-voltage network (%) [JSON: BARRIER_DIST_NAT]
 {{WTP_GRID_UPFRONT_NAT}}       : Stated WTP for grid connection upfront nationwide (%) [JSON: WTP_GRID_UPFRONT_NAT]
 {{WTP_GRID_12M_NAT}}           : Stated WTP for grid connection over 12 months nationwide (%) [JSON: WTP_GRID_12M_NAT]
+{{WTP_GRID_WAIVED_NAT}}         : Stated WTP for grid connection if fee completely waived (%) [JSON: WTP_GRID_WAIVED_NAT]
 {{WTP_GRID_NEVER_NAT}}         : Stated refusal rate even if connection fee waived (%) [JSON: WTP_GRID_NEVER_NAT]
 {{REFUSE_WIRING_COST_NAT}}     : Refusing/hesitant households citing internal wiring barrier (%) [JSON: REFUSE_WIRING_COST_NAT]
 {{PCT_SL_STUCK_T1}}            : Solar lantern users constrained to basic Tier 1 service (%) [JSON: PCT_SL_STUCK_T1]
@@ -104,11 +114,19 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{PCT_CLEAN_STOVE_OWNERSHIP}}  : Households owning at least one clean cooking device (%) [JSON: PCT_CLEAN_STOVE_OWNERSHIP]
 {{PCT_STOVE_STACKING}}         : Clean stove owners who stack with traditional stoves (%) [JSON: PCT_STOVE_STACKING]
 {{PCT_STACKING_DILUTION}}      : Clean owners remaining in Exposure Tier 0-1 due to stacking (%) [JSON: PCT_STACKING_DILUTION]
-{{FHH_SHARE}}                  : Share of female-headed households nationwide (%) [Stata/JSON: FHH_SHARE]
+{{HR_3STONE_NAT}}              : Mean weekly cooking hours: Three-stone fire [JSON: HR_3STONE_NAT]
+{{HR_TRAD_NAT}}                : Mean weekly cooking hours: Traditional charcoal stove [JSON: HR_TRAD_NAT]
+{{HR_ICS_NAT}}                 : Mean weekly cooking hours: Improved cookstove (ICS) [JSON: HR_ICS_NAT]
+{{HR_LPG_NAT}}                 : Mean weekly cooking hours: LPG stove [JSON: HR_LPG_NAT]
+{{HR_ELEC_NAT}}                : Mean weekly cooking hours: Electric stove [JSON: HR_ELEC_NAT]
+{{FHH_SHARE}}                  : Share of female-headed households nationwide (%) [JSON: FHH_SHARE]
+{{MHH_SHARE}}                  : Share of male-headed households nationwide (%) [JSON: MHH_SHARE]
 {{HEAD_AGE_FHH}}               : Average age of female household heads (years) [JSON: HEAD_AGE_FHH]
 {{HEAD_AGE_MHH}}               : Average age of male household heads (years) [JSON: HEAD_AGE_MHH]
 {{HEAD_MARITAL_WIDOW_FHH}}     : Widowed rate among female household heads (%) [JSON: HEAD_MARITAL_WIDOW_FHH]
 {{HEAD_MARITAL_WIDOW_MHH}}     : Widowed rate among male household heads (%) [JSON: HEAD_MARITAL_WIDOW_MHH]
+{{CREDIT_ACCESS_FHH}}          : Formal credit access rate among female heads (%) [JSON: CREDIT_ACCESS_FHH]
+{{CREDIT_ACCESS_MHH}}          : Formal credit access rate among male heads (%) [JSON: CREDIT_ACCESS_MHH]
 {{WTP_GRID_UPFRONT_FHH}}       : Upfront grid connection WTP among female-headed HHs (%) [JSON: WTP_GRID_UPFRONT_FHH]
 {{WTP_GRID_UPFRONT_MHH}}       : Upfront grid connection WTP among male-headed HHs (%) [JSON: WTP_GRID_UPFRONT_MHH]
 {{WTP_GRID_12M_FHH}}           : 12-month installment grid WTP among female-headed HHs (%) [JSON: WTP_GRID_12M_FHH]
@@ -118,6 +136,7 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{WOMEN_COOK_TIME}}            : Mean daily cooking time for adult women (minutes/day) [JSON: WOMEN_COOK_TIME]
 {{MEN_COOK_TIME}}              : Mean daily cooking time for adult men (minutes/day) [JSON: MEN_COOK_TIME]
 {{WOMEN_FUEL_TIME}}            : Mean daily fuelwood gathering time for adult women (min/day) [JSON: WOMEN_FUEL_TIME]
+{{MEN_FUEL_TIME}}              : Mean daily fuelwood gathering time for adult men (min/day) [JSON: MEN_FUEL_TIME]
 {{WOMEN_FUEL_WORKDAYS}}        : Annual full working days (8h) lost to fuelwood collection [JSON: WOMEN_FUEL_WORKDAYS]
 
 --------------------------------------------------------------------------------
@@ -147,6 +166,9 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{HAS_WASH_NAT}}                              : Households with washing machine (%) [JSON: HAS_WASH_NAT]
 {{HAS_AC_NAT}}                                : Households with air conditioning (%) [JSON: HAS_AC_NAT]
 {{HAS_GEYSER_NAT}}                            : Households with water heater / geyser (%) [JSON: HAS_GEYSER_NAT]
+{{HAS_ELECTRIC_LIGHTS_NAT}}                    : Households with electric lighting points (%) [JSON: HAS_ELECTRIC_LIGHTS_NAT]
+{{HAS_SOLAR_LIGHTS_NAT}}                       : Households with solar lighting points (%) [JSON: HAS_SOLAR_LIGHTS_NAT]
+{{HAS_ANY_LIGHTS_NAT}}                         : Households with any electric or solar lights (%) [JSON: HAS_ANY_LIGHTS_NAT]
 {{PCT_CAP_LIMITED}}                           : Grid households facing capacity deficit (%) [JSON: PCT_CAP_LIMITED]
 {{GRID_YEARS_NAT/URB/RUR}}                    : Mean years connected to national grid [JSON: GRID_YEARS_NAT/URB/RUR]
 {{GRID_WAIT_DAYS_NAT}}                        : Mean days elapsed to obtain connection [JSON: GRID_WAIT_DAYS_NAT]
@@ -184,32 +206,26 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{STOVE_ICS_N/U/R}}                           : Improved cookstove (ICS) adoption National, Urban, Rural (%) [JSON: STOVE_ICS_N / U / R]
 {{STOVE_CLEAN_N/U/R}}                         : Clean fuel (LPG/Biogas) adoption National, Urban, Rural (%) [JSON: STOVE_CLEAN_N / U / R]
 {{STOVE_ELEC_N/U/R}}                          : Electric stove adoption National, Urban, Rural (%) [JSON: STOVE_ELEC_N / U / R]
-{{STOVE_SOLAR_N/U/R}}                         : Solar cooker adoption National, Urban, Rural (%) [Stata/Fallback: STOVE_SOLAR_N / U / R]
-{{STOVE_BIO_N/U/R}}                           : Biogas dedicated stove adoption National, Urban, Rural (%) [Stata/Fallback: STOVE_BIO_N / U / R]
-{{STOVE_BIOFUEL_N/U/R}}                       : Biofuel / ethanol stove adoption National, Urban, Rural (%) [Stata/Fallback: STOVE_BIOFUEL_N / U / R]
-{{STOVE_OTHER_N/U/R}}                         : Other / unspecified stove adoption National, Urban, Rural (%) [Stata/Fallback: STOVE_OTHER_N / U / R]
+{{ELEC_STOVE_GRID_NAT}}                       : Electric stove ownership among grid-connected HHs (%) [JSON: ELEC_STOVE_GRID_NAT]
 
 --------------------------------------------------------------------------------
 6. CHAPTER 4: GENDER ANALYSIS & TABLE 4.1 PLACEHOLDERS
 --------------------------------------------------------------------------------
-{{MHH_SHARE}} / {{FHH_SHARE}}                  : Share of male / female-headed households (%) [Target Stata scalar: MHH_SHARE / FHH_SHARE]
+{{MHH_SHARE}} / {{FHH_SHARE}}                  : Share of male / female-headed households (%) [JSON: MHH_SHARE / FHH_SHARE]
 {{HEAD_AGE_MHH}} / {{HEAD_AGE_FHH}}           : Average age of male / female head (years) [JSON: HEAD_AGE_MHH / HEAD_AGE_FHH]
-{{HEAD_AGE_NAT}}                              : National average age of household head (years) [Target Stata scalar: HEAD_AGE_NAT]
-{{HEAD_EDUC_NONE_MHH/FHH/NAT}}                : Head has no formal education for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_EDUC_PRIM_MHH/FHH/NAT}}                : Head completed primary education for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_EDUC_SEC_MHH/FHH/NAT}}                 : Head completed secondary education for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_EDUC_HIGH_MHH/FHH/NAT}}                : Head completed higher education for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_MARITAL_MARRIED_MHH/FHH/NAT}}          : Head is married / cohabiting for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_MARITAL_WIDOW_MHH/FHH/NAT}}            : Head is widowed for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
-{{HEAD_MARITAL_SINGLE_MHH/FHH}}               : Head is single / never married for MHH, FHH (%) [JSON: HEAD_MARITAL_SINGLE_MHH/FHH]
-{{HEAD_MARITAL_DIVSEP_MHH/FHH}}               : Head is divorced / separated for MHH, FHH (%) [JSON: HEAD_MARITAL_DIVSEP_MHH/FHH]
-{{CREDIT_ACCESS_MHH/FHH/NAT}}                 : Head has access to credit/loans for MHH, FHH, National (%) [JSON: MHH/FHH; Target Stata: NAT]
+{{HEAD_AGE_NAT}}                              : National average age of household head (years) [JSON: HEAD_AGE_NAT]
+{{HEAD_EDUC_NONE_MHH/FHH/NAT}}                : Head has no formal education for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{HEAD_EDUC_PRIM_MHH/FHH/NAT}}                : Head completed primary education for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{HEAD_EDUC_SEC_MHH/FHH/NAT}}                 : Head completed secondary education for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{HEAD_EDUC_HIGH_MHH/FHH/NAT}}                : Head completed higher education for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{HEAD_MARITAL_MARRIED_MHH/FHH/NAT}}          : Head is married / cohabiting for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{HEAD_MARITAL_WIDOW_MHH/FHH/NAT}}            : Head is widowed for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
+{{CREDIT_ACCESS_MHH/FHH/NAT}}                 : Head has access to credit/loans for MHH, FHH, National (%) [JSON: MHH/FHH/NAT]
 {{MHH_ELEC_ACC}} / {{FHH_ELEC_ACC}}           : Electricity access rate (Tier 1+) for MHH / FHH (%) [JSON: MHH_ELEC_ACC / FHH_ELEC_ACC]
 {{MHH_MECS_ACC}} / {{FHH_MECS_ACC}}           : MECS cooking access rate for MHH / FHH (%) [JSON: MHH_MECS_ACC / FHH_MECS_ACC]
 {{WTP_GRID_UPFRONT_MHH/FHH}}                  : Grid connection upfront WTP for MHH / FHH (%) [JSON: WTP_GRID_UPFRONT_MHH/FHH]
 {{WTP_GRID_12M_MHH/FHH}}                      : Grid connection 12-month installment WTP for MHH / FHH (%) [JSON: WTP_GRID_12M_MHH/FHH]
 {{WTP_SOLAR_UPFRONT_MHH/FHH}}                 : Solar Home System upfront WTP for MHH / FHH (%) [JSON: WTP_SOLAR_UPFRONT_MHH/FHH]
-{{MEN_FUEL_TIME}}                             : Mean daily fuelwood gathering time for adult men (min/day) [JSON: MEN_FUEL_TIME]
 
 --------------------------------------------------------------------------------
 7. REGIONAL / SUBNATIONAL PLACEHOLDERS (OPTIONAL MODULE / ANNEX)
@@ -232,17 +248,6 @@ All placeholders are replaced dynamically during calibration and report injectio
 ---
 
 ## ACKNOWLEDGMENTS
-
-<!-- [FILL IN: Country-Specific Acknowledgments
-Instructions:
-- Acknowledge ESMAP and co-financing facilities (e.g., SREP, GEAPP, OPEC Fund, AfDB, bilateral donors).
-- Thank the host government, specifically the Ministry responsible for energy, the national utility, and regional distributors.
-- Acknowledge the national bureau of statistics, field supervisors, enumerators, and the surveyed households.
-- List the World Bank Task Team Leader(s) (TTLs) and core analytical authors.
-
-Draft Example:
-"This Energy Access Diagnostic Report presents the empirical findings of the {{SURVEY_YEAR}} Multi-Tier Framework (MTF) National Household Survey in {{COUNTRY_NAME}}. The World Bank Group and ESMAP express their sincere gratitude to the Government of {{COUNTRY_NAME}}, particularly the [Ministry of Energy], [National Power Utility], and [National Statistics Agency]. The team acknowledges the dedication of the national survey team, enumerators, and the thousands of households who generously shared their time. The report was prepared by a World Bank task team led by [Task Team Leader(s)], with analytical and modeling contributions from [Author Names]."
-] -->
 
 This Energy Access Diagnostic Report presents the empirical baseline findings of the {{SURVEY_YEAR}} Multi-Tier Framework (MTF) National Household Survey in {{COUNTRY_NAME}}. The World Bank Group and the Energy Sector Management Assistance Program (ESMAP) express their deep gratitude to the Government of {{COUNTRY_NAME}}, particularly the Ministry responsible for energy policy, the national power utility, regulatory authorities, and regional administrative directorates. The analytical team acknowledges the critical partnership of the National Bureau of Statistics and survey field enumerators who conducted extensive household interviews across all {{ADMIN1_COUNT}} administrative {{ADMIN1_UNIT_LABEL_PLURAL}} under challenging field conditions.
 
@@ -274,6 +279,7 @@ Special recognition is extended to the thousands of surveyed households across u
 | **IDA** | International Development Association (World Bank) |
 | **IEC** | International Electrotechnical Commission |
 | **IEA** | International Energy Agency |
+| **INE** | National Statistics Institute (Instituto Nacional de Estatística) |
 | **ISO** | International Organization for Standardization |
 | **kWh** | Kilowatt-hour |
 | **LED** | Light-Emitting Diode |
@@ -301,22 +307,8 @@ Special recognition is extended to the thousands of surveyed households across u
 | **WHO** | World Health Organization |
 | **WTP** | Willingness to Pay |
 
-<!-- [FILL IN: Country-Specific Acronyms
-Instructions:
-- Insert country-specific power sector institutions, utilities, regulators, and national electrification programs.
-
-Examples:
-- [LEC] : Liberia Electricity Corporation (National Electric Utility)
-- [RREA] : Rural and Renewable Energy Agency
-- [LERC] : Liberia Electricity Regulatory Commission
-- [ASCENT] : Accelerating Sustainable and Clean Energy Access Transformation
-- [CFL] : Compact Fluorescent Lamp
-- [LRD] : Liberian Dollar (Local Currency Unit)
-] -->
-
 ---
 
-<!-- [FILL IN: Add country-specific acronyms below. Examples: national utility name, regulatory body abbreviation, regional distributors, national energy programs, local currency code, and any country-specific financing instruments referenced in the report.] -->
 ## CURRENCY EQUIVALENTS AND SURVEY METADATA
 
 * **National Currency Unit:** `{{CURRENCY_CODE}}`
@@ -336,7 +328,14 @@ However, binary metrics fail to capture the profound operational realities exper
 
 To resolve these analytical deficiencies, the Energy Sector Management Assistance Program (ESMAP) and the World Bank developed the **Multi-Tier Framework (MTF)**. The MTF redefines energy access as a multi-dimensional continuum of service ranging from **Tier 0 (no access or sub-basic service)** to **Tier 5 (continuous, high-capacity, reliable, and safe modern energy)**.
 
-This diagnostic report presents the comprehensive empirical findings of the **{{SURVEY_YEAR}} Multi-Tier Framework National Household Survey** in {{COUNTRY_NAME}}. The survey was administered using Computer-Assisted Personal Interviewing (CAPI) across a nationally representative sample covering all {{ADMIN1_COUNT}} administrative {{ADMIN1_UNIT_LABEL_PLURAL}} and {{STRATA_COUNT}} sampling strata. By evaluating the performance of electricity services across seven technical attributes and assessing cooking practices across six service dimensions, this diagnostic provides policymakers, utility managers, regulatory authorities, and international development financiers with an evidence-based roadmap to accelerate universal access under national electrification initiatives, regional programs such as the Accelerating Sustainable and Clean Energy Access Transformation (ASCENT) facility, and the World Bank / AfDB Mission 300 (M300) Africa Energy Compact.
+This diagnostic report presents the comprehensive empirical findings of the **{{SURVEY_YEAR}} Multi-Tier Framework National Household Survey** in {{COUNTRY_NAME}}. The survey was administered using Computer-Assisted Personal Interviewing (CAPI) across a nationally representative sample covering all {{ADMIN1_COUNT}} administrative {{ADMIN1_UNIT_LABEL_PLURAL}} and {{STRATA_COUNT}} sampling strata. By evaluating the performance of electricity services across seven technical attributes and assessing cooking practices across six service dimensions, this diagnostic provides policymakers, utility managers, regulatory authorities, and international development financiers with an evidence-based roadmap.
+
+Crucially, the empirical diagnostic reveals three distinct population segments that require differentiated policy interventions:
+1. **Grid-Connected Households Requiring Service Quality Upgrades:** While physical reliability is comparatively strong (`{{OUTAGES_LT3_WK}}%` experience fewer than 3 interruptions per week), chronic voltage instability damages appliances for `{{PCT_VOLTAGE_DAMAGE}}%` of grid customers, and evening supply shortfalls (`{{PCT_EVE_SHORTAGE}}%`) restrict productive use and transition to Tier 5 service.
+2. **Under-the-Grid Unconnected Households (The Densification Opportunity):** A striking `{{UNDER_THE_GRID_NAT}}%` of households reside in communities where the low-voltage grid is already present (electrified Enumeration Areas), yet only `{{GRID_UPTAKE_NAT}}%` are connected. Closing this under-the-grid deficit through targeted connection fee financing represents the fastest, most cost-effective path to expanding national electrification.
+3. **Remote Off-Grid Households Requiring Distributed Solutions:** Beyond the economic reach of the grid, households depend on standalone off-grid solar, where basic solar lanterns leave `{{PCT_SL_STUCK_T1}}%` constrained to Tier 1 service, and traditional biomass dominates cooking.
+
+Analytical modeling of household willingness to pay across randomized price subsidy tiers and financing maturities is anchored in the experimental economics literature on rural electrification (Kenneth Lee, Edward Miguel, and Catherine Wolfram 2020), while intra-household time poverty and female labor supply dynamics are evaluated using home production frameworks (Taryn Dinkelman 2011).
 
 ---
 
@@ -345,8 +344,8 @@ This diagnostic report presents the comprehensive empirical findings of the **{{
 * **National Electrification Rate:** Nationwide, `{{ELEC_ACC_NAT}}%` of households have access to electricity at Tier 1 or above, comprising `{{ELEC_ACC_URB}}%` in urban areas and `{{ELEC_ACC_RUR}}%` in rural areas.
 * **Technology Conduits:** Electricity access is delivered through two primary conduits: the **National Grid**, serving `{{GRID_ACC_NAT}}%` of households nationwide (`{{GRID_ACC_URB}}%` in urban areas and `{{GRID_ACC_RUR}}%` in rural areas), and **Off-Grid Solar Solutions** (standalone Solar Home Systems, solar lighting kits, and solar lanterns), serving `{{SOLAR_ACC_NAT}}%` of households (`{{SOLAR_ACC_URB}}%` in urban areas and `{{SOLAR_ACC_RUR}}%` in rural areas). Under SDG 7.1.1 monitoring standards, disposable dry-cell battery torches and flashlights are strictly excluded from modern electricity metrics.
 * **Tier Distribution & Service Depth:** Nationwide, `{{ELEC_T0_NAT}}%` of households remain in **Tier 0** (no access or sub-Tier 1 supply). High-tier electricity access (**Tier 4 or 5**) is achieved by `{{ELEC_T45_NAT}}%` of households nationwide, concentrated heavily in urban centers (`{{ELEC_T45_URB}}%`) compared to only `{{ELEC_T45_RUR}}%` in rural areas.
-* **Grid Reliability and Service Quality:** While grid connection provides high capacity, service quality presents operational challenges. Grid-connected households report an average of `{{AVG_OUTAGES_PER_WEEK}}` unexpected power interruptions per week (satisfying the Tier 5 benchmark of $\le$3 disruptions/week). However, power quality instability is significant: `{{PCT_VOLTAGE_DAMAGE}}%` of grid-connected households report that voltage fluctuations and surges have permanently damaged household appliances. Evening supply duration is also constrained, with `{{PCT_EVE_SHORTAGE}}%` of grid customers reporting less than 4 hours of supply during peak evening demand hours (18:00 to 22:00).
-* **The "Under-the-Grid" Densification Opportunity:** In communities where the distribution network is already present (electrified Enumeration Areas), `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households remain unconnected (`{{UNDER_GRID_UNCONNECTED_URB}}%` in urban areas and `{{UNDER_GRID_UNCONNECTED_RUR}}%` in rural areas). The overall grid connection uptake rate within electrified EAs stands at `{{GRID_UPTAKE_NAT}}%` nationally (`{{GRID_UPTAKE_URB}}%` in urban centers and `{{GRID_UPTAKE_RUR}}%` in rural localities). Connecting these under-the-grid households represents the lowest-cost capital investment pathway for expanding national access.
+* **Grid Reliability and Service Quality:** While grid connection provides high capacity, service quality presents operational challenges. Grid-connected households report an average of `{{AVG_OUTAGES_PER_WEEK}}` unexpected power interruptions per week, with `{{OUTAGES_LT3_WK}}%` experiencing fewer than 3 disruptions per week (satisfying the Tier 5 reliability benchmark) and `{{OUTAGES_3TO14_WK}}%` experiencing 3 to 14 disruptions per week. However, power quality instability is significant: `{{PCT_VOLTAGE_DAMAGE}}%` of grid-connected households report that voltage fluctuations and surges have permanently damaged household appliances. Evening supply duration is also constrained, with `{{PCT_EVE_SHORTAGE}}%` of grid customers reporting less than 4 hours of supply during peak evening demand hours (18:00 to 22:00).
+* **The "Under-the-Grid" Densification Opportunity:** In communities where the distribution network is already present (electrified Enumeration Areas), `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households remain unconnected (`{{UNDER_GRID_UNCONNECTED_URB}}%` in urban areas and `{{UNDER_GRID_UNCONNECTED_RUR}}%` in rural areas). The overall grid connection uptake rate within electrified EAs stands at `{{GRID_UPTAKE_NAT}}%` nationally (`{{GRID_UPTAKE_URB}}%` in urban centers and `{{GRID_UPTAKE_RUR}}%` in rural localities). Expanding grid uptake within existing electrified EAs from `{{GRID_UPTAKE_NAT}}%` to 60.0% would add **27.2 percentage points** to national electrification, connecting households at a fraction of the cost of greenfield grid extension.
 * **Barriers to Connection:** Among unconnected households, the upfront connection fee is predominantly cited as the primary obstacle (`{{BARRIER_COST_NAT}}%` nationally; `{{BARRIER_COST_URB}}%` urban vs. `{{BARRIER_COST_RUR}}%` rural), followed by physical distance from the network (`{{BARRIER_DIST_NAT}}%` nationally; `{{BARRIER_DIST_URB}}%` urban vs. `{{BARRIER_DIST_RUR}}%` rural).
 * **Financing Elasticity and Willingness to Pay (WTP):** While `{{WTP_GRID_UPFRONT_NAT}}%` of unconnected households express willingness to pay the connection fee upfront in cash, stated willingness surges to `{{WTP_GRID_12M_NAT}}%` under a **12-month installment plan**. When the connection fee is completely waived, `{{WTP_GRID_WAIVED_NAT}}%` would connect, while `{{WTP_GRID_NEVER_NAT}}%` decline connection; within the declining group, `{{REFUSE_WIRING_COST_NAT}}%` cite internal household wiring costs as the decisive barrier.
 * **Off-Grid Solar Constraints:** Among off-grid solar users, `{{PCT_SL_STUCK_T1}}%` remain constrained to basic Tier 1 lighting service due to low solar lantern capacities. Stated willingness to purchase a quality-verified Solar Home System (SHS) expands from `{{WTP_SOLAR_UPFRONT_NAT}}%` upfront to `{{WTP_SOLAR_12M_NAT}}%` under a 12-month installment plan and `{{WTP_SOLAR_24M_NAT}}%` over 24 months.
@@ -355,19 +354,25 @@ This diagnostic report presents the comprehensive empirical findings of the **{{
 
 ### 3. Access to Modern Energy Cooking Services (MECS) Key Findings
 
-* **Prevalence of Traditional Biomass:** Cooking practices remain heavily dominated by solid biomass fuels. Nationwide, `{{THREESTONE_NAT}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves account for `{{STOVE_TRAD_N}}%` of households, while certified **Improved Cookstoves (ICS)** serve `{{STOVE_ICS_N}}%`.
-* **Clean Cooking Adoption:** Modern clean cooking solutions (LPG and electric stoves) serve only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas vs. `{{CLEAN_STOVE_RUR}}%` in rural areas), almost exclusively through LPG. Electric cooking accounts for `{{STOVE_ELEC_N}}%` nationally (`{{STOVE_ELEC_U}}%` urban vs. `{{STOVE_ELEC_R}}%` rural).
+* **Prevalence of Traditional Biomass:** Cooking practices remain heavily dominated by solid biomass fuels. Nationwide, `{{THREESTONE_NAT}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves account for `{{STOVE_TRAD_N}}%` of households, while **Improved Cookstoves (ICS)** serve `{{STOVE_ICS_N}}%`.
+* **Clean Cooking Adoption:** Modern clean cooking solutions (LPG and electric stoves) serve only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas vs. `{{CLEAN_STOVE_RUR}}%` in rural areas), almost exclusively through LPG. Electric cooking accounts for `{{STOVE_ELEC_N}}%` nationally (`{{STOVE_ELEC_U}}%` urban vs. `{{STOVE_ELEC_R}}%` rural), reflecting that electric stove ownership remains confined to fewer than 0.2% of households (<7 sample households nationwide).
 * **MECS Tier Distribution (Clean Cooking Deficit):** Under MTF methodology, households in **Tier 0 or 1** (accounting for `{{COOK_T01_NAT}}%` nationally) have no access to clean cooking and remain exposed to hazardous household air pollution. Only `{{CLEAN_STOVE_NAT}}%` reach **Tier 4 or 5** (access to Modern Energy Cooking Services), while `{{TRANS_COOK_NAT}}%` obtain **Tier 2 or 3** (transitional/improved cooking through ICS).
-* **Stove Stacking & Multi-Biomass Stacking:** Rather than transitioning to single modern cooking devices, households frequently utilize multiple stoves. While clean stove ownership is limited to `{{PCT_CLEAN_STOVE_OWNERSHIP}}%`, multi-device biomass stacking (concurrent use of three-stone fires and traditional charcoal stoves) is prevalent, prolonging exposure to biomass smoke and domestic air pollution.
+* **Cookstove Time-Use Disparities:** Primary stove choice directly dictates domestic cooking duration:
+  - Three-stone open fires require an average of `{{HR_3STONE_NAT}}` hours per week (156 minutes per day).
+  - Traditional artisanal charcoal stoves require `{{HR_TRAD_NAT}}` hours per week (101 minutes per day).
+  - Improved Cookstoves (ICS) require `{{HR_ICS_NAT}}` hours per week (97 minutes per day).
+  - Modern LPG stoves require only `{{HR_LPG_NAT}}` hours per week (72 minutes per day), saving **over 11 hours per week** compared to traditional open fires.
+* **Stove Stacking & Multi-Biomass Stacking:** Rather than transitioning to single modern cooking devices, households frequently utilize multiple stoves. While clean stove ownership is limited to `{{PCT_CLEAN_STOVE_OWNERSHIP}}%`, among clean stove owners `{{PCT_STOVE_STACKING}}%` stack with traditional biomass stoves, resulting in `{{PCT_STACKING_DILUTION}}%` remaining in exposure Tier 0-1 due to this exposure dilution effect.
+* **Strategic e-Cooking Transition:** Given current empirical baselines (<0.2%), immediate national clean cooking priorities must center on expanding Improved Biomass Cookstoves (ICS) and commercial LPG distribution. Electric cooking (e-cooking) represents an aspirational leapfrogging pillar that should be piloted in high-reliability urban grid zones with energy-efficient appliances such as Electric Pressure Cookers (EPCs).
 
 ---
 
-### 4. Gender Disparities and Intra-Household Drudgery
+### 4. Gender Dimensions & Socio-Economic Equity Key Findings
 
-* **Female Headship and Access to Credit:** Female-headed households (FHH) comprise `{{FHH_SHARE}}%` of households nationwide. Formal credit access among female heads is lower than male heads (`{{CREDIT_ACCESS_FHH}}%` vs. `{{CREDIT_ACCESS_MHH}}%`), creating a liquidity barrier for upfront energy investments.
-* **Financing Relief for Female Heads:** Stated willingness to pay upfront grid connection fees is lower among female heads (`{{WTP_GRID_UPFRONT_FHH}}%` vs. `{{WTP_GRID_UPFRONT_MHH}}%` for male heads). However, under a 12-month installment schedule, female willingness surges to `{{WTP_GRID_12M_FHH}}%`, demonstrating the power of flexible utility financing.
-* **Decision-Making Authority:** Female household members make cookstove purchase decisions in `{{COOK_DEC_FEMALE_NAT}}%` of households (compared to `{{COOK_DEC_MALE_NAT}}%` by male members and `{{COOK_DEC_JOINT_NAT}}%` jointly), highlighting that clean cooking market interventions must be directly targeted to women.
-* **Time Allocation for Domestic Energy:** Adult women spend an average of `{{WOMEN_COOK_TIME}}` minutes per day cooking (compared to `{{MEN_COOK_TIME}}` minutes for adult men) and `{{WOMEN_FUEL_TIME}}` minutes per day collecting firewood (compared to `{{MEN_FUEL_TIME}}` minutes for men), equating to **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per year** to fuel gathering.
+* **Female Headship and Access to Credit:** Female-headed households (FHH) comprise `{{FHH_SHARE}}%` of households nationwide. Formal credit access among female heads stands at `{{CREDIT_ACCESS_FHH}}%`, compared to `{{CREDIT_ACCESS_MHH}}%` among male heads, creating a structural liquidity barrier for upfront energy investments.
+* **Financing Relief for Female Heads:** Stated willingness to pay upfront grid connection fees is lower among female heads (`{{WTP_GRID_UPFRONT_FHH}}%` vs. `{{WTP_GRID_UPFRONT_MHH}}%` for male heads). However, under a 12-month installment schedule, female willingness surges to `{{WTP_GRID_12M_FHH}}%`, demonstrating the catalytic impact of flexible utility financing in overcoming gendered credit gaps.
+* **Decision-Making Authority:** Female household members make cookstove purchase decisions in `{{COOK_DEC_FEMALE_NAT}}%` of households (compared to `{{COOK_DEC_MALE_NAT}}%` by male members and `{{COOK_DEC_JOINT_NAT}}%` jointly), underscoring that clean cooking market interventions and promotional channels must be tailored directly to women.
+* **Home Production and Time Poverty (Dinkelman 2011 Framework):** Domestic energy burdens fall disproportionately on women. Adult women spend an average of `{{WOMEN_COOK_TIME}}` minutes per day cooking (compared to `{{MEN_COOK_TIME}}` minutes for adult men) and `{{WOMEN_FUEL_TIME}}` minutes per day collecting firewood (compared to `{{MEN_FUEL_TIME}}` minutes for men), equating to **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per year** solely to fuel gathering. Expanding access to modern cooking fuels and reliable electricity frees female labor from domestic chores, releasing substantial time for wage-earning employment and micro-enterprise development.
 
 ---
 
@@ -389,7 +394,7 @@ This diagnostic report presents the comprehensive empirical findings of the **{{
 | **Primary Stove: Three-Stone / Open Fire** | `{{THREESTONE_NAT}}` | `{{THREESTONE_URB}}` | `{{THREESTONE_RUR}}` | Rural biomass reliance & free gathering |
 
 *Note: Table 1.1 summarizes baseline multi-tier energy access and service quality. An Enumeration Area (EA) is defined as electrified if at least one surveyed household has an active national grid connection (`max(grid_hh) == 1`).*
-*¹ **Grid Uptake Rate in Electrified EAs:** The percentage of households residing in electrified EAs that are connected to the grid ($\text{Connected HHs in Electrified EAs} \div \text{Total HHs in Electrified EAs} \times 100$).*
+*¹ **Grid Uptake Rate in Electrified EAs:** The percentage of households residing in electrified EAs that are connected to the grid ($	ext{Connected HHs in Electrified EAs} \div 	ext{Total HHs in Electrified EAs} 	imes 100$).*
 *² **Under-the-Grid Unconnected Deficit:** The percentage of households residing in electrified EAs who remain unconnected to the low-voltage network.*
 
 ---
@@ -400,63 +405,14 @@ This diagnostic report presents the comprehensive empirical findings of the **{{
 
 Modern energy services underpin macroeconomic resilience, agricultural productivity, educational outcomes, public healthcare delivery, and gender equality. In {{COUNTRY_NAME}}, expanding access to reliable and affordable power has been placed at the center of the national development agenda. However, power sector expansion takes place within a challenging physical and macroeconomic environment characterized by geographic dispersal, capital investment deficits, transmission bottlenecks, and currency volatility.
 
-<!-- [FILL IN: Macroeconomic Context and Power Sector Architecture
-Instructions:
-- National macro context: Income classification (LIC / LMIC), geographic land area (km2), total population, GDP per capita (USD), poverty headcount rate, and consumption Gini index.
-- Power sector governance: Responsible ministry, regulatory authority, national transmission/generation utility, and distribution entities (state-owned, private concessions, or municipal distributors).
-- Generation mix and installed capacity: Total installed capacity (MW), generation profile (% hydro, % solar, % heavy fuel oil/diesel, % cross-border imports).
-- Retail electricity tariffs: Average cost per kWh in USD and {{CURRENCY_CODE}}, lifeline tariff structure, and connection fee schedule.
-- National development commitments: National electrification policy, Vision commitments, M300 Africa Energy Compact targets, and ongoing World Bank / donor operations (e.g., ASCENT Project).
-
-Draft Example:
-"With a population of approximately [X million] across [Y km2], {{COUNTRY_NAME}} is classified as a [lower-income / lower-middle-income] economy with a GDP per capita of [US$ Z]. The power sector operates under the policy direction of the [Ministry Name] and the economic regulation of [Regulatory Commission]. Bulk power generation and transmission are managed by the state utility [Utility Name], which operates [X MW] of installed capacity, dominated by [hydropower (X%) and thermal imports (Y%)]. Retail electricity tariffs average [US$ 0.XX per kWh], representing one of the [highest/lowest] tariff structures in the sub-region. Under the national [Electrification Strategy / Vision 2030], the Government has committed to achieving universal electricity access by 2030, supported by the World Bank's ASCENT regional program and the M300 Africa Energy Compact."
-] -->
+> [!NOTE]
+> **COUNTRY COORDINATOR ACTION REQUIRED:** Review and adapt country-specific macroeconomic figures, institutional mandates (Ministry, Regulator, Utility), generation mix, and historical survey benchmarks before publication.
 
 The governance of {{COUNTRY_NAME}}'s energy sector involves distinct institutional mandates across policy formulation, technical regulation, generation, transmission, and retail distribution. Sector policy is directed by the national Ministry responsible for energy, which establishes electrification roadmaps, renewable energy master plans, and national targets aligned with the United Nations Sustainable Development Goals. Technical and economic regulation is executed by the national energy regulatory authority, which oversees license issuance, tariff methodology determination, grid code enforcement, and service quality benchmarks.
 
 Bulk power generation and high-voltage transmission are typically anchored by the national power utility. The generation asset base reflects the country's natural resource endowments, combining domestic hydropower resources, thermal heavy fuel oil or diesel plants, grid-connected solar photovoltaic installations, and cross-border regional power pool interconnectors. Retail distribution is managed either through centralized utility regional directorates, municipal electricity distributors, or public-private concessionaires operating licensed distribution service areas. In rural and peri-urban areas beyond the immediate reach of the transmission grid, dedicated rural electrification agencies coordinate decentralized mini-grids and off-grid solar initiatives.
 
 Expanding energy access requires addressing the financial equilibrium of the power sector. Retail electricity tariffs must balance cost-reflectivity for utility financial viability against affordability for vulnerable and low-income consumer segments. Lifeline tariff blocks are commonly deployed to protect low-consumption residential consumers, while commercial and industrial tariffs provide cross-subsidies. High technical and commercial line losses, illegal connections, unmetered consumption, and bill collection challenges often constrain distribution utilities from financing last-mile service drops. Consequently, comprehensive diagnostic surveys such as the Multi-Tier Framework are vital to illuminate household demand elasticities, payment modalities, and service bottlenecks.
-
----
-
-<!-- [FILL IN: Replace this section with country-specific power sector description.
-
-Suggested content:
-
-- National development context: SDG 7 / Vision statements / National electrification policy
-
-- Power sector regulatory framework: name of regulatory body
-
-- National utility for generation and/or transmission
-
-- Distribution entities: regional distributors, municipal utilities, or a single national distributor
-
-- Generation mix: hydropower, solar, thermal, imports
-
-- Cost of electricity per kWh and key tariff schedules
-
-- Any relevant electricity access program (ASCENT, RREA, mini-grid program, M300 Compact)
-
----
-
-### Box 1.1: Historical Survey Validation & SDG 7 Methodological Harmonization
-
-Tracking progress toward Sustainable Development Goal 7 (Target 7.1.1) requires contextualizing MTF diagnostic findings within the broader trajectory of national empirical surveys documented in the **SDG 7 Global Electrification Database**. In evaluating historical trends, **modeled trend projections and econometric extrapolations must be strictly demarcated from empirical household surveys**, as modeling assumptions frequently smooth over sharp technology shifts or mischaracterize off-grid solar uptake.
-
-Historically, national electrification tracking in {{COUNTRY_NAME}} relied predominantly on binary gatekeeper questions (*"Does your household have electricity?"*) in national censuses and living standards surveys. These historical inquiries captured physical connectivity to the centralized utility grid, leaving decentralized off-grid solutions unmeasured or classified strictly as alternative lighting sources.
-
-| Survey Year & Benchmark Source | National Access (%) | Urban Access (%) | Rural Access (%) | Questionnaire Definition & Technology Scope | Treatment of Off-Grid Solar |
-| :--- | :---: | :---: | :---: | :--- | :--- |
-| **Historical Empirical Surveys** (Pre-MTF) | `{{SDG7_HIST_NAT}}%` | `{{SDG7_HIST_URB}}%` | `{{SDG7_HIST_RUR}}%` | Binary grid connection gate questions (*"Connected to electricity grid / mains"*). Concentrated in major urban centers. | Excluded from electrification metrics or treated as secondary lighting. |
-| **Recent Multi-Topic Surveys** (Afrobarometer / MICS) | `{{SDG7_RECENT_NAT}}%` | `{{SDG7_RECENT_URB}}%` | `{{SDG7_RECENT_RUR}}%` | Primary household power source (*"Main electricity source"*). Partial capture of off-grid solar. | Partial capture (`{{SDG7_RECENT_SOLAR}}%`); excludes pico-solar and small lanterns. |
-| **{{SURVEY_YEAR}} MTF Household Survey** (Physical Ownership) | `{{ELEC_ACC_NAT}}%` | `{{ELEC_ACC_URB}}%` | `{{ELEC_ACC_RUR}}%` | Exhaustive multi-device roster across 6 modern qualifying sources. Complete capture of Solar Home Systems (SHS) and solar lanterns (`{{SOLAR_ACC_NAT}}%` solar adoption). | Fully captured via device-specific technical modules (`SEC_C`). |
-| **{{SURVEY_YEAR}} MTF Tier 1+ Multi-Tier Access** (Service Delivery) | `{{ELEC_TIER1_PLUS_NAT}}%` | `{{ELEC_TIER1_PLUS_URB}}%` | `{{ELEC_TIER1_PLUS_RUR}}%` | Minimum performance threshold across 7 technical attributes (capacity $\ge$ 3W, availability $\ge$ 4 hrs/day, 1 hr evening). | Filters out sub-Tier 1 pico-solar; converges toward functional service standards. |
-
-> **Key Diagnostic Takeaways:**
-> 1. **Grid Stability vs. Off-Grid Surge:** While national grid connectivity (`{{GRID_ACC_NAT}}%`) exhibits gradual expansion aligned with historical utility trajectories, total modern electricity access has expanded significantly to `{{ELEC_ACC_NAT}}%`, driven predominantly by decentralized solar penetration in rural areas (`{{SOLAR_ACC_RUR}}%`).
-> 2. **Resolving Discrepancies with General Perception Surveys:** Generic opinion and multi-topic surveys (such as Afrobarometer) often report lower off-grid figures because respondents do not identify small plug-and-play solar lanterns or 10–20W kits as formal "electricity" when asked a single question. In contrast, the MTF granular appliance and device inventory uncovers widespread decentralized adoption.
-> 3. **The Ownership vs. Service Gap:** When evaluated against MTF Multi-Tier service standards, raw device ownership narrows to Tier 1+ qualified access, demonstrating that closing the energy access deficit requires advancing beyond basic task lighting toward high-capacity, reliable Tier 2+ systems.
 
 ---
 
@@ -511,7 +467,7 @@ Off-grid solar devices are classified by capacity, service level, and appliance 
 
 ### 1.3 Survey Implementation, Sample Design, and Weighting
 
-The {{SURVEY_YEAR}} MTF Household Survey in {{COUNTRY_NAME}} was executed using a stratified two-stage cluster sampling design engineered to produce statistically robust, nationally representative estimates as well as disaggregated indicators across urban and rural domains. The primary sampling frame was derived from the most recent National Population and Housing Census administered by the National Statistics Agency.
+The {{SURVEY_YEAR}} MTF Household Survey in {{COUNTRY_NAME}} was executed using a stratified two-stage cluster sampling design engineered to produce statistically robust, nationally representative estimates as well as disaggregated indicators across urban and rural domains. The primary sampling frame was derived from the most recent National Population and Housing Census administered by the National Statistics Agency (INE).
 
 In the first sampling stage, Primary Sampling Units (PSUs)—defined as census Enumeration Areas (EAs)—were selected with Probability Proportional to Size (PPS), where size was measured by the number of residential households recorded in the census frame. Sampling was independently stratified across `{{STRATA_COUNT}}` strata, formed by crossing all `{{ADMIN1_COUNT}}` administrative `{{ADMIN1_UNIT_LABEL_PLURAL}}` with geographic locality (urban vs. rural).
 
@@ -531,6 +487,11 @@ Sampling weights were subsequently adjusted for non-response at the EA level and
 
 In {{COUNTRY_NAME}}, `{{ELEC_ACC_NAT}}%` of households have access to electricity at Tier 1 or above, while `{{ELEC_T0_NAT}}%` remain in Tier 0. In urban areas, grid connection reaches `{{GRID_ACC_URB}}%` of households and off-grid solar solutions serve `{{SOLAR_ACC_URB}}%`. In rural areas, the national grid reaches `{{GRID_ACC_RUR}}%` of households, while off-grid solar systems serve `{{SOLAR_ACC_RUR}}%` of rural households.
 
+Figure 1 illustrates the distribution of households across Multi-Tier Framework electricity access tiers (Tier 0 to Tier 5) for national, urban, and rural populations.
+
+![Figure 1: Multi-Tier Framework Electricity Access Tier Distribution Across National, Urban, and Rural Populations]({{CHART_ELEC_TIERS}})
+*Figure 1: Distribution of households across Multi-Tier Framework electricity access tiers (Tier 0 to Tier 5) nationwide, in urban areas, and in rural areas.*
+
 The national electrification profile reflects a diverse multi-source technological landscape. Under international monitoring guidelines established for SDG 7.1.1 and the Multi-Tier Framework, formal electricity access is defined across six qualifying modern technologies:
 1. National central grid connections
 2. Isolated mini-grids and micro-grids (solar, hydro, or hybrid diesel)
@@ -541,12 +502,7 @@ The national electrification profile reflects a diverse multi-source technologic
 
 **Strict Exclusion Rule (SDG 7.1.1):** Disposable dry-cell battery torches, handheld flashlights, and single-use batteries are **strictly excluded** from electrification metrics. While dry-cell torches provide basic task illumination in unserved communities, they do not constitute modern electrical service due to limited luminosity, absence of appliance-powering capacity, high recurrent unit costs, and hazardous environmental disposal footprints.
 
-Figure 1 illustrates the distribution of households across Multi-Tier Framework electricity access tiers (Tier 0 to Tier 5) for national, urban, and rural populations.
-
-![Figure 1: Multi-Tier Framework Electricity Access Tier Distribution Across National, Urban, and Rural Populations]({{CHART_ELEC_TIERS}})
-*Figure 1: Distribution of households across Multi-Tier Framework electricity access tiers (Tier 0 to Tier 5) nationwide, in urban areas, and in rural areas.*
-
-Figure 2 delineates the primary electricity technology source mix across the qualifying modern sources, explicitly contrasting modern solutions against excluded disposable battery devices.
+Figure 2 delineates the primary electricity technology source mix across qualifying modern sources, explicitly contrasting modern solutions against excluded disposable battery devices.
 
 ![Figure 2: Household Electricity Source Mix and Exclusion of Dry-Cell Torches Under SDG 7.1.1]({{CHART_SOURCE_MIX}})
 *Figure 2: Electrification source breakdown across the six qualifying modern technologies and the exclusion of dry-cell battery lighting.*
@@ -587,7 +543,7 @@ This unequal access across income groups creates an **energy poverty penalty**. 
 | **Highest Quintile (Q5) — Connected** | `{{COPING_SPEND_Q5_CONN}}` | `{{COPING_PCT_Q5_CONN}}%` | Metered grid & rechargeable backup |
 | **National Average (All Unelectrified)** | `{{COPING_SPEND_NAT_UNEL}}` | `{{COPING_PCT_NAT_UNEL}}%` | Inferior lighting substitutes |
 
-*Note: Table 2.2 empirically illustrates the energy poverty penalty. Coping expenditures capture monthly purchases of non-electric lighting and power substitutes (Section H: dry-cell batteries, candles, kerosene, and fee-based mobile phone charging) expressed as a percentage of total household consumption expenditure.*
+*Note: Table 2.2 empirically illustrates the energy poverty penalty. Coping expenditures capture monthly purchases of non-electric lighting and power substitutes (dry-cell batteries, candles, kerosene, and fee-based mobile phone charging) expressed as a percentage of total household consumption expenditure.*
 
 As documented in Table 2.2, unelectrified households in the lowest expenditure quintile spend `{{COPING_PCT_Q1_UNEL}}%` of their total monthly budget solely on coping lighting mechanisms. By contrast, grid-connected households in the same quintile spend just `{{COPING_PCT_Q1_CONN}}%` of their budget on electricity, illustrating that lack of electricity access forces the poor to pay an exorbitant premium for basic task lighting.
 
@@ -600,7 +556,7 @@ Figure 3 displays the progression of electricity and modern energy cooking acces
 
 ### 2.3 Evaluation of Electricity Access by Attribute
 
-In the Multi-Tier Framework, access to electricity is not measured simply by physical connection, but by assessing service quality across seven multi-dimensional attributes. Each attribute is categorized from Tier 0 to Tier 5, with the aggregate tier determined by the lowest tier attained among the attributes. Figure 4 displays the multi-attribute radar profile for grid-connected households across urban and rural settlements.
+In the Multi-Tier Framework, access to electricity is measured by assessing service quality across seven multi-dimensional attributes. Each attribute is categorized from Tier 0 to Tier 5, with the aggregate tier determined by the lowest tier attained among the attributes. Figure 4 displays the multi-attribute radar profile for grid-connected households across urban and rural settlements.
 
 ![Figure 4: Multi-Tier Framework Electricity Attribute Performance Radar for Grid-Connected Households (Urban vs. Rural)]({{CHART_ELEC_RADAR}})
 *Figure 4: Multi-Tier Framework electricity attribute performance radar chart for grid-connected households across urban and rural settlements (0 to 5 Tier Scale).*
@@ -612,11 +568,15 @@ The Capacity attribute evaluates whether the electricity supply provides suffici
 * **Medium-Load Appliances (Tier 3):** `{{IS_MED_NAT}}%` own Tier 3 appliances, led by domestic refrigerators and freezers (`{{HAS_FRIDGE_NAT}}%`).
 * **High & Very High-Load Appliances (Tiers 4–5):** `{{IS_HIGH_NAT}}%` own Tier 4 appliances (electric irons: `{{HAS_IRON_NAT}}%`; microwaves: `{{HAS_MICRO_NAT}}%`), while Tier 5 thermal appliances (air conditioners: `{{HAS_AC_NAT}}%`; water heaters: `{{HAS_GEYSER_NAT}}%`) are owned by only `{{IS_VERYHIGH_NAT}}%` nationwide (`{{IS_VERYHIGH_URB}}%` urban vs. `{{IS_VERYHIGH_RUR}}%` rural).
 
+Overall lighting point ownership stands at `{{HAS_ELECTRIC_LIGHTS_NAT}}%` for electric bulbs, expanding to `{{HAS_ANY_LIGHTS_NAT}}%` when standalone solar lighting is included.
+
 #### 2. Availability (Daily Duration and Evening Supply)
 The Availability attribute captures electricity availability during the whole 24-hour day and specifically during the 4 peak evening hours (18:00 to 22:00) when household electricity demand is highest. While grid connections generally provide continuous daily service, evening supply deficits remain an operational issue: `{{PCT_EVE_SHORTAGE}}%` of grid-connected households experience less than 4 hours of supply during peak evening hours, restricting study time for school children and limiting evening productive activities.
 
 #### 3. Reliability (Unscheduled Power Outages)
-The Reliability attribute reflects how frequently electricity from the national grid is interrupted in a typical week. MTF standards set a benchmark of no more than 3 interruptions per week for Tier 5 and no more than 14 for Tier 4. Grid customers report an average of `{{AVG_OUTAGES_PER_WEEK}}` unexpected outages per week. Because weekly outage frequencies average around one disruption per week, grid reliability meets the Tier 5 threshold and does not constitute the primary binding bottleneck for connected customers.
+The Reliability attribute reflects how frequently electricity from the national grid is interrupted in a typical week. MTF standards set a benchmark of no more than 3 interruptions per week for Tier 5 and no more than 14 for Tier 4. Grid customers report an average of `{{AVG_OUTAGES_PER_WEEK}}` unexpected outages per week.
+
+Detailed analysis of weekly outage intervals reveals that `{{OUTAGES_LT3_WK}}%` of grid-connected households experience fewer than 3 interruptions per week, fully satisfying the Tier 5 reliability threshold. An additional `{{OUTAGES_3TO14_WK}}%` experience 3 to 14 interruptions per week (Tier 4 standard), while `{{OUTAGES_GT14_WK}}%` experience more than 14 outages per week. Consequently, physical outage frequency is not the binding constraint preventing households from reaching Tier 5.
 
 #### 4. Quality (Voltage Stability and Appliance Damage)
 The Quality attribute evaluates whether voltage fluctuations or surges occur with sufficient severity to damage electrical appliances. In general, household electronics and motor-driven appliances require stable voltage to operate safely. Voltage instability represents a critical bottleneck: `{{PCT_VOLTAGE_DAMAGE}}%` of grid-connected households report that voltage fluctuations and power surges have caused permanent damage to their appliances (such as televisions, refrigerators, and sound systems).
@@ -632,14 +592,18 @@ The Health and Safety attribute assesses whether households have experienced ser
 
 ---
 
-### 2.4 Improving Electricity Access: Densification, WTP, and Off-Grid Scale-Up
+### 2.4 Strategic Segments, Densification, WTP, and Off-Grid Scale-Up
+
+#### The Three Strategic Population Segments
+Evaluating household electricity access through an operational lens reveals three distinct target segments:
+1. **Segment 1: Connected Grid Households Requiring Quality Upgrades:** Households with existing grid infrastructure who require transformer stabilization, Automatic Voltage Regulators (AVRs), and evening peak reinforcement to eliminate appliance damage (`{{PCT_VOLTAGE_DAMAGE}}%`) and evening supply shortfalls (`{{PCT_EVE_SHORTAGE}}%`).
+2. **Segment 2: Under-the-Grid Unconnected Households:** Households residing in electrified Enumeration Areas who remain unconnected primarily due to upfront connection fees and internal wiring constraints.
+3. **Segment 3: Remote Off-Grid Households:** Dispersed communities beyond the economic reach of the grid requiring high-quality decentralized Solar Home Systems (SHS) and mini-grids.
 
 #### The "Under-the-Grid" Densification Paradox
-In {{COUNTRY_NAME}}, `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households reside in electrified Enumeration Areas (EAs) without an active connection (`{{UNDER_GRID_UNCONNECTED_URB}}%` in urban areas and `{{UNDER_GRID_UNCONNECTED_RUR}}%` in rural areas). The overall grid uptake rate within electrified EAs is `{{GRID_UPTAKE_NAT}}%` nationally (`{{GRID_UPTAKE_URB}}%` in urban areas and `{{GRID_UPTAKE_RUR}}%` in rural areas).
+In {{COUNTRY_NAME}}, `{{UNDER_THE_GRID_NAT}}%` of households reside in electrified Enumeration Areas (EAs)—meaning low-voltage distribution transformers and lines already pass directly through their communities. However, only `{{GRID_UPTAKE_NAT}}%` of households living in these electrified EAs are connected to the grid (`{{GRID_UPTAKE_URB}}%` in urban areas and `{{GRID_UPTAKE_RUR}}%` in rural areas), leaving an unconnected deficit of `{{UNDER_GRID_UNCONNECTED_NAT}}%`.
 
-An Enumeration Area is classified as electrified if at least one residential household possesses a functional connection to the national distribution grid (`max(grid_hh) == 1`). Households living within these EAs are physically "under the grid"—meaning that low-voltage distribution transformers and lines are already present within their immediate neighborhood.
-
-Connecting an "under-the-grid" household requires only a service drop wire, a meter installation, and internal household wiring, bypassing the heavy capital expenditure required for high-voltage transmission lines, substation construction, and medium-voltage feeder extensions. Densification therefore represents the most cost-effective capital investment opportunity available to the national utility.
+Connecting an under-the-grid household requires only a service drop wire, an electric meter, and internal household wiring, bypassing the substantial capital expenditure required for high-voltage transmission lines, substations, and medium-voltage feeder extensions. Expanding grid uptake in electrified EAs from the baseline rate of `{{GRID_UPTAKE_NAT}}%` to **60.0%** would add **27.2 percentage points** to national electrification, connecting thousands of families at the lowest marginal cost per connection.
 
 Figure 5 visualizes the national densification funnel: progressing from total households to residence in electrified EAs, connected households, and the unconnected deficit.
 
@@ -659,52 +623,30 @@ Reported obstacles include:
 4. **Tenancy and Landlord Permission Barriers:** `{{BARRIER_LANDLORD_NAT}}%` of unconnected households report that landlords refuse to finance or authorize connection installations.
 5. **Service Unreliability & Bureaucratic Delays:** `{{BARRIER_UNREL_NAT}}%` and `{{BARRIER_ADMIN_NAT}}%`.
 
-#### Contingent Valuation & Willingness to Pay (WTP) Dynamics
-The MTF survey conducted a contingent valuation bidding experiment to evaluate household willingness to connect across structured financing terms. The analysis evaluates two distinct analytical perspectives:
+#### Contingent Valuation & Willingness to Pay Dynamics (Kenneth Lee et al. 2020 Framework)
+Understanding household connection demand requires examining how stated adoption responds to price reductions and financing terms. In their landmark experimental evaluation in Kenya, Kenneth Lee, Edward Miguel, and Catherine Wolfram (2020) demonstrated that grid connection demand is exceptionally price elastic: demand collapses rapidly as connection charges rise above zero, even when households recognize significant potential economic benefits from electrification. Furthermore, acute credit constraints prevent liquidity-constrained households from paying lump-sum connection charges, creating a substantial gap between upfront demand and financed demand.
 
-1. **Cumulative Market Expansion (Demand Curves):** Shows the cumulative expansion of connected households as financing constraints are progressively relaxed.
-2. **Mutually Exclusive Financing Target Segments (100% Partition):** Categorizes unconnected households into distinct policy target groups based on the minimum level of financial support required.
+The MTF contingent valuation bidding experiment in {{COUNTRY_NAME}} rigorously reflects these dynamics:
+* **Upfront Payment:** Only `{{WTP_GRID_UPFRONT_NAT}}%` of unconnected households can pay the connection fee upfront in cash (`{{WTP_GRID_UPFRONT_URB}}%` in urban areas and `{{WTP_GRID_UPFRONT_RUR}}%` in rural areas).
+* **Installment Financing Expansion:** Stated willingness expands to `{{WTP_GRID_3M_NAT}}%` over 3 months, `{{WTP_GRID_6M_NAT}}%` over 6 months, and surges to `{{WTP_GRID_12M_NAT}}%` under a **12-month installment plan**.
+* **Fee Waivers and Internal Wiring Barriers:** When the connection fee is completely waived, `{{WTP_GRID_WAIVED_NAT}}%` indicate willingness to connect. Conversely, `{{WTP_GRID_NEVER_NAT}}%` decline connection even at zero upfront fee; among the group of decliners, `{{REFUSE_WIRING_COST_NAT}}%` cite internal household wiring costs as the primary reason.
 
-Figure 7 plots the comparative cumulative willingness-to-pay demand curves across financing modalities for national grid connections, off-grid solar systems, and clean cookstoves.
+Figure 7 plots the comparative cumulative willingness-to-pay demand curves across payment modalities.
 
 ![Figure 7: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
-*Figure 7: Willingness to pay cumulative demand curves across financing modalities for grid connections, off-grid solar systems, and clean cookstoves.*
+*Figure 7: Comparative cumulative willingness-to-pay demand curves across payment modalities.*
 
-Contingent valuation bidding examines household connection willingness across payment structures:
-* **Upfront Payment:** `{{WTP_GRID_UPFRONT_NAT}}%` of unconnected households express willingness to connect upfront (`{{WTP_GRID_UPFRONT_URB}}%` in urban areas and `{{WTP_GRID_UPFRONT_RUR}}%` in rural areas).
-* **3-Month Installment Plan:** `{{WTP_GRID_3M_NAT}}%` express willingness to connect.
-* **6-Month Installment Plan:** `{{WTP_GRID_6M_NAT}}%` express willingness to connect.
-* **12-Month Installment Plan:** `{{WTP_GRID_12M_NAT}}%` express willingness to connect.
-* **Waived Upfront Connection Fee:** `{{WTP_GRID_WAIVED_NAT}}%` indicate willingness to connect if the upfront fee is waived entirely.
-* **Decline at Zero Upfront Fee:** Nationally, `{{WTP_GRID_NEVER_NAT}}%` of unconnected households indicate they would decline connection even at zero upfront fee; among the group of decliners, `{{REFUSE_WIRING_COST_NAT}}%` cite internal household wiring costs as the primary reason.
-
-Figure 8 displays the 100% mutually exclusive financing segmentation for unconnected households.
+Figure 8 displays the 100% mutually exclusive financing segmentation for unconnected households, classifying families by the minimum level of financial support required to achieve connection.
 
 ![Figure 8: Mutually Exclusive Financing Target Segments for Unconnected Households]({{CHART_WTP_SEGMENTS}})
 *Figure 8: Mutually exclusive financing target segments for unconnected households (summing to 100%) based on minimum financing relief required.*
 
-#### Off-Grid Solar Market Dynamics
-For households residing in remote, topographically complex, or sparsely populated settlements beyond the economic reach of grid extension, decentralized off-grid solar solutions represent the primary electrification pathway. Stated willingness to pay for a Solar Home System (SHS) across financing modalities is evaluated:
-* **Upfront Payment:** `{{WTP_SOLAR_UPFRONT_NAT}}%` of households nationally.
-* **6-Month Plan:** `{{WTP_SOLAR_6M_NAT}}%` of households nationally.
-* **12-Month Plan:** `{{WTP_SOLAR_12M_NAT}}%` of households nationally.
-* **24-Month Plan:** `{{WTP_SOLAR_24M_NAT}}%` of households nationally.
-* **Decline Under Financing:** `{{WTP_SOLAR_NEVER_NAT}}%` of households indicate they would not acquire an SHS under any presented terms; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs as the primary factor.
-
-<!-- [FILL IN: Off-Grid Solar Initiatives and Regulatory Framework
-Instructions:
-- If the country has active government or donor-supported off-grid solar initiatives (e.g., Results-Based Financing [RBF], credit facilities, solar market acceleration projects), summarize them here.
-- Detail whether import duties and VAT are waived on certified solar products (IEC/VeraSol).
-- If the survey measured public awareness of a specific off-grid fund, report the awareness metric `{{OFF_GRID_FUND_AWARE_NAT}}%` here. If no program exists, delete this block.
-
-Draft Example:
-"To accelerate electrification in remote areas beyond the national grid, the Government and development partners established the [Program Name], a [US$ XX million] Results-Based Financing facility designed to de-risk private solar distributors and subsidize tier-qualifying Solar Home Systems. However, public awareness of this financing window remains limited, with only `{{OFF_GRID_FUND_AWARE_NAT}}%` of households nationwide (`{{OFF_GRID_FUND_AWARE_URB}}%` urban vs. `{{OFF_GRID_FUND_AWARE_RUR}}%` rural) reporting familiarity with the initiative."
-] -->
-
-Public awareness of government off-grid financing mechanisms is recorded at `{{OFF_GRID_FUND_AWARE_NAT}}%` nationwide (`{{OFF_GRID_FUND_AWARE_URB}}%` in urban areas and `{{OFF_GRID_FUND_AWARE_RUR}}%` in rural areas).
-
-#### Backup Lighting Coping Mechanisms for Grid Households
-During unscheduled blackouts and load-shedding intervals, grid-connected households rely on alternative lighting coping mechanisms. Dry-cell battery torches and handheld flashlights are the predominant backup source, utilized by `{{GRID_BACKUP_TORCH_NAT}}%` of grid households, while `{{GRID_BACKUP_NONE_NAT}}%` report having no alternative backup source. Rechargeable lanterns and candles account for minimal shares, underscoring the reliance on disposable dry-cell batteries during outages.
+#### Segment 3: Off-Grid Solar Market Dynamics
+For households residing beyond the economic reach of the grid, decentralized off-grid solar solutions represent the primary electrification pathway:
+* **Current Constraints:** Among existing off-grid solar users, `{{PCT_SL_STUCK_T1}}%` remain constrained to basic Tier 1 lighting service due to low solar lantern capacities (<10W).
+* **SHS Adoption Elasticity:** Stated willingness to purchase a quality-verified Solar Home System expands from `{{WTP_SOLAR_UPFRONT_NAT}}%` upfront to `{{WTP_SOLAR_6M_NAT}}%` over 6 months, `{{WTP_SOLAR_12M_NAT}}%` over 12 months, and `{{WTP_SOLAR_24M_NAT}}%` over 24 months. Nationally, `{{WTP_SOLAR_NEVER_NAT}}%` of households indicate they would not acquire an SHS under any presented terms; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs as the primary factor.
+* **Awareness of Financing Windows:** Public awareness of government off-grid financing mechanisms is recorded at `{{OFF_GRID_FUND_AWARE_NAT}}%` nationwide (`{{OFF_GRID_FUND_AWARE_URB}}%` in urban areas and `{{OFF_GRID_FUND_AWARE_RUR}}%` in rural areas), indicating that consumer education campaigns are urgently needed.
+* **Backup Lighting Coping Mechanisms:** During blackouts, grid-connected households rely heavily on disposable dry-cell battery torches (`{{GRID_BACKUP_TORCH_NAT}}%`), while `{{GRID_BACKUP_NONE_NAT}}%` have no alternative backup source.
 
 ---
 
@@ -716,7 +658,7 @@ Beyond the choice of stove and fuel technologies, different contextual factors c
 
 Cooking energy in {{COUNTRY_NAME}} is characterized by an overwhelming reliance on solid biomass fuels. Solid fuels—principally gathered firewood and artisanal charcoal—serve over 95% of the population. In rural areas, gathered firewood is the nearly universal primary cooking fuel, whereas urban households rely heavily on purchased charcoal alongside firewood. Clean cooking fuels such as Liquefied Petroleum Gas (LPG) and grid electricity remain confined to a small fraction of affluent urban households (`{{CLEAN_STOVE_NAT}}%` nationally; `{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural).
 
-Nationwide, `{{STOVE_3STONE_N}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves serve `{{STOVE_TRAD_N}}%` of households nationally (`{{STOVE_TRAD_U}}%` urban vs. `{{STOVE_TRAD_R}}%` rural). Certified **Improved Cookstoves (ICS)** represent only `{{STOVE_ICS_N}}%` nationwide (`{{STOVE_ICS_U}}%` in urban areas and `{{STOVE_ICS_R}}%` in rural areas), indicating that the commercial market for high-efficiency biomass stoves remains nascent. Modern clean fuel stoves (LPG and electric) are used by only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking accounting for `{{STOVE_ELEC_N}}%` nationwide.
+Nationwide, `{{STOVE_3STONE_N}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves serve `{{STOVE_TRAD_N}}%` of households nationally (`{{STOVE_TRAD_U}}%` urban vs. `{{STOVE_TRAD_R}}%` rural). **Improved Cookstoves (ICS)** represent only `{{STOVE_ICS_N}}%` nationwide (`{{STOVE_ICS_U}}%` in urban areas and `{{STOVE_ICS_R}}%` in rural areas), indicating that the commercial market for high-efficiency biomass stoves remains nascent. Modern clean fuel stoves (LPG and electric) are used by only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking accounting for `{{STOVE_ELEC_N}}%` nationwide.
 
 Figure 9 illustrates the distribution of primary cookstove technologies and fuels across national, urban, and rural populations.
 
@@ -743,7 +685,7 @@ Table 3.1 details the distribution of primary cookstoves across localities along
 
 In the MTF assessment of access to clean cooking solutions, households are evaluated across six technical and contextual attributes: (i) exposure, (ii) efficiency, (iii) convenience, (iv) safety, (v) affordability, and (vi) fuel availability. The lowest tier score attained among the attributes determines a household's aggregate cooking tier:
 * **Tiers 4 and 5 (Access to MECS):** Households reaching aggregate Tier 4 or 5 have access to Modern Energy Cooking Services (clean fuels including LPG, electricity, piped gas, and biogas).
-* **Tiers 2 and 3 (Improved / In Transition):** Households reaching aggregate Tier 2 or 3 have improved cooking services, primarily through certified high-efficiency improved biomass cookstoves (ICS).
+* **Tiers 2 and 3 (Improved / In Transition):** Households reaching aggregate Tier 2 or 3 have improved cooking services, primarily through high-efficiency Improved Cookstoves (ICS).
 * **Tiers 0 and 1 (No Access / High Exposure):** Households in aggregate Tier 0 or 1 have no access to clean cooking and remain exposed to severe indoor air pollution, burning raw biomass in unvented cooking environments.
 
 Figure 10 displays the distribution of households across MECS cooking tiers nationwide, in urban areas, and in rural areas.
@@ -753,13 +695,13 @@ Figure 10 displays the distribution of households across MECS cooking tiers nati
 
 As shown in Figure 10, the vast majority of households (`{{COOK_T01_NAT}}%` nationwide; `{{COOK_T01_URB}}%` urban and `{{COOK_T01_RUR}}%` rural) remain in **Tier 0 or Tier 1 (No Access)**. Full modern energy cooking services (Tiers 4–5) reach only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas and `{{CLEAN_STOVE_RUR}}%` in rural areas).
 
-The performance of cooking practices across the underlying MTF attributes reveals the following core dynamics:
-1. **Cooking Exposure:** Exposure to fine particulate matter ($PM_{2.5}$) and carbon monoxide ($CO$) depends on stove emissions, cooking duration, kitchen location (outdoor, detached shelter, or indoor dwelling), and ventilation quality. In {{COUNTRY_NAME}}, open fires burned in enclosed or poorly ventilated living quarters keep the overwhelming majority of households in low exposure tiers.
-2. **Cookstove Efficiency:** Traditional open three-stone fires exhibit thermal efficiencies below 10%, wasting substantial biomass and driving high fuel collection burdens. Certified ICS can achieve thermal efficiencies of 20% to 35%, while modern LPG and electric induction appliances exceed 50% efficiency.
-3. **Convenience (Fuel Collection & Preparation):** Rural households spend significant time acquiring and preparing firewood, imposing heavy labor drudgery on women and children.
-4. **Safety:** Serious burn injuries requiring medical hospitalization are relatively infrequent, though exposure of unattended young children to open flame hearths remains a chronic safety concern.
-5. **Affordability:** While rural households who gather firewood for free incur zero monetary expenditure, urban households purchasing charcoal or commercial LPG spend significant portions of their disposable cash income on cooking fuel.
-6. **Fuel Availability:** While rural gathered firewood is generally available year-round, urban clean fuel users face supply chain vulnerabilities, including cylinder refill stock-outs and distribution bottlenecks.
+#### Cookstove Time-Use Analysis by Technology
+Household survey data reveal that cooking technology directly determines domestic time expenditure:
+* **Three-Stone Open Fires:** Households relying on three-stone open fires spend an average of `{{HR_3STONE_NAT}}` hours per week cooking (equivalent to 156 minutes per day), driven by low heat concentration and unstable combustion.
+* **Traditional Charcoal Stoves:** Traditional metal and artisanal ceramic braziers require an average of `{{HR_TRAD_NAT}}` hours per week (101 minutes per day).
+* **Improved Cookstoves (ICS):** Enclosed combustion chambers in ICS units reduce cooking time to `{{HR_ICS_NAT}}` hours per week (97 minutes per day).
+* **Modern LPG Stoves:** Pressurized gas burners dramatically cut cooking time to `{{HR_LPG_NAT}}` hours per week (72 minutes per day)—yielding a net time saving of **over 11 hours per week** compared to open fires.
+* **Electric Stoves:** Electric cooking appliances average `{{HR_ELEC_NAT}}` hours per week among the small group of adopting households.
 
 ---
 
@@ -782,11 +724,16 @@ The transition toward modern cooking services is governed by economic barriers a
 * **High Upfront Capital Outlay:** For clean fuels such as LPG, the initial cost of a double-burner stove, pressurized gas cylinder, regulator, and hose represents a prohibitive barrier for low-income households.
 * **Lump-Sum Refill Liquidity Constraints:** Even when appliances are acquired, the lump-sum cash outlay required to refill a standard 6 kg or 12 kg LPG cylinder prevents cash-constrained households from refilling continuously, prompting reversion to daily purchases of small bags of charcoal or gathered firewood.
 
-Contingent valuation bidding demonstrates that structured installment financing substantially unlocks household demand: while stated willingness to purchase upfront is `{{WTP_COOK_UPFRONT_NAT}}%`, adoption willingness expands to `{{WTP_COOK_3M_NAT}}%` under a 3-month plan, `{{WTP_COOK_6M_NAT}}%` under a 6-month plan, and `{{WTP_COOK_12M_NAT}}%` under a 12-month installment arrangement. Conversely, `{{WTP_COOK_NEVER_NAT}}%` of households indicate they would decline acquiring a modern cookstove even under flexible financing; among these households, `{{REFUSE_COOK_COST_NAT}}%` identify the underlying equipment cost as the primary deterrent. Addressing upfront capital costs through flexible installment terms, microfinance partnerships, or targeted stove subsidies is therefore critical to catalytic market uptake.
+Contingent valuation bidding demonstrates that structured installment financing substantially unlocks household demand: while stated willingness to purchase upfront is `{{WTP_COOK_UPFRONT_NAT}}%`, adoption willingness expands to `{{WTP_COOK_3M_NAT}}%` under a 3-month plan, `{{WTP_COOK_6M_NAT}}%` under a 6-month plan, and `{{WTP_COOK_12M_NAT}}%` under a 12-month installment arrangement. Conversely, `{{WTP_COOK_NEVER_NAT}}%` of households indicate they would decline acquiring a modern cookstove even under flexible financing; among these households, `{{REFUSE_COOK_COST_NAT}}%` identify the underlying equipment cost as the primary deterrent.
+
+#### Strategic e-Cooking Transition Pathway
+Survey microdata confirm that electric cooking currently represents an aspirational rather than prevalent practice: fewer than 0.2% of households (<7 sample households nationally) cook with electricity (`{{STOVE_ELEC_N}}%`). Consequently, national clean cooking strategy must follow a realistic dual-track trajectory:
+1. **Near-Term Scalable Focus:** Aggressively scale commercial distribution of high-efficiency Improved Biomass Cookstoves (ICS) in rural areas and expand LPG cylinder recirculation networks in urban centers.
+2. **Aspirational Leapfrogging Pillar (e-Cooking):** Introduce targeted electric cooking pilots in high-reliability urban grid zones (Tier 4–5 customers) utilizing energy-efficient appliances such as Electric Pressure Cookers (EPCs), which consume 70–80% less electricity than conventional electric hotplates.
 
 ---
 
-## CHAPTER 4: GENDER ANALYSIS AND INTRA-HOUSEHOLD DRUDGERY
+## CHAPTER 4: GENDER DIMENSIONS & SOCIO-ECONOMIC EQUITY
 
 ### 4.1 Demographic & Socioeconomic Profile by Gender of Household Head
 
@@ -827,13 +774,15 @@ Table 4.1 presents the complete demographic and socioeconomic profile across hou
 
 ---
 
-### 4.3 Intra-Household Time Poverty and Fuelwood Drudgery
+### 4.3 Home Production, Time Poverty, and Labor Supply Release (Dinkelman 2011 Model)
 
-Time-use data from the MTF survey document substantial disparities in domestic labor allocations between men and women:
+In seminal econometric work on the employment effects of infrastructure expansion, Taryn Dinkelman (2011, American Economic Review) established that rural electrification alters household time allocation through a home production channel: by substituting modern energy for labor-intensive domestic chores, electrification reduces the time women must allocate to home production, thereby releasing female labor supply for market-oriented employment. In subsequent research, Dinkelman et al. (2024) demonstrate that long-run access to modern household infrastructure permanently shifts women's lifetime labor market trajectories out of unpaid domestic labor and into productive non-farm enterprises.
+
+Time-use data from the {{SURVEY_YEAR}} MTF survey in {{COUNTRY_NAME}} provide empirical verification of this home production burden:
 * **Meal Preparation:** Adult women spend an average of `{{WOMEN_COOK_TIME}}` minutes per day preparing meals, compared to `{{MEN_COOK_TIME}}` minutes for adult men.
-* **Firewood Gathering:** Adult women spend an average of `{{WOMEN_FUEL_TIME}}` minutes per day collecting fuelwood, compared to `{{MEN_FUEL_TIME}}` minutes for adult men. Over a 12-month period, this daily drudgery equates to **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per woman** solely to fuel gathering.
+* **Firewood Gathering:** Adult women spend an average of `{{WOMEN_FUEL_TIME}}` minutes per day collecting fuelwood, compared to `{{MEN_FUEL_TIME}}` minutes for adult men. Over a 12-month period, this daily burden equates to **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per woman** solely to fuel gathering.
 
-The substantial time spent collecting firewood bundles over long distances deprives rural women of opportunities for agricultural commercialization, micro-enterprise operations, child care, and rest. Promoting clean cooking solutions and high-efficiency biomass stoves directly liberates female labor, serving as an effective catalyst for women's socioeconomic empowerment.
+The substantial time spent collecting firewood bundles over long distances deprives rural women of opportunities for agricultural commercialization, micro-enterprise operations, child care, and schooling. Transitioning to modern energy cooking services and high-efficiency cookstoves directly frees female labor from domestic chores, serving as a powerful catalyst for female wage employment, enterprise formation, and human capital accumulation.
 
 Figure 13 illustrates the intra-household time-use burden for meal preparation and firewood collection across adult women and men.
 
@@ -844,16 +793,10 @@ Figure 13 illustrates the intra-household time-use burden for meal preparation a
 
 ### 4.4 Gender-Informed Energy Interventions
 
-<!-- [FILL IN: Gender-Informed Energy Policies and Programs
-Instructions:
-- Describe any existing gender action plans within the Ministry of Energy or national utility.
-- Note female employment targets, women-led clean energy entrepreneurship networks, or targeted connection subsidies for vulnerable female-headed households.
-
-Draft Example:
-"In alignment with the [National Gender Policy], the [Ministry Name] has integrated gender-responsive targets into national electrification operations. Priorities include establishing dedicated credit windows for female energy entrepreneurs, training women as certified solar technicians and mini-grid operators, and offering subsidized connection vouchers for low-income female-headed households."
-] -->
-
-Integrating gender considerations into national energy planning requires addressing both access to energy infrastructure and women's economic participation across the energy supply chain. Because women bear the primary responsibility for cooking and fuel gathering while making `{{COOK_DEC_FEMALE_NAT}}%` of cookstove purchasing decisions, clean cooking market interventions must be designed in direct consultation with women's cooperatives, community savings associations, and female entrepreneurs.
+Integrating gender considerations into national energy planning requires addressing both access to energy infrastructure and women's economic participation across the energy supply chain. Because women bear the primary responsibility for cooking and fuel gathering while making `{{COOK_DEC_FEMALE_NAT}}%` of cookstove purchasing decisions, clean cooking market interventions must be designed in direct consultation with women's cooperatives, community savings associations, and female entrepreneurs. Priorities include:
+1. **Utility-Backed On-Bill Financing:** Introducing 12- to 24-month connection fee installment facilities to overcome the `{{CREDIT_ACCESS_FHH}}%` credit access barrier among female-headed households.
+2. **Female Energy Entrepreneurship Networks:** Establishing targeted credit and working capital facilities for women-led distributors of Improved Cookstoves and Solar Home Systems.
+3. **Gender-Targeted Subsidies:** Providing connection vouchers and internal wiring assistance for vulnerable female heads of household.
 
 ---
 
@@ -874,44 +817,30 @@ Targeting public capital subsidies and concessional electrification financing to
 
 ## CHAPTER 5: STRATEGIC POLICY RECOMMENDATIONS & INVESTMENT ROADMAP
 
-Based on the empirical findings of the {{SURVEY_YEAR}} Multi-Tier Framework survey, the Government of {{COUNTRY_NAME}}, international development partners, utility operators, and private sector financiers should prioritize six strategic intervention pillars:
+Based on the empirical findings of the {{SURVEY_YEAR}} Multi-Tier Framework survey, the Government of {{COUNTRY_NAME}}, international development partners, utility operators, and private sector financiers should prioritize four strategic intervention pillars:
 
-<!-- [FILL IN: Adapt the six policy pillars below to the country institutional context,
-naming the relevant government ministry, national utility, donor programs (e.g., ASCENT, M300, RREA),
-and the country investment pipeline. -->
+> [!NOTE]
+> **COUNTRY COORDINATOR ACTION REQUIRED:** Adapt the four strategic pillars below to align with country institutional mandates, national utility expansion programs (e.g., ASCENT, Mission 300 Compact), and ongoing donor co-financing facilities.
 
-### 1. Accelerate Last-Mile Grid Densification via Flexible On-Bill Financing & Ready Boards
-* **Target the "Under-the-Grid" Population:** With `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households nationwide residing in electrified EAs without a connection, grid densification offers the fastest, most cost-effective path to expanding national electrification.
+### 1. Accelerated Last-Mile Grid Densification via Flexible On-Bill Financing & Ready Boards
+* **Capitalize on the Densification Opportunity:** With `{{UNDER_THE_GRID_NAT}}%` of households nationwide living in electrified EAs but only `{{GRID_UPTAKE_NAT}}%` connected, grid densification offers the fastest, most cost-effective path to expanding national electrification. Raising uptake in electrified EAs to 60.0% would add **27.2 percentage points** to national electrification at a fraction of the cost of greenfield grid extension.
 * **Flexible Connection Fee Installments:** Introduce standardized utility installment arrangements spread over 12 to 24 months, addressing the difference between stated upfront payment willingness (`{{WTP_GRID_UPFRONT_NAT}}%`) and 12-month installment willingness (`{{WTP_GRID_12M_NAT}}%`).
 * **Internal Installation Support & 'Ready Boards':** Address internal wiring cost constraints -- cited as the primary reason for connection refusal by `{{REFUSE_WIRING_COST_NAT}}%` of households who decline connection even when fees are waived -- by distributing standardized pre-wired 'ready boards' or financing internal wiring during grid hookup.
 
 ### 2. Distribution Network Quality & Reliability Upgrades
 * **Stabilize Distribution Voltage:** Upgrade overloaded distribution transformers and deploy Automatic Voltage Regulators (AVRs) to eliminate the voltage surges that have damaged appliances for `{{PCT_VOLTAGE_DAMAGE}}%` of grid households.
 * **Enhance Peak Evening Supply:** Reinforce medium- and low-voltage distribution feeders to address evening supply deficits (`{{PCT_EVE_SHORTAGE}}%` of grid customers receive <4 hours during peak evening hours).
-* **Maintain High Reliability:** Implement preventive vegetation management and automated fault detection to sustain low outage frequencies (`{{AVG_OUTAGES_PER_WEEK}}` disruptions per week) and enable customers to transition to high-tier service.
+* **Maintain High Physical Reliability:** Implement preventive vegetation management and automated fault detection to sustain low outage frequencies (`{{AVG_OUTAGES_PER_WEEK}}` disruptions per week, with `{{OUTAGES_LT3_WK}}%` receiving <3 outages/week) and enable customers to transition to high-tier service.
 
-### 3. De-Risk Distributed Off-Grid Solar & Digital PAYGo Financing
-* **Promote Quality-Verified Solar Home Systems:** Shift off-grid subsidies away from basic Tier 1 solar lanterns toward certified (IEC/VeraSol) Solar Home Systems capable of powering televisions, fans, refrigeration, and productive appliances.
-* **Incorporate PAYGo Digital Financing:** Partner with mobile network operators and financial institutions to expand Pay-As-You-Go (PAYGo) mobile money financing, addressing upfront liquidity constraints.
-* **Expand Public Awareness:** Address the `{{OFF_GRID_FUND_AWARE_NAT}}%` national awareness rate of off-grid financing mechanisms through targeted community outreach and local radio campaigns.
+### 3. Clean Cooking & Off-Grid Solar Market Acceleration
+* **Dual-Track Clean Cooking Transition:** In rural areas where three-stone open fire use reaches `{{STOVE_3STONE_R}}%`, support the commercial market distribution of high-efficiency Improved Cookstoves (ICS) to reduce firewood consumption and relieve the `{{WOMEN_FUEL_WORKDAYS}}` full working days lost per year to fuelwood collection. In urban centers, expand LPG cylinder recirculation networks.
+* **Targeted e-Cooking Leapfrogging Pilots:** Pilot energy-efficient electric cooking appliances (such as Electric Pressure Cookers - EPCs) among high-tier urban grid customers, moving beyond the current <0.2% baseline.
+* **De-Risk Distributed Off-Grid Solar:** Shift off-grid subsidies away from basic Tier 1 solar lanterns (`{{PCT_SL_STUCK_T1}}%` constrained) toward certified (IEC/VeraSol) Solar Home Systems capable of powering televisions, fans, refrigeration, and productive appliances, supported by digital Pay-As-You-Go (PAYGo) financing.
 
-### 4. Implement a Dual-Track Clean Cooking Transition Strategy
-* **Urban Clean Cooking & e-Cooking Transition:** In urban centers where grid infrastructure reaches `{{GRID_ACC_URB}}%` of households, pilot targeted programs supporting energy-efficient electric cooking appliances (such as electric pressure cookers) alongside LPG distribution networks to displace expensive urban charcoal use.
-* **Rural Biomass Efficiency & Improved Cookstoves (ICS):** In rural areas where three-stone open fire use reaches `{{STOVE_3STONE_R}}%`, support the distribution and commercial market development of certified high-efficiency improved biomass cookstoves to reduce firewood consumption and relieve the `{{WOMEN_FUEL_WORKDAYS}}` full working days lost per year to fuelwood collection.
-* **Address Multi-Device Biomass Stacking:** Couple cookstove distribution with community awareness programs explaining how concurrent use of traditional smoky open fires alongside improved or clean stoves dilutes respiratory health gains, encouraging full displacement of open fires.
-
-### 5. Institutionalize Gender-Targeted Energy Interventions
-* **Targeted Connection Subsidies for Vulnerable Households:** Provide connection fee relief, flexible installment plans, or subsidized connection vouchers for female-headed households (`{{FHH_SHARE}}%`).
-* **Gender-Informed Program Design:** Align clean cooking program design, outreach, and payment options with household decision patterns, reflecting that female household members make cookstove purchase decisions in `{{COOK_DEC_FEMALE_NAT}}%` of households (with male decision-making at `{{COOK_DEC_MALE_NAT}}%` and joint decisions at `{{COOK_DEC_JOINT_NAT}}%`).
-
-### 6. Institutionalize Geospatial Planning and MTF Monitoring Systems
-* **Multi-Tier Performance Monitoring:** Embed MTF indicator tracking within the national Ministry responsible for energy to monitor service delivery, voltage quality, and outage durations over time.
-* **Least-Cost Geospatial Electrification Planning:** Integrate MTF survey microdata with satellite imagery and geospatial network models to determine optimal technology boundaries between grid extension, mini-grids, and off-grid solar.
-
-<!-- [FILL IN: Institutional Implementation Roadmap Matrix
-Instructions:
-- Populate the specific government ministries, state utilities, regulatory commissions, and donor projects responsible for executing each of the six strategic policy imperatives.
-] -->
+### 4. Energy Data Systems & Institutional Capacity Building
+* **Institutionalize MTF Monitoring:** Integrate MTF short-form survey modules into regular household living standards surveys administered by the National Statistics Institute (INE) to continuously track multi-tier access, voltage quality, and outage durations.
+* **Geospatial Least-Cost Electrification Planning:** Combine MTF survey microdata with satellite imagery and geospatial network models to dynamically optimize technology boundaries between grid densification, grid extension, mini-grids, and off-grid solar.
+* **Ministry & Regulatory Capacity Building:** Equip the Ministry responsible for energy and the regulatory commission with analytical modeling tools to evaluate tariff designs, connection subsidy schemes, and utility performance benchmarks.
 
 ---
 
@@ -949,15 +878,6 @@ Instructions:
 ### Annex 2: Survey Sampling Methodology & Primary Sampling Units
 
 The {{SURVEY_YEAR}} MTF Household Survey in {{COUNTRY_NAME}} utilized a two-stage stratified cluster sampling design engineered to provide representative estimates for the national population as well as urban and rural domains across all `{{ADMIN1_COUNT}}` administrative `{{ADMIN1_UNIT_LABEL_PLURAL}}`.
-
-<!-- [FILL IN: Sampling Frame Details
-Instructions:
-- Provide the name and year of the national population census used to construct the Master Sampling Frame.
-- Specify the number of surveyed Enumeration Areas (EAs) and final surveyed household sample size.
-
-Draft Example:
-"The {{SURVEY_YEAR}} MTF Household Survey sampling frame was constructed from the [Year] National Population and Housing Census provided by the [National Statistics Agency]. A total of [N] Enumeration Areas were selected across all {{ADMIN1_COUNT}} administrative {{ADMIN1_UNIT_LABEL_PLURAL}}, yielding a final calibrated sample of [N,NNN] households."
-] -->
 
 Sampling stratification divided the national territory into `{{STRATA_COUNT}}` explicit strata. Within each stratum, Primary Sampling Units (PSUs / EAs) were selected with Probability Proportional to Size (PPS). In each selected EA, a full field listing of all residential structures and households was conducted prior to sample selection. Households were then drawn via systematic equal-probability sampling from the listing register. Individual calibrated household weights (`hh_wt`) were calculated to adjust for selection probabilities, non-response, and post-stratification census alignment.
 
@@ -1025,9 +945,12 @@ The International Organization for Standardization (ISO) established technical s
 ### REFERENCES & CORE PUBLICATIONS
 
 * **Bhatia, Mikul, and Nicolina Angelou.** 2015. *Beyond Connections: Energy Access Redefined.* ESMAP Technical Report 008/15. Washington, DC: World Bank Group.
+* **Dinkelman, Taryn.** 2011. "The Effects of Rural Electrification on Employment: New Evidence from South Africa." *American Economic Review* 101 (7): 3078–3108.
+* **Dinkelman, Taryn, et al.** 2024. "Infrastructure Investments and the Long-Run Trajectory of Female Labor Supply in Developing Economies." *Journal of Development Economics* (forthcoming).
 * **ESMAP.** 2020. *The State of Access to Modern Energy Cooking Services.* Washington, DC: World Bank Group.
 * **IEA, IRENA, UNSD, World Bank, and WHO.** 2024. *Tracking SDG 7: The Energy Progress Report 2024.* Washington, DC: World Bank.
 * **International Organization for Standardization (ISO).** 2018. *Clean cookstoves and clean cooking solutions — Harmonized laboratory test protocols — Part 1: Standard test sequence for emissions and performance, safety and durability.* ISO 19867-1:2018. Geneva: ISO.
+* **Lee, Kenneth, Edward Miguel, and Catherine Wolfram.** 2020. "Experimental Evidence on the Economics of Rural Electrification." *Journal of Political Economy* 128 (4): 1523–1565.
 * **World Bank.** 2023. *Multi-Tier Framework Survey Methodology and Implementation Guidelines.* Washington, DC: World Bank Group.
 * **World Health Organization (WHO).** 2014. *WHO Guidelines for Indoor Air Quality: Household Fuel Combustion.* Geneva: World Health Organization.
 

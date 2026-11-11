@@ -4,7 +4,7 @@
 	*  Namibia MTF Pipeline — Weighted Tables → Excel + JSON                *
 	*                                                                        *
 	*  Survey design: svyset already declared in 01_setup.do                *
-	*  Output Excel: $out_sl/MTF_Guinea-Bissau_Summary.xlsx (5 sheets)            *
+	*  Output Excel: $out_sl/MTF_Namibia_Summary.xlsx (5 sheets)            *
 	*    Sheet 1: Electricity_Tiers    — National + Urban/Rural             *
 	*    Sheet 2: Cooking_Tiers        — National + Urban/Rural             *
 	*    Sheet 3: Disagg_UrbanRural    — All indicators × Urban/Rural       *
@@ -404,7 +404,7 @@
 
 	local grid_vars ///
 		barrier_cost barrier_dist barrier_tariff barrier_landlord barrier_unrel barrier_admin ///
-		under_grid_unconnected grid_uptake ///
+		under_the_grid under_grid_unconnected grid_uptake ///
 		wtp_grid_upfront wtp_grid_3m wtp_grid_6m wtp_grid_12m wtp_grid_waived wtp_grid_never refuse_wiring_cost
 
 	foreach var of local grid_vars {
@@ -616,7 +616,6 @@
 			putexcel J`row' = `m_b'
 			putexcel K`row' = "`m_ci'"
 
-			* Export point and CI interval strings for report templates
 			scalar json_REG_`rcode'_ELEC     = `e_b'
 			scalar json_REG_`rcode'_ELEC_LL  = `e_ll'
 			scalar json_REG_`rcode'_ELEC_UL  = `e_ul'
@@ -739,6 +738,84 @@
 		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]
 	}
 
+	* Outages by Interval (<3, 3-14, >14 per week)
+	capture {
+		svy, subpop(if grid_hh == 1 & outages_per_wk < .): mean outages_lt3_wk outages_3to14_wk outages_gt14_wk
+		scalar json_OUTAGES_LT3_WK   = e(b)[1,1] * 100
+		scalar json_OUTAGES_3TO14_WK = e(b)[1,2] * 100
+		scalar json_OUTAGES_GT14_WK  = e(b)[1,3] * 100
+	}
+
+	* Comprehensive Lighting Points
+	capture {
+		svy: mean has_electric_lights has_solar_lights has_any_lights
+		scalar json_HAS_ELECTRIC_LIGHTS_NAT = e(b)[1,1] * 100
+		scalar json_HAS_SOLAR_LIGHTS_NAT    = e(b)[1,2] * 100
+		scalar json_HAS_ANY_LIGHTS_NAT      = e(b)[1,3] * 100
+	}
+
+	* Cookstove Time-Use & Weekly Hours
+	capture {
+		svy: mean hr_3stone_hh hr_trad_hh hr_ics_hh hr_lpg_hh hr_elec_hh
+		scalar json_HR_3STONE_NAT = e(b)[1,1]
+		scalar json_HR_TRAD_NAT   = e(b)[1,2]
+		scalar json_HR_ICS_NAT    = e(b)[1,3]
+		scalar json_HR_LPG_NAT    = e(b)[1,4]
+		scalar json_HR_ELEC_NAT   = e(b)[1,5]
+	}
+
+	* Grid Electric Cooking Adoption
+	capture {
+		svy, subpop(if grid_hh == 1): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_NAT = e(b)[1,1] * 100
+		svy, subpop(if grid_hh == 1 & loc_urban_rural == 1): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_URB = e(b)[1,1] * 100
+		svy, subpop(if grid_hh == 1 & loc_urban_rural == 2): mean elec_stove_grid
+		scalar json_ELEC_STOVE_GRID_RUR = e(b)[1,1] * 100
+	}
+
+	* Disaggregated Solar WTP by Price Tier
+	capture {
+		svy, subpop(if index_random_3 == 2): mean wtp_solar_p100_upfront wtp_solar_p100_6m wtp_solar_p100_12m wtp_solar_p100_24m
+		scalar json_WTP_SOLAR_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P100_6M      = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P100_12M     = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P100_24M     = e(b)[1,4] * 100
+
+		svy, subpop(if index_random_3 == 1): mean wtp_solar_p66_upfront wtp_solar_p66_6m wtp_solar_p66_12m wtp_solar_p66_24m
+		scalar json_WTP_SOLAR_P66_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P66_6M       = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P66_12M      = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P66_24M      = e(b)[1,4] * 100
+
+		svy, subpop(if index_random_3 == 0): mean wtp_solar_p33_upfront wtp_solar_p33_6m wtp_solar_p33_12m wtp_solar_p33_24m
+		scalar json_WTP_SOLAR_P33_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_SOLAR_P33_6M       = e(b)[1,2] * 100
+		scalar json_WTP_SOLAR_P33_12M      = e(b)[1,3] * 100
+		scalar json_WTP_SOLAR_P33_24M      = e(b)[1,4] * 100
+	}
+
+	* Disaggregated Cooking WTP by Price Tier
+	capture {
+		svy, subpop(if random_perc_k >= 0.99 & random_perc_k <= 1.01): mean wtp_cook_p100_upfront wtp_cook_p100_6m wtp_cook_p100_12m wtp_cook_p100_24m
+		scalar json_WTP_COOK_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P100_6M      = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P100_12M     = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P100_24M     = e(b)[1,4] * 100
+
+		svy, subpop(if random_perc_k >= 0.60 & random_perc_k <= 0.70): mean wtp_cook_p66_upfront wtp_cook_p66_6m wtp_cook_p66_12m wtp_cook_p66_24m
+		scalar json_WTP_COOK_P66_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P66_6M       = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P66_12M      = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P66_24M      = e(b)[1,4] * 100
+
+		svy, subpop(if random_perc_k >= 0.30 & random_perc_k <= 0.40): mean wtp_cook_p33_upfront wtp_cook_p33_6m wtp_cook_p33_12m wtp_cook_p33_24m
+		scalar json_WTP_COOK_P33_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_COOK_P33_6M       = e(b)[1,2] * 100
+		scalar json_WTP_COOK_P33_12M      = e(b)[1,3] * 100
+		scalar json_WTP_COOK_P33_24M      = e(b)[1,4] * 100
+	}
+
 	*===========================================================================
 	*  WRITE EXPANDED JSON FILE
 	*===========================================================================
@@ -783,6 +860,7 @@
 		BARRIER_LANDLORD_NAT BARRIER_LANDLORD_URB BARRIER_LANDLORD_RUR ///
 		BARRIER_UNREL_NAT BARRIER_UNREL_URB BARRIER_UNREL_RUR ///
 		BARRIER_ADMIN_NAT BARRIER_ADMIN_URB BARRIER_ADMIN_RUR ///
+		UNDER_THE_GRID_NAT UNDER_THE_GRID_URB UNDER_THE_GRID_RUR ///
 		UNDER_GRID_UNCONNECTED_NAT UNDER_GRID_UNCONNECTED_URB UNDER_GRID_UNCONNECTED_RUR ///
 		GRID_UPTAKE_NAT GRID_UPTAKE_URB GRID_UPTAKE_RUR ///
 		GRID_YEARS_NAT GRID_YEARS_URB GRID_YEARS_RUR ///
@@ -826,7 +904,17 @@
 		WTP_COOK_12M_NAT WTP_COOK_12M_URB WTP_COOK_12M_RUR ///
 		WTP_COOK_NEVER_NAT WTP_COOK_NEVER_URB WTP_COOK_NEVER_RUR ///
 		REFUSE_COOK_COST_NAT REFUSE_COOK_COST_URB REFUSE_COOK_COST_RUR ///
-		PCT_AFFORDABLE_NAT PCT_AFFORDABLE_URB PCT_AFFORDABLE_RUR PCT_UNAFFORDABLE_Q1
+		PCT_AFFORDABLE_NAT PCT_AFFORDABLE_URB PCT_AFFORDABLE_RUR PCT_UNAFFORDABLE_Q1 ///
+		OUTAGES_LT3_WK OUTAGES_3TO14_WK OUTAGES_GT14_WK ///
+		HAS_ELECTRIC_LIGHTS_NAT HAS_SOLAR_LIGHTS_NAT HAS_ANY_LIGHTS_NAT ///
+		HR_3STONE_NAT HR_TRAD_NAT HR_ICS_NAT HR_LPG_NAT HR_ELEC_NAT ///
+		ELEC_STOVE_GRID_NAT ELEC_STOVE_GRID_URB ELEC_STOVE_GRID_RUR ///
+		WTP_SOLAR_P100_UPFRONT WTP_SOLAR_P100_6M WTP_SOLAR_P100_12M WTP_SOLAR_P100_24M ///
+		WTP_SOLAR_P66_UPFRONT WTP_SOLAR_P66_6M WTP_SOLAR_P66_12M WTP_SOLAR_P66_24M ///
+		WTP_SOLAR_P33_UPFRONT WTP_SOLAR_P33_6M WTP_SOLAR_P33_12M WTP_SOLAR_P33_24M ///
+		WTP_COOK_P100_UPFRONT WTP_COOK_P100_6M WTP_COOK_P100_12M WTP_COOK_P100_24M ///
+		WTP_COOK_P66_UPFRONT WTP_COOK_P66_6M WTP_COOK_P66_12M WTP_COOK_P66_24M ///
+		WTP_COOK_P33_UPFRONT WTP_COOK_P33_6M WTP_COOK_P33_12M WTP_COOK_P33_24M
 
 	local n : word count `scalars_list'
 	local i = 1

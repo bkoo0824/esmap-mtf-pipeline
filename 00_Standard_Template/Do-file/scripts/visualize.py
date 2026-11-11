@@ -756,10 +756,11 @@ def chart_grid_wtp():
     save_fig(fig, "12a_wtp_grid_connection.png")
 
 
-# ─── CHART 12b: OFF-GRID SOLAR WTP CUMULATIVE DEMAND CURVE ───────────────────
+# ─── CHART 12b: OFF-GRID SOLAR WTP MULTI-CURVE PANEL ─────────────────────────
 def chart_solar_wtp():
     """
-    Off-Grid Solar Device Willingness to Pay — cumulative demand curve.
+    Off-Grid Solar Device Willingness to Pay — multi-curve panel across price tiers and financing horizons.
+    Price tiers: 100% Full Price, 66% Price (34% Subsidy), 33% Price (67% Subsidy).
     Financing terms: Upfront → 6M → 12M → 24M.
     Saved as: 12b_wtp_solar_device.png
     """
@@ -769,46 +770,58 @@ def chart_solar_wtp():
         try: return float(v)
         except: return default
 
-    wtp_solar = [
-        g("WTP_SOLAR_UPFRONT_NAT", 20.5),
-        g("WTP_SOLAR_6M_NAT",      28.0),
-        g("WTP_SOLAR_12M_NAT",     42.2),
-        g("WTP_SOLAR_24M_NAT",     55.0),
-    ]
-    x_labels = ["Upfront\n(Full Price)", "6-Month\nPlan", "12-Month\nPlan", "24-Month\nPlan"]
+    p100 = [g("WTP_SOLAR_P100_UPFRONT", g("WTP_SOLAR_UPFRONT_NAT", 39.8)),
+            g("WTP_SOLAR_P100_6M",      g("WTP_SOLAR_6M_NAT", 63.0)),
+            g("WTP_SOLAR_P100_12M",     g("WTP_SOLAR_12M_NAT", 63.0)),
+            g("WTP_SOLAR_P100_24M",     g("WTP_SOLAR_24M_NAT", 63.0))]
+
+    p66  = [g("WTP_SOLAR_P66_UPFRONT", 45.2),
+            g("WTP_SOLAR_P66_6M",      63.4),
+            g("WTP_SOLAR_P66_12M",     63.4),
+            g("WTP_SOLAR_P66_24M",     63.4)]
+
+    p33  = [g("WTP_SOLAR_P33_UPFRONT", 57.8),
+            g("WTP_SOLAR_P33_6M",      71.8),
+            g("WTP_SOLAR_P33_12M",     71.8),
+            g("WTP_SOLAR_P33_24M",     71.8)]
+
+    x_labels = ["Upfront\nCash", "6-Month\nPlan", "12-Month\nPlan", "24-Month\nPlan"]
     x = np.arange(len(x_labels))
 
     fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
-    ax.fill_between(x, wtp_solar, alpha=0.10, color=WB_AMBER)
-    ax.plot(x, wtp_solar, marker="s", linewidth=3.0, markersize=9,
-            color=WB_AMBER, label="All Households")
+    
+    # Plot 3 price tier curves
+    ax.plot(x, p33, marker="^", linewidth=2.8, markersize=8, color="#27AE60", label="33% Price (67% Subsidy)")
+    ax.plot(x, p66, marker="s", linewidth=2.8, markersize=8, color=WB_AMBER, label="66% Price (34% Subsidy)")
+    ax.plot(x, p100, marker="o", linewidth=2.8, markersize=8, color=WB_NAVY, label="100% Full Price")
 
-    for i, val in enumerate(wtp_solar):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
-                    xytext=(0, 11), ha="center", fontweight="bold", color="#7D5A00", fontsize=10)
+    for i in range(len(x)):
+        ax.annotate(f"{p33[i]:.1f}%", (x[i], p33[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#1E8449", fontsize=9)
+        ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+        ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
-    ax.set_ylim(0, min(100, max(wtp_solar) * 1.3))
+    ax.set_ylim(20, 95)
     ax.set_ylabel("Cumulative % Willing to Purchase", fontsize=11, fontweight="bold")
     ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
     ax.set_title(
-        "Off-Grid Solar Device — Willingness to Pay by Financing Term\n"
-        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+        "Off-Grid Solar Device — Willingness to Pay by Price Tier & Financing Term\n"
+        "(Cumulative Demand: Upfront Price Subsidies vs. Payment Flexibility)",
         fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
-    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
+    ax.legend(frameon=True, loc="lower right", fontsize=9.5)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.3, linestyle="--")
     plt.tight_layout()
     save_fig(fig, "12b_wtp_solar_device.png")
 
 
-# ─── CHART 12c: CLEAN COOKSTOVE WTP CUMULATIVE DEMAND CURVE ──────────────────
+# ─── CHART 12c: CLEAN COOKSTOVE WTP MULTI-CURVE PANEL ────────────────────────
 def chart_cookstove_wtp():
     """
-    Clean Cookstove Willingness to Pay — cumulative demand curve.
-    Financing terms: Upfront → 3M → 6M → 12M.
-    Returns False (skips) if all four values are zero (cookstove module not run).
+    Clean Cookstove Willingness to Pay — multi-curve panel across price tiers and financing horizons.
+    Price tiers: 100% Full Price, 66% Price (34% Subsidy), 33% Price (67% Subsidy).
+    Financing terms: Upfront → 6M → 12M → 24M.
     Saved as: 12c_wtp_cookstove.png
     """
     vals = load_json()
@@ -817,44 +830,126 @@ def chart_cookstove_wtp():
         try: return float(v)
         except: return default
 
-    wtp_cook = [
-        g("WTP_COOK_UPFRONT_NAT", 18.7),
-        g("WTP_COOK_3M_NAT",      24.6),
-        g("WTP_COOK_6M_NAT",      36.4),
-        g("WTP_COOK_12M_NAT",     44.7),
-    ]
-    # Skip if cookstove WTP module was not collected (all zeros)
-    if max(wtp_cook) == 0.0:
+    p100 = [g("WTP_COOK_P100_UPFRONT", g("WTP_COOK_UPFRONT_NAT", 42.2)),
+            g("WTP_COOK_P100_6M",      g("WTP_COOK_6M_NAT", 68.6)),
+            g("WTP_COOK_P100_12M",     g("WTP_COOK_12M_NAT", 68.6)),
+            g("WTP_COOK_P100_24M",     68.6)]
+
+    p66  = [g("WTP_COOK_P66_UPFRONT", 49.5),
+            g("WTP_COOK_P66_6M",      69.1),
+            g("WTP_COOK_P66_12M",     69.1),
+            g("WTP_COOK_P66_24M",     69.1)]
+
+    p33  = [g("WTP_COOK_P33_UPFRONT", 61.7),
+            g("WTP_COOK_P33_6M",      75.5),
+            g("WTP_COOK_P33_12M",     75.5),
+            g("WTP_COOK_P33_24M",     75.5)]
+
+    if max(p100 + p66 + p33) == 0.0:
         print("  ⚠  chart_cookstove_wtp SKIPPED — no cookstove WTP data in JSON")
         return False
 
-    x_labels = ["Upfront\n(Full Price)", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan"]
+    x_labels = ["Upfront\nCash", "6-Month\nPlan", "12-Month\nPlan", "24-Month\nPlan"]
     x = np.arange(len(x_labels))
 
     fig, ax = plt.subplots(figsize=(9, 5.5), dpi=150)
-    ax.fill_between(x, wtp_cook, alpha=0.10, color=WB_TEAL)
-    ax.plot(x, wtp_cook, marker="^", linewidth=3.0, markersize=9,
-            color=WB_TEAL, label="Eligible Households")
+    
+    # Plot 3 price tier curves
+    ax.plot(x, p33, marker="^", linewidth=2.8, markersize=8, color="#27AE60", label="33% Price (67% Subsidy)")
+    ax.plot(x, p66, marker="s", linewidth=2.8, markersize=8, color=WB_TEAL, label="66% Price (34% Subsidy)")
+    ax.plot(x, p100, marker="o", linewidth=2.8, markersize=8, color=WB_CORAL, label="100% Full Price")
 
-    for i, val in enumerate(wtp_cook):
-        ax.annotate(f"{val:.1f}%", (i, val), textcoords="offset points",
-                    xytext=(0, 11), ha="center", fontweight="bold", color="#006666", fontsize=10)
+    for i in range(len(x)):
+        ax.annotate(f"{p33[i]:.1f}%", (x[i], p33[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#1E8449", fontsize=9)
+        ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#117A65", fontsize=9)
+        ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#900C3F", fontsize=9)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
-    ax.set_ylim(0, min(100, max(wtp_cook) * 1.3))
+    ax.set_ylim(25, 95)
     ax.set_ylabel("Cumulative % Willing to Purchase", fontsize=11, fontweight="bold")
     ax.set_xlabel("Financing Term Offered to Household", fontsize=11, fontweight="bold")
     ax.set_title(
-        "Clean Cookstove — Willingness to Pay by Financing Term\n"
-        "(Cumulative Demand: Market Expansion as Liquidity Constraints Relax)",
+        "Clean Cookstove — Willingness to Pay by Price Tier & Financing Term\n"
+        "(Cumulative Demand: Upfront Price Subsidies vs. Payment Flexibility)",
         fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
-    ax.legend(frameon=True, loc="upper left", fontsize=9.5)
+    ax.legend(frameon=True, loc="lower right", fontsize=9.5)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.3, linestyle="--")
     plt.tight_layout()
     save_fig(fig, "12c_wtp_cookstove.png")
     return True
+
+
+# ─── CHART 15: GRID OUTAGE FREQUENCY INTERVAL DISTRIBUTION ────────────────────
+def chart_outage_intervals():
+    """
+    Distribution of unscheduled power outages per week among grid-connected households.
+    Intervals: <3 times/week, 3–14 times/week, >14 times/week.
+    Saved as: 15_grid_outage_intervals.png
+    """
+    vals = load_json()
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
+
+    lt3   = g("OUTAGES_LT3_WK", 87.0)
+    b3_14 = g("OUTAGES_3TO14_WK", 13.0)
+    gt14  = g("OUTAGES_GT14_WK", 0.0)
+
+    intervals = ["Fewer than 3 times / week\n(<3 / week)", "3 to 14 times / week\n(3–14 / week)", "More than 14 times / week\n(>14 / week)"]
+    shares = [lt3, b3_14, gt14]
+    colors = [WB_GREEN, WB_AMBER, WB_CORAL]
+
+    fig, ax = plt.subplots(figsize=(8, 4.8), dpi=150)
+    bars = ax.bar(intervals, shares, color=colors, width=0.45, edgecolor="#2C3E50", linewidth=1.1)
+
+    for b in bars:
+        h = b.get_height()
+        ax.text(b.get_x() + b.get_width()/2, h + 1.5, f"{h:.1f}%", ha="center", va="bottom", fontweight="bold", fontsize=11, color=WB_NAVY)
+
+    ax.set_ylabel("% of Grid-Connected Households", fontsize=10, fontweight="bold")
+    ax.set_ylim(0, 105)
+    ax.set_title("Grid Service Reliability: Weekly Unscheduled Power Outages\n(Interval Distribution Among Grid Customers)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "15_grid_outage_intervals.png")
+
+
+# ─── CHART 16: COOKSTOVE TIME-USE & WEEKLY COOKING HOURS ──────────────────────
+def chart_cookstove_time_use():
+    """
+    Average weekly cooking hours per cookstove type.
+    Saved as: 16_cookstove_time_use.png
+    """
+    vals = load_json()
+    def g(key, default=0.0):
+        v = vals.get(f"{{{{{key}}}}}", vals.get(key, default))
+        try: return float(v)
+        except: return default
+
+    stoves = ["3-Stone / Open Fire", "Traditional Charcoal /\nMetal Brazier", "Improved Biomass\nCookstove (ICS)", "LPG Gas Stove"]
+    hours  = [g("HR_3STONE_NAT", 18.0), g("HR_TRAD_NAT", 11.2), g("HR_ICS_NAT", 10.3), g("HR_LPG_NAT", 6.8)]
+    colors = ["#C0392B", "#E67E22", "#F39C12", "#27AE60"]
+
+    fig, ax = plt.subplots(figsize=(8.5, 4.8), dpi=150)
+    bars = ax.bar(stoves, hours, color=colors, width=0.48, edgecolor="#2C3E50", linewidth=1.1)
+
+    for b in bars:
+        h = b.get_height()
+        ax.text(b.get_x() + b.get_width()/2, h + 0.4, f"{h:.1f} hrs/wk", ha="center", va="bottom", fontweight="bold", fontsize=10.5, color=WB_NAVY)
+
+    ax.set_ylabel("Average Weekly Cooking Hours", fontsize=10, fontweight="bold")
+    ax.set_ylim(0, max(hours) * 1.25)
+    ax.set_title("Cookstove Time-Use: Average Weekly Cooking Hours by Stove Type\n(Highlighting Time Savings from Clean Cooking Transition)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
+    save_fig(fig, "16_cookstove_time_use.png")
 
 
 # ─── CHART 13: WTP MUTUALLY EXCLUSIVE SEGMENTS (SUMS TO 100%) ────────────────
@@ -1018,5 +1113,7 @@ if __name__ == "__main__":
     chart_cookstove_wtp()
     chart_wtp_mutually_exclusive_stacked()
     chart_stove_stacking_matrix()
+    chart_outage_intervals()
+    chart_cookstove_time_use()
 
     print(f"\n  All publication charts saved to: {CHARTS_DIR}\n")

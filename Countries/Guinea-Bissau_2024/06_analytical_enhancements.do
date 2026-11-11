@@ -176,12 +176,27 @@
 	lab var barrier_admin    "Grid barrier: Administrative delay / complicated"
 
 	* Under the grid: EA has grid infrastructure, but HH is not connected
-	capture drop ea_grid_present under_grid_unconnected grid_uptake
-	bys SEC_A_Q05: egen ea_grid_present = max(grid_hh)
+	capture drop ea_grid_present under_the_grid under_grid_unconnected grid_uptake
+	capture confirm variable psu_id
+	if !_rc {
+		bys psu_id: egen ea_grid_present = max(grid_hh)
+	}
+	else {
+		capture confirm variable SEC_A_Q06
+		if !_rc bys SEC_A_Q06: egen ea_grid_present = max(grid_hh)
+		else {
+			capture confirm variable SEC_A_Q07
+			if !_rc bys SEC_A_Q07: egen ea_grid_present = max(grid_hh)
+			else bys SEC_A_Q05: egen ea_grid_present = max(grid_hh)
+		}
+	}
 	lab var ea_grid_present "Grid infrastructure present in Enumeration Area (EA)"
 
+	gen byte under_the_grid = (ea_grid_present == 1)
+	lab var under_the_grid "Household lives in electrified EA ('under the grid')"
+
 	gen byte under_grid_unconnected = (ea_grid_present == 1 & grid_hh == 0)
-	lab var under_grid_unconnected "Living in electrified EA but unconnected ('under the grid')"
+	lab var under_grid_unconnected "Living in electrified EA but unconnected ('under the grid deficit')"
 
 	gen byte grid_uptake = grid_hh if ea_grid_present == 1
 	lab var grid_uptake "Household grid uptake rate among EAs with grid"
@@ -204,8 +219,7 @@
 
 	gen grid_monthly_spend = SEC_C_Q23
 	replace grid_monthly_spend = SEC_C_Q25 if grid_monthly_spend == . | grid_monthly_spend == 0
-	replace grid_monthly_spend = . if inlist(grid_monthly_spend, 888, 999, -888, -999)
-	lab var grid_monthly_spend "Monthly expenditure on grid electricity (XOF)"
+	lab var grid_monthly_spend "Monthly expenditure on grid electricity (N$)"
 
 
 	*===========================================================================
@@ -292,6 +306,84 @@
 	lab var wtp_cook_never   "Will NEVER purchase clean cookstove"
 	lab var refuse_cook_cost "Cannot afford clean cookstove payment"
 
+	*===========================================================================
+	*  ENHANCEMENT 7c: DISAGGREGATED WTP BY PRICE SPLIT (SOLAR & COOKING)
+	*  Allows plotting multi-curve panels crossing price subsidies (33%, 66%, 100%)
+	*  with installment financing horizons (Upfront, 6M, 12M, 24M).
+	*===========================================================================
+
+	capture drop wtp_solar_p100_upfront wtp_solar_p100_6m wtp_solar_p100_12m wtp_solar_p100_24m
+	capture drop wtp_solar_p66_upfront wtp_solar_p66_6m wtp_solar_p66_12m wtp_solar_p66_24m
+	capture drop wtp_solar_p33_upfront wtp_solar_p33_6m wtp_solar_p33_12m wtp_solar_p33_24m
+
+	capture confirm variable index_random_3
+	if !_rc {
+		* 100% full price (index_random_3 == 2)
+		gen byte wtp_solar_p100_upfront = (SEC_E_Q02 == 1) if index_random_3 == 2 & SEC_E_Q02 < .
+		gen byte wtp_solar_p100_6m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1) if index_random_3 == 2 & SEC_E_Q02 < .
+		gen byte wtp_solar_p100_12m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1) if index_random_3 == 2 & SEC_E_Q02 < .
+		gen byte wtp_solar_p100_24m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1 | SEC_E_Q05 == 1) if index_random_3 == 2 & SEC_E_Q02 < .
+		
+		* 66% price (index_random_3 == 1)
+		gen byte wtp_solar_p66_upfront  = (SEC_E_Q02 == 1) if index_random_3 == 1 & SEC_E_Q02 < .
+		gen byte wtp_solar_p66_6m       = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1) if index_random_3 == 1 & SEC_E_Q02 < .
+		gen byte wtp_solar_p66_12m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1) if index_random_3 == 1 & SEC_E_Q02 < .
+		gen byte wtp_solar_p66_24m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1 | SEC_E_Q05 == 1) if index_random_3 == 1 & SEC_E_Q02 < .
+
+		* 33% price (index_random_3 == 0)
+		gen byte wtp_solar_p33_upfront  = (SEC_E_Q02 == 1) if index_random_3 == 0 & SEC_E_Q02 < .
+		gen byte wtp_solar_p33_6m       = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1) if index_random_3 == 0 & SEC_E_Q02 < .
+		gen byte wtp_solar_p33_12m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1) if index_random_3 == 0 & SEC_E_Q02 < .
+		gen byte wtp_solar_p33_24m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1 | SEC_E_Q05 == 1) if index_random_3 == 0 & SEC_E_Q02 < .
+	}
+
+	* Clean Cookstove WTP disaggregated by randomized price proportion (random_perc_k: 1.0, 0.66, 0.33)
+	capture drop wtp_cook_p100_upfront wtp_cook_p100_6m wtp_cook_p100_12m wtp_cook_p100_24m
+	capture drop wtp_cook_p66_upfront wtp_cook_p66_6m wtp_cook_p66_12m wtp_cook_p66_24m
+	capture drop wtp_cook_p33_upfront wtp_cook_p33_6m wtp_cook_p33_12m wtp_cook_p33_24m
+
+	capture confirm variable random_perc_k
+	if !_rc {
+		* 100% full price
+		gen byte wtp_cook_p100_upfront = (SEC_K_Q03 == 1) if random_perc_k >= 0.99 & random_perc_k <= 1.01 & SEC_K_Q03 < .
+		gen byte wtp_cook_p100_6m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1) if random_perc_k >= 0.99 & random_perc_k <= 1.01 & SEC_K_Q03 < .
+		gen byte wtp_cook_p100_12m     = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1) if random_perc_k >= 0.99 & random_perc_k <= 1.01 & SEC_K_Q03 < .
+		gen byte wtp_cook_p100_24m     = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1 | SEC_K_Q06 == 1) if random_perc_k >= 0.99 & random_perc_k <= 1.01 & SEC_K_Q03 < .
+
+		* 66% price
+		gen byte wtp_cook_p66_upfront  = (SEC_K_Q03 == 1) if random_perc_k >= 0.60 & random_perc_k <= 0.70 & SEC_K_Q03 < .
+		gen byte wtp_cook_p66_6m       = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1) if random_perc_k >= 0.60 & random_perc_k <= 0.70 & SEC_K_Q03 < .
+		gen byte wtp_cook_p66_12m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1) if random_perc_k >= 0.60 & random_perc_k <= 0.70 & SEC_K_Q03 < .
+		gen byte wtp_cook_p66_24m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1 | SEC_K_Q06 == 1) if random_perc_k >= 0.60 & random_perc_k <= 0.70 & SEC_K_Q03 < .
+
+		* 33% price
+		gen byte wtp_cook_p33_upfront  = (SEC_K_Q03 == 1) if random_perc_k >= 0.30 & random_perc_k <= 0.40 & SEC_K_Q03 < .
+		gen byte wtp_cook_p33_6m       = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1) if random_perc_k >= 0.30 & random_perc_k <= 0.40 & SEC_K_Q03 < .
+		gen byte wtp_cook_p33_12m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1) if random_perc_k >= 0.30 & random_perc_k <= 0.40 & SEC_K_Q03 < .
+		gen byte wtp_cook_p33_24m      = (SEC_K_Q03 == 1 | SEC_K_Q04 == 1 | SEC_K_Q05 == 1 | SEC_K_Q06 == 1) if random_perc_k >= 0.30 & random_perc_k <= 0.40 & SEC_K_Q03 < .
+	}
+
+	* Outage intervals for grid households (SEC_C_Q29, dropping 888 "Don't know")
+	capture drop outages_per_wk outages_lt3_wk outages_3to14_wk outages_gt14_wk
+	gen double outages_per_wk = .
+	capture confirm variable SEC_C_Q29
+	if !_rc {
+		replace outages_per_wk = SEC_C_Q29 if grid_hh == 1 & SEC_C_Q29 < 888
+	}
+	gen byte outages_lt3_wk   = (outages_per_wk < 3) if outages_per_wk < .
+	gen byte outages_3to14_wk = (outages_per_wk >= 3 & outages_per_wk <= 14) if outages_per_wk < .
+	gen byte outages_gt14_wk  = (outages_per_wk > 14) if outages_per_wk < .
+	lab var outages_lt3_wk   "Grid outages: fewer than 3 times per week (<3/wk)"
+	lab var outages_3to14_wk "Grid outages: 3 to 14 times per week (3-14/wk)"
+	lab var outages_gt14_wk  "Grid outages: more than 14 times per week (>14/wk)"
+
+	* Electric stove adoption among grid households
+	capture drop elec_stove_grid
+	capture confirm variable elec_stove
+	if !_rc gen byte elec_stove_grid = (elec_stove == 1) if grid_hh == 1
+	else    gen byte elec_stove_grid = 0 if grid_hh == 1
+	lab var elec_stove_grid "Grid-connected household owns an electric cookstove"
+
 
 	*===========================================================================
 	*  ENHANCEMENT 8: BACKUP LIGHTING SOLUTIONS FOR GRID HOUSEHOLDS
@@ -352,17 +444,118 @@
 
 	*===========================================================================
 	*  ENHANCEMENT 11: 9 SUBDIVISIONS OF GUINEA-BISSAU (SEC_A_Q01)
-*===========================================================================
-capture drop reg_*
-gen byte reg_tombali = (SEC_A_Q01 == 1)
-gen byte reg_quinara = (SEC_A_Q01 == 2)
-gen byte reg_oio = (SEC_A_Q01 == 3)
-gen byte reg_biombo = (SEC_A_Q01 == 4)
-gen byte reg_bolamabijags = (SEC_A_Q01 == 5)
-gen byte reg_bafat = (SEC_A_Q01 == 6)
-gen byte reg_gabu = (SEC_A_Q01 == 7)
-gen byte reg_cacheu = (SEC_A_Q01 == 8)
-gen byte reg_setor_autnomo_de_bissau = (SEC_A_Q01 == 10)
+	*===========================================================================
 
-save "$wip_hh/$master_dta", replace
-	di " 06_analytical_enhancements.do complete (Enhancements 1-12)"
+	capture drop reg_*
+	gen byte reg_tombali = (SEC_A_Q01 == 1)
+	gen byte reg_quinara = (SEC_A_Q01 == 2)
+	gen byte reg_oio = (SEC_A_Q01 == 3)
+	gen byte reg_biombo = (SEC_A_Q01 == 4)
+	gen byte reg_bolamabijags = (SEC_A_Q01 == 5)
+	gen byte reg_bafat = (SEC_A_Q01 == 6)
+	gen byte reg_gabu = (SEC_A_Q01 == 7)
+	gen byte reg_cacheu = (SEC_A_Q01 == 8)
+	gen byte reg_setor_autnomo_de_bissau = (SEC_A_Q01 == 10)
+
+
+	*===========================================================================
+	*  ENHANCEMENT 12: ENERGY POVERTY PENALTY & COPING MECHANISM EXPENDITURES
+	*  Coping fuel expenditure (dry-cell batteries, candles, kerosene, phone charging)
+	*  and budget share relative to total household monthly consumption expenditure.
+	*===========================================================================
+
+	capture drop coping_spend coping_pct
+	* Calculate total monthly spending on lighting substitutes from Section H / Section C
+	gen double coping_spend = 0
+	capture confirm variable SEC_H_Q06
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q06 < ., SEC_H_Q06, 0) // Candles monthly spend
+	capture confirm variable SEC_H_Q12
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q12 < ., SEC_H_Q12, 0) // Dry-cell batteries monthly spend
+	capture confirm variable SEC_H_Q18
+	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q18 < ., SEC_H_Q18, 0) // Kerosene / liquid fuel monthly spend
+	capture confirm variable SEC_C_Q121
+	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0) // Fee-based mobile phone charging
+
+	* Monthly budget share (% of total monthly consumption expenditure)
+	gen double coping_pct = .
+	capture confirm variable hh_exp_monthly
+	if !_rc {
+		replace coping_pct = (coping_spend / hh_exp_monthly) * 100 if hh_exp_monthly > 0 & hh_exp_monthly < .
+	}
+	else {
+		capture confirm variable exp_total_month
+		if !_rc replace coping_pct = (coping_spend / exp_total_month) * 100 if exp_total_month > 0 & exp_total_month < .
+	}
+
+	lab var coping_spend "Monthly expenditure on alternative lighting & coping mechanisms"
+	lab var coping_pct   "Share of monthly household budget spent on coping mechanisms (%)"
+
+
+	*===========================================================================
+	*  ENHANCEMENT 13: COMPREHENSIVE LIGHTING POINTS (INCANDESCENT, FLUOR, CFL, LED)
+	*===========================================================================
+
+	capture drop has_electric_lights has_solar_lights has_any_lights
+	capture confirm variable has_lights
+	if !_rc gen byte has_electric_lights = (has_lights == 1) if has_lights < .
+	else    gen byte has_electric_lights = 0
+	gen byte has_solar_lights = (solar_hh == 1)
+	gen byte has_any_lights   = (has_electric_lights == 1 | has_solar_lights == 1)
+	lab var has_electric_lights "Owns electric lighting points (incandescent, fluorescent, CFL, LED)"
+	lab var has_solar_lights    "Owns standalone solar lighting points / lantern"
+	lab var has_any_lights      "Owns any modern electric or solar lighting points"
+
+
+	*===========================================================================
+	*  ENHANCEMENT 14: COOKSTOVE TIME-USE & WEEKLY COOKING HOURS
+	*===========================================================================
+
+	preserve
+		local fn_stoves = cond("$fn_cookstoves" != "", "$fn_cookstoves", "section_g_cookstoves_roster.dta")
+		capture confirm file "$raw_hh/`fn_stoves'"
+		if !_rc {
+			use "$raw_hh/`fn_stoves'", clear
+			capture confirm variable interview__id
+			if _rc {
+				capture confirm variable interview__key
+				if !_rc clonevar interview__id = interview__key
+			}
+			* Daily cooking minutes: boiling water (Q21) + morning (Q22a) + afternoon (Q22b) + evening (Q22c)
+			gen double daily_mins = cond(SEC_G_Q21 < ., SEC_G_Q21, 0) + ///
+			                        cond(SEC_G_Q22a < ., SEC_G_Q22a, 0) + ///
+			                        cond(SEC_G_Q22b < ., SEC_G_Q22b, 0) + ///
+			                        cond(SEC_G_Q22c < ., SEC_G_Q22c, 0)
+			* Weekly hours = (daily_mins / 60) * days used per week (Q19)
+			gen double weekly_hrs = (daily_mins / 60) * cond(SEC_G_Q19 < ., SEC_G_Q19, 0)
+			
+			* Disaggregate by cookstove type
+			gen double hr_3stone = weekly_hrs if SEC_G_Q05 == 1
+			gen double hr_trad   = weekly_hrs if SEC_G_Q05 == 2
+			gen double hr_ics    = weekly_hrs if SEC_G_Q05 == 3
+			gen double hr_lpg    = weekly_hrs if SEC_G_Q05 == 5
+			gen double hr_elec   = weekly_hrs if SEC_G_Q05 == 7
+			
+			bys interview__id: egen hr_3stone_hh = total(hr_3stone)
+			bys interview__id: egen hr_trad_hh   = total(hr_trad)
+			bys interview__id: egen hr_ics_hh    = total(hr_ics)
+			bys interview__id: egen hr_lpg_hh    = total(hr_lpg)
+			bys interview__id: egen hr_elec_hh   = total(hr_elec)
+			
+			keep interview__id hr_3stone_hh hr_trad_hh hr_ics_hh hr_lpg_hh hr_elec_hh
+			duplicates drop
+			save "$wip_hh/stove_time_use.dta", replace
+		}
+	restore
+	capture merge 1:1 interview__id using "$wip_hh/stove_time_use.dta", nogen
+	lab var hr_3stone_hh "Weekly cooking hours on 3-stone / open fire"
+	lab var hr_trad_hh   "Weekly cooking hours on traditional/artisanal charcoal stove"
+	lab var hr_ics_hh    "Weekly cooking hours on improved biomass cookstove (ICS)"
+	lab var hr_lpg_hh    "Weekly cooking hours on LPG cookstove"
+	lab var hr_elec_hh   "Weekly cooking hours on electric cookstove"
+
+
+	*---------------------------------------------------------------------------
+	* Save
+	*---------------------------------------------------------------------------
+	save "$wip_hh/$master_dta", replace
+	di " 06_analytical_enhancements.do complete (Enhancements 1-14)"
