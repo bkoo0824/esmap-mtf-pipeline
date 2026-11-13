@@ -74,7 +74,23 @@ _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.nam
 XLS_PATH     = _xls_candidates[0] if _xls_candidates else OUTPUT_DIR / "MTF_Summary.xlsx"
 JSON_PATH    = OUTPUT_DIR / "mtf_report_values.json"
 
-CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+import argparse
+parser = argparse.ArgumentParser(description="ESMAP MTF Visualization Pipeline")
+parser.add_argument("--base-dir", default=None, help="Country working directory")
+_cli_args, _ = parser.parse_known_args()
+
+if _cli_args.base_dir:
+    BASE_DIR = Path(_cli_args.base_dir)
+    OUTPUT_DIR = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
+    CHARTS_DIR = OUTPUT_DIR / "charts"
+    _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+    XLS_PATH = _xls_candidates[0] if _xls_candidates else OUTPUT_DIR / "MTF_Summary.xlsx"
+    JSON_PATH = OUTPUT_DIR / "mtf_report_values.json"
+
+try:
+    CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 # ─── COLORS ────────────────────────────────────────────────────────────────────
 WB_NAVY  = "#002244"
@@ -276,7 +292,12 @@ def chart_quintile_access():
         except Exception:
             elec_vals.append(np.nan)
         try:
-            mecs_vals.append(float(df.loc["mecs_access", qcol]) * 100)
+            if "mecs_modern" in df.index:
+                mecs_vals.append(float(df.loc["mecs_modern", qcol]) * 100)
+            elif "cleanstove_hh" in df.index:
+                mecs_vals.append(float(df.loc["cleanstove_hh", qcol]) * 100)
+            else:
+                mecs_vals.append(float(df.loc["mecs_access", qcol]) * 100)
         except Exception:
             mecs_vals.append(np.nan)
 
@@ -286,7 +307,7 @@ def chart_quintile_access():
     ax.plot(x, elec_vals, "o-", color=WB_NAVY, linewidth=2.5, markersize=7,
             label="Electricity Access (Tier 1+)")
     ax.plot(x, mecs_vals, "s--", color=WB_TEAL, linewidth=2.5, markersize=7,
-            label="MECS Cooking Access (Tier 1+)")
+            label="MECS Cooking Access (Tier 4–5)")
 
     for xi, (ev, mv) in enumerate(zip(elec_vals, mecs_vals)):
         if not np.isnan(ev):
@@ -697,10 +718,6 @@ def chart_electricity_source_mix():
     ax.set_xlabel("% of National Population (Weighted)", fontsize=10, fontweight="bold")
     ax.set_title("Primary Electricity Technology Distribution\n(Formal Source Access = 47.1% | MTF Tier 1+ Access = 31.4%)",
                  fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
-
-    ax.text(max(shares) * 0.72, 5.2, "Notice: Dry-cell batteries & torches\nare strictly excluded from formal\nelectricity access under SDG 7",
-            ha="center", va="center", bbox=dict(boxstyle="round,pad=0.5", facecolor="#FADBD8", edgecolor=WB_RED, lw=1.5),
-            color="#922B21", fontsize=8.5, fontweight="bold")
 
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="x", alpha=0.3, linestyle="--")

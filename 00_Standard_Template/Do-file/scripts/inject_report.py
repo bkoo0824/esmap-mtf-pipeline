@@ -423,11 +423,9 @@ def load_values(
             "| **Three-Stone / Open Fire** | `{{STOVE_3STONE_N}}` | `{{STOVE_3STONE_U}}` | `{{STOVE_3STONE_R}}` | Gathered firewood | Tier 0 |\n"
             "| **Traditional / Local Stove** | `{{STOVE_TRAD_N}}` | `{{STOVE_TRAD_U}}` | `{{STOVE_TRAD_R}}` | Wood / Charcoal | Tier 0 |\n"
             "| **Improved Cookstove (ICS)** | `{{STOVE_ICS_N}}` | `{{STOVE_ICS_U}}` | `{{STOVE_ICS_R}}` | Firewood / Charcoal | Tier 2–3 |\n"
-            "| **Clean Fuel: LPG / Biogas** | `{{STOVE_CLEAN_N}}` | `{{STOVE_CLEAN_U}}` | `{{STOVE_CLEAN_R}}` | Bottled LPG / Biogas | Tier 4–5 |\n"
-            "| **Clean Fuel: Electric Stove** | `{{STOVE_ELEC_N}}` | `{{STOVE_ELEC_U}}` | `{{STOVE_ELEC_R}}` | Grid electricity | Tier 5 |\n"
-            "| **Solar Cooker** | `{{STOVE_SOLAR_N}}` | `{{STOVE_SOLAR_U}}` | `{{STOVE_SOLAR_R}}` | Solar radiation | Tier 5 |\n"
-            "| **Biogas Dedicated Stove** | `{{STOVE_BIO_N}}` | `{{STOVE_BIO_U}}` | `{{STOVE_BIO_R}}` | Biogas digester | Tier 5 |\n"
-            "| **Biofuel / Ethanol Stove** | `{{STOVE_BIOFUEL_N}}` | `{{STOVE_BIOFUEL_U}}` | `{{STOVE_BIOFUEL_R}}` | Ethanol / Biofuel | Tier 4 |"
+            "| **Clean Fuel: LPG** | `{{STOVE_CLEAN_N}}` | `{{STOVE_CLEAN_U}}` | `{{STOVE_CLEAN_R}}` | Bottled LPG | Tier 4–5 |\n"
+            "| **Clean Fuel: Electric Stove** | `{{STOVE_ELEC_N}}` | `{{STOVE_ELEC_U}}` | `{{STOVE_ELEC_R}}` | Grid electricity | Tier 5 |\n\n"
+            "*Note: Solar cookers, domestic biogas digesters, and biofuel/ethanol stoves were not observed in the survey sample (0.0%). Electric cooking appliances were identified in fewer than 0.2% of surveyed households nationally (<7 sample households).*"
         )
 
     if "{{COOKSTOVE_TYPOLOGY_TABLE}}" not in values:
@@ -938,9 +936,15 @@ def inject_docx_from_markdown(
         # Numbered list
         num_match = re.match(r'^(\d+)\.\s+(.*)', line)
         if num_match:
-            p = doc.add_paragraph(style='List Number')
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.25)
+            p.paragraph_format.first_line_indent = Inches(-0.25)
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(3)
+            r_num = p.add_run(f"{num_match.group(1)}. ")
+            r_num.bold = True
+            r_num.font.color.rgb = COLOR_NAVY
+            r_num.font.size = Pt(10.0)
             _add_formatted_runs(p, num_match.group(2).strip(), base_color=COLOR_CHARCOAL, base_size=Pt(10.0))
             i += 1
             continue
