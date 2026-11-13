@@ -85,51 +85,14 @@
 	*  Source: time_collecting.dta  — individual-level, filtered by sex/age
 	*===========================================================================
 
-	preserve
-		local fn_time_coll = cond("$fn_time_coll" != "", "$fn_time_coll", "time_collecting.dta")
-		use "$raw_hh/`fn_time_coll'", clear
-		capture confirm variable interview__id
-		if _rc {
-			capture confirm variable interview__key
-			if !_rc clonevar interview__id = interview__key
-		}
-
-		* Recode frequency
-		replace SEC_I_Q12 = 1440 if SEC_I_Q12 > 1440 & SEC_I_Q12 != .
-		gen wk_coll = .
-		replace wk_coll = (SEC_I_Q12/60)*7           if SEC_I_Q13 == 1
-		replace wk_coll = (SEC_I_Q12/60)             if SEC_I_Q13 == 2
-		replace wk_coll = (SEC_I_Q12/60)*2           if SEC_I_Q13 == 3
-		replace wk_coll = (SEC_I_Q12/60)*(7/14)      if SEC_I_Q13 == 4
-		replace wk_coll = (SEC_I_Q12/60)*(7/21)      if SEC_I_Q13 == 5
-		replace wk_coll = (SEC_I_Q12/60)*(7/30)      if SEC_I_Q13 == 6
-		replace wk_coll = (SEC_I_Q12/60)*(7/60)      if SEC_I_Q13 == 7
-		replace wk_coll = (SEC_I_Q12/60)*(7/90)      if SEC_I_Q13 == 8
-		replace wk_coll = (SEC_I_Q12/60)*(7/120)     if SEC_I_Q13 == 9
-		replace wk_coll = (SEC_I_Q12/60)*(7/30)      if SEC_I_Q13 == 19  // as needed → monthly
-
-		** Annual hours
-		gen yr_coll_hr = wk_coll * 52
-
-		** By demographic group directly from time_collecting__id:
-		** 1=Women 15+, 2=Girls <15, 3=Men 15+, 4=Boys <15
-		gen women_fuel_hr_yr = yr_coll_hr if time_collecting__id == 1
-		gen girls_fuel_hr_yr = yr_coll_hr if time_collecting__id == 2
-		gen men_fuel_hr_yr   = yr_coll_hr if time_collecting__id == 3
-		gen boys_fuel_hr_yr  = yr_coll_hr if time_collecting__id == 4
-
-		bys interview__id: egen women_fuel_hr_yr_hh = total(women_fuel_hr_yr)
-		bys interview__id: egen girls_fuel_hr_yr_hh = total(girls_fuel_hr_yr)
-		bys interview__id: egen men_fuel_hr_yr_hh   = total(men_fuel_hr_yr)
-		bys interview__id: egen boys_fuel_hr_yr_hh  = total(boys_fuel_hr_yr)
-
-		keep interview__id women_fuel_hr_yr_hh men_fuel_hr_yr_hh ///
-			girls_fuel_hr_yr_hh boys_fuel_hr_yr_hh
-		duplicates drop
-		save "$wip_hh/fuel_time_by_sex.dta", replace
-	restore
-
-	merge 1:1 interview__id using "$wip_hh/fuel_time_by_sex.dta", nogen
+	* Demographic fuel hours already merged from time_collecting.dta in 00_build_master_dataset.do
+	capture confirm variable women_fuel_hr_yr_hh
+	if _rc {
+		gen women_fuel_hr_yr_hh = .
+		gen men_fuel_hr_yr_hh = .
+		gen girls_fuel_hr_yr_hh = .
+		gen boys_fuel_hr_yr_hh = .
+	}
 
 	** Equivalent working days (÷8 hrs/day) and school days lost
 	gen women_fuel_workdays_yr = women_fuel_hr_yr_hh / 8
@@ -242,6 +205,80 @@
 	lab var wtp_grid_waived  "WTP grid connection: if connection fee waived"
 	lab var wtp_grid_never   "Will NEVER connect to grid under any terms"
 	lab var refuse_wiring_cost "Refuses grid because cannot afford internal wiring"
+
+	*===========================================================================
+	*  ENHANCEMENT 6b: DISAGGREGATED WTP BY PRICE SPLIT (GRID CONNECTION)
+	*  Allows plotting multi-curve panels crossing connection fee price points
+	*  (100%, 57%, 29%, 14%) with installment financing horizons (Upfront, 3M, 6M, 12M, Waived).
+	*===========================================================================
+
+	capture drop wtp_grid_p100_upfront wtp_grid_p100_3m wtp_grid_p100_6m wtp_grid_p100_12m wtp_grid_p100_waived
+	capture drop wtp_grid_p57_upfront  wtp_grid_p57_3m  wtp_grid_p57_6m  wtp_grid_p57_12m  wtp_grid_p57_waived
+	capture drop wtp_grid_p29_upfront  wtp_grid_p29_3m  wtp_grid_p29_6m  wtp_grid_p29_12m  wtp_grid_p29_waived
+	capture drop wtp_grid_p14_upfront  wtp_grid_p14_3m  wtp_grid_p14_6m  wtp_grid_p14_12m  wtp_grid_p14_waived
+
+	capture confirm variable random_percentage
+	if !_rc {
+		* 100% full fee
+		gen byte wtp_grid_p100_upfront = (SEC_D_Q03 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p100_waived  = (wtp_grid_p100_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 57% fee
+		gen byte wtp_grid_p57_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p57_waived   = (wtp_grid_p57_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 29% fee
+		gen byte wtp_grid_p29_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p29_waived   = (wtp_grid_p29_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
+
+		* 14% fee
+		gen byte wtp_grid_p14_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		gen byte wtp_grid_p14_waived   = (wtp_grid_p14_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+	}
+	else {
+		capture confirm variable index_random
+		if !_rc {
+			* 100% full fee (index_random == 5)
+			gen byte wtp_grid_p100_upfront = (SEC_D_Q03 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p100_waived  = (wtp_grid_p100_12m == 1 | SEC_D_Q07 == 1) if index_random == 5 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 57% fee (index_random == 3)
+			gen byte wtp_grid_p57_upfront  = (SEC_D_Q03 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p57_waived   = (wtp_grid_p57_12m == 1 | SEC_D_Q07 == 1) if index_random == 3 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 29% fee (index_random == 1)
+			gen byte wtp_grid_p29_upfront  = (SEC_D_Q03 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p29_waived   = (wtp_grid_p29_12m == 1 | SEC_D_Q07 == 1) if index_random == 1 & grid_hh == 0 & SEC_D_Q03 < .
+
+			* 14% fee (index_random == 0)
+			gen byte wtp_grid_p14_upfront  = (SEC_D_Q03 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+			gen byte wtp_grid_p14_waived   = (wtp_grid_p14_12m == 1 | SEC_D_Q07 == 1) if index_random == 0 & grid_hh == 0 & SEC_D_Q03 < .
+		}
+	}
 
 
 	*===========================================================================
@@ -443,19 +480,24 @@
 
 
 	*===========================================================================
-	*  ENHANCEMENT 11: 9 SUBDIVISIONS OF GUINEA-BISSAU (SEC_A_Q01)
+	*  ENHANCEMENT 11: 14 REGIONS OF NAMIBIA (SEC_A_Q01)
 	*===========================================================================
 
 	capture drop reg_*
-	gen byte reg_tombali = (SEC_A_Q01 == 1)
-	gen byte reg_quinara = (SEC_A_Q01 == 2)
-	gen byte reg_oio = (SEC_A_Q01 == 3)
-	gen byte reg_biombo = (SEC_A_Q01 == 4)
-	gen byte reg_bolamabijags = (SEC_A_Q01 == 5)
-	gen byte reg_bafat = (SEC_A_Q01 == 6)
-	gen byte reg_gabu = (SEC_A_Q01 == 7)
-	gen byte reg_cacheu = (SEC_A_Q01 == 8)
-	gen byte reg_setor_autnomo_de_bissau = (SEC_A_Q01 == 10)
+	gen byte reg_kharas       = (SEC_A_Q01 == 1)
+	gen byte reg_erongo       = (SEC_A_Q01 == 2)
+	gen byte reg_hardap       = (SEC_A_Q01 == 3)
+	gen byte reg_kavango_e    = (SEC_A_Q01 == 4)
+	gen byte reg_kavango_w    = (SEC_A_Q01 == 5)
+	gen byte reg_khomas       = (SEC_A_Q01 == 6)
+	gen byte reg_kunene       = (SEC_A_Q01 == 7)
+	gen byte reg_ohangwena    = (SEC_A_Q01 == 8)
+	gen byte reg_omaheke      = (SEC_A_Q01 == 9)
+	gen byte reg_omusati      = (SEC_A_Q01 == 10)
+	gen byte reg_oshana       = (SEC_A_Q01 == 11)
+	gen byte reg_oshikoto     = (SEC_A_Q01 == 12)
+	gen byte reg_otjozondjupa = (SEC_A_Q01 == 13)
+	gen byte reg_zambezi      = (SEC_A_Q01 == 14)
 
 
 	*===========================================================================
@@ -465,26 +507,19 @@
 	*===========================================================================
 
 	capture drop coping_spend coping_pct
-	* Calculate total monthly spending on lighting substitutes from Section H / Section C
+	* Calculate total monthly spending on lighting substitutes (Section H + phone charging)
 	gen double coping_spend = 0
-	capture confirm variable SEC_H_Q06
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q06 < ., SEC_H_Q06, 0) // Candles monthly spend
-	capture confirm variable SEC_H_Q12
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q12 < ., SEC_H_Q12, 0) // Dry-cell batteries monthly spend
-	capture confirm variable SEC_H_Q18
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q18 < ., SEC_H_Q18, 0) // Kerosene / liquid fuel monthly spend
+	capture confirm variable lightfuel_exp_tot_m
+	if !_rc replace coping_spend = coping_spend + cond(lightfuel_exp_tot_m < ., lightfuel_exp_tot_m, 0)
 	capture confirm variable SEC_C_Q121
-	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0) // Fee-based mobile phone charging
+	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0)
 
 	* Monthly budget share (% of total monthly consumption expenditure)
 	gen double coping_pct = .
-	capture confirm variable hh_exp_monthly
+	capture confirm variable exp_total_m
 	if !_rc {
-		replace coping_pct = (coping_spend / hh_exp_monthly) * 100 if hh_exp_monthly > 0 & hh_exp_monthly < .
-	}
-	else {
-		capture confirm variable exp_total_month
-		if !_rc replace coping_pct = (coping_spend / exp_total_month) * 100 if exp_total_month > 0 & exp_total_month < .
+		replace coping_pct = (coping_spend / exp_total_m) * 100 if exp_total_m > 0 & exp_total_m < .
+		replace coping_pct = 100 if coping_pct > 100 & coping_pct < .
 	}
 
 	lab var coping_spend "Monthly expenditure on alternative lighting & coping mechanisms"

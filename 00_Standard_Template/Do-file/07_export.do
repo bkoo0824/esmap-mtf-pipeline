@@ -172,7 +172,7 @@
 		putexcel `col'11 = (e(b)[1,10] * 100)
 		putexcel `col'12 = (e(b)[1,11] * 100)
 
-		scalar json_MECS_ACC_`loc'    = e(b)[1,7] * 100
+		scalar json_MECS_ACC_`loc'    = e(b)[1,8] * 100
 		scalar json_MECS_MOD_`loc'    = e(b)[1,8] * 100
 		scalar json_TRANS_COOK_`loc'  = e(b)[1,9] * 100
 		scalar json_THREESTONE_`loc'  = e(b)[1,10] * 100
@@ -268,7 +268,7 @@
 				putexcel `col'`row' = `val'
 				* Store key JSON values for electricity and MECS access by quintile
 				if "`var'" == "elec_access" scalar json_Q`q'_ELEC_ACC = `val' * 100
-				if "`var'" == "mecs_access"  scalar json_Q`q'_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  scalar json_Q`q'_MECS_ACC  = `val' * 100
 			}
 			local q = `q' + 1
 		}
@@ -300,8 +300,8 @@
 				putexcel `col'`row' = `val'
 				if "`var'" == "elec_access" & `g'==1 scalar json_MHH_ELEC_ACC = `val' * 100
 				if "`var'" == "elec_access" & `g'==2 scalar json_FHH_ELEC_ACC = `val' * 100
-				if "`var'" == "mecs_access"  & `g'==1 scalar json_MHH_MECS_ACC  = `val' * 100
-				if "`var'" == "mecs_access"  & `g'==2 scalar json_FHH_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  & `g'==1 scalar json_MHH_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  & `g'==2 scalar json_FHH_MECS_ACC  = `val' * 100
 				if "`var'" == "elc_t45"      & `g'==1 scalar json_MHH_ELEC_T45  = `val' * 100
 				if "`var'" == "elc_t45"      & `g'==2 scalar json_FHH_ELEC_T45  = `val' * 100
 			}
@@ -594,11 +594,11 @@
 		putexcel A`row' = "`rdisp'"
 
 		capture {
-			svy, subpop(if SEC_A_Q01 == `r'): proportion elec_access grid_hh solar_hh elc_t45 mecs_access
+			svy, subpop(if SEC_A_Q01 == `r'): proportion elec_access grid_hh solar_hh elc_t45 mecs_modern
 			matrix T = r(table)
 
 			* T matrix indices for proportion = 1 (positive outcome):
-			* Col 2: elec_access==1; Col 4: grid_hh==1; Col 6: solar_hh==1; Col 8: elc_t45==1; Col 10: mecs_access==1
+			* Col 2: elec_access==1; Col 4: grid_hh==1; Col 6: solar_hh==1; Col 8: elc_t45==1; Col 10: mecs_modern==1
 			* Row 1: Point estimate (b), Row 5: LL, Row 6: UL
 
 			local e_b  = T[1,2] * 100
@@ -727,33 +727,43 @@
 	*  SHEET 11: ENERGY POVERTY PENALTY & COPING EXPENDITURES (TABLE 2.2)
 	*===========================================================================
 
+	* Q1 Unelectrified
 	capture {
-		* Q1 Unelectrified
 		svy, subpop(if hh_exp_quintile == 1 & elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q1_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_Q1_UNEL   = e(b)[1,2]
+	}
 
-		* Q1 Connected
+	* Q1 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 1 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q1_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q1_CONN   = e(b)[1,2]
+	}
 
-		* Q3 Unelectrified
+	* Q3 Unelectrified
+	capture {
 		svy, subpop(if hh_exp_quintile == 3 & elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q3_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_Q3_UNEL   = e(b)[1,2]
+	}
 
-		* Q3 Connected
+	* Q3 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 3 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q3_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q3_CONN   = e(b)[1,2]
+	}
 
-		* Q5 Connected
+	* Q5 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 5 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q5_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q5_CONN   = e(b)[1,2]
+	}
 
-		* National Unelectrified Average
+	* National Unelectrified Average
+	capture {
 		svy, subpop(if elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_NAT_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]

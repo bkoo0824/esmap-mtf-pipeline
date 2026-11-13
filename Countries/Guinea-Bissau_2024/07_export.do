@@ -39,7 +39,7 @@
 	svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
 
 	* Output path
-	local xls "$out_sl/MTF_Guinea-Bissau_Summary.xlsx"
+	local xls "$out_sl/MTF_Namibia_Summary.xlsx"
 	local json_out "$out_sl/mtf_report_values.json"
 
 	*===========================================================================
@@ -172,7 +172,7 @@
 		putexcel `col'11 = (e(b)[1,10] * 100)
 		putexcel `col'12 = (e(b)[1,11] * 100)
 
-		scalar json_MECS_ACC_`loc'    = e(b)[1,7] * 100
+		scalar json_MECS_ACC_`loc'    = e(b)[1,8] * 100
 		scalar json_MECS_MOD_`loc'    = e(b)[1,8] * 100
 		scalar json_TRANS_COOK_`loc'  = e(b)[1,9] * 100
 		scalar json_THREESTONE_`loc'  = e(b)[1,10] * 100
@@ -268,7 +268,7 @@
 				putexcel `col'`row' = `val'
 				* Store key JSON values for electricity and MECS access by quintile
 				if "`var'" == "elec_access" scalar json_Q`q'_ELEC_ACC = `val' * 100
-				if "`var'" == "mecs_access"  scalar json_Q`q'_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  scalar json_Q`q'_MECS_ACC  = `val' * 100
 			}
 			local q = `q' + 1
 		}
@@ -300,8 +300,10 @@
 				putexcel `col'`row' = `val'
 				if "`var'" == "elec_access" & `g'==1 scalar json_MHH_ELEC_ACC = `val' * 100
 				if "`var'" == "elec_access" & `g'==2 scalar json_FHH_ELEC_ACC = `val' * 100
-				if "`var'" == "mecs_access"  & `g'==1 scalar json_MHH_MECS_ACC  = `val' * 100
-				if "`var'" == "mecs_access"  & `g'==2 scalar json_FHH_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  & `g'==1 scalar json_MHH_MECS_ACC  = `val' * 100
+				if "`var'" == "mecs_modern"  & `g'==2 scalar json_FHH_MECS_ACC  = `val' * 100
+				if "`var'" == "elc_t45"      & `g'==1 scalar json_MHH_ELEC_T45  = `val' * 100
+				if "`var'" == "elc_t45"      & `g'==2 scalar json_FHH_ELEC_T45  = `val' * 100
 			}
 			local col = "C"
 		}
@@ -346,6 +348,27 @@
 	* Clean stove ownership %
 	svy: mean clean_stove
 	scalar json_PCT_CLEAN_STOVE_OWNERSHIP = e(b)[1,1] * 100
+
+	* Primary electricity technology source mix (qualifying sources vs dry-cell exclusion)
+	capture {
+		capture drop tech_grid tech_solar tech_gen tech_mini tech_rechar tech_drycell tech_noelec
+		gen byte tech_grid    = (elec_tech_type == 1)
+		gen byte tech_solar   = inlist(elec_tech_type, 4, 5, 6)
+		gen byte tech_gen     = (elec_tech_type == 3)
+		gen byte tech_mini    = (elec_tech_type == 2)
+		gen byte tech_rechar  = (elec_tech_type == 7)
+		gen byte tech_drycell = (SEC_C_Q162 == 8)
+		gen byte tech_noelec  = (SEC_C_Q162 == 111 | elec_tech_type == 8 & SEC_C_Q162 != 8)
+		svy: mean tech_grid tech_solar tech_gen tech_mini tech_rechar tech_drycell tech_noelec
+		scalar json_SHARE_GRID    = e(b)[1,1] * 100
+		scalar json_SHARE_SOLAR   = e(b)[1,2] * 100
+		scalar json_SHARE_GEN     = e(b)[1,3] * 100
+		scalar json_SHARE_MINI    = e(b)[1,4] * 100
+		scalar json_SHARE_RECHAR  = e(b)[1,5] * 100
+		scalar json_SHARE_DRYCELL = e(b)[1,6] * 100
+		scalar json_SHARE_NOELEC  = e(b)[1,7] * 100
+		drop tech_*
+	}
 
 	* Stove type disaggregations for Table 2
 	capture drop stove_3stone
@@ -561,24 +584,21 @@
 		J`row' = "MECS Access (%)"        K`row' = "MECS Access [95% CI]"
 	local row = 2
 
-	local reg_names Tombali Quinara Oio Biombo BolamaBijags Bafat Gabu Cacheu Setor_Autnomo_de_Bissau
-	local reg_codes TOMBALI QUINARA OIO BIOMBO BOLAMABIJAGS BAFAT GABU CACHEU SETOR_AUTNOMO_DE_BISSAU
-	local reg_num_codes 1 2 3 4 5 6 7 8 10
+	local reg_names Kharas Erongo Hardap Kavango_East Kavango_West Khomas Kunene Ohangwena Omaheke Omusati Oshana Oshikoto Otjozondjupa Zambezi
+	local reg_codes KHARAS ERONGO HARDAP KAVANGO_E KAVANGO_W KHOMAS KUNENE OHANGWENA OMAHEKE OMUSATI OSHANA OSHIKOTO OTJOZONDJUPA ZAMBEZI
 
-	local n_regs : word count `reg_names'
-	forval idx = 1/`n_regs' {
-		local rname : word `idx' of `reg_names'
-		local rcode : word `idx' of `reg_codes'
-		local r     : word `idx' of `reg_num_codes'
+	forval r = 1/14 {
+		local rname : word `r' of `reg_names'
+		local rcode : word `r' of `reg_codes'
 		local rdisp = subinstr("`rname'", "_", " ", .)
 		putexcel A`row' = "`rdisp'"
 
 		capture {
-			svy, subpop(if SEC_A_Q01 == `r'): proportion elec_access grid_hh solar_hh elc_t45 mecs_access
+			svy, subpop(if SEC_A_Q01 == `r'): proportion elec_access grid_hh solar_hh elc_t45 mecs_modern
 			matrix T = r(table)
 
 			* T matrix indices for proportion = 1 (positive outcome):
-			* Col 2: elec_access==1; Col 4: grid_hh==1; Col 6: solar_hh==1; Col 8: elc_t45==1; Col 10: mecs_access==1
+			* Col 2: elec_access==1; Col 4: grid_hh==1; Col 6: solar_hh==1; Col 8: elc_t45==1; Col 10: mecs_modern==1
 			* Row 1: Point estimate (b), Row 5: LL, Row 6: UL
 
 			local e_b  = T[1,2] * 100
@@ -616,6 +636,7 @@
 			putexcel J`row' = `m_b'
 			putexcel K`row' = "`m_ci'"
 
+			* Export point and CI interval strings for report templates
 			scalar json_REG_`rcode'_ELEC     = `e_b'
 			scalar json_REG_`rcode'_ELEC_LL  = `e_ll'
 			scalar json_REG_`rcode'_ELEC_UL  = `e_ul'
@@ -706,33 +727,43 @@
 	*  SHEET 11: ENERGY POVERTY PENALTY & COPING EXPENDITURES (TABLE 2.2)
 	*===========================================================================
 
+	* Q1 Unelectrified
 	capture {
-		* Q1 Unelectrified
 		svy, subpop(if hh_exp_quintile == 1 & elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q1_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_Q1_UNEL   = e(b)[1,2]
+	}
 
-		* Q1 Connected
+	* Q1 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 1 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q1_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q1_CONN   = e(b)[1,2]
+	}
 
-		* Q3 Unelectrified
+	* Q3 Unelectrified
+	capture {
 		svy, subpop(if hh_exp_quintile == 3 & elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q3_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_Q3_UNEL   = e(b)[1,2]
+	}
 
-		* Q3 Connected
+	* Q3 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 3 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q3_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q3_CONN   = e(b)[1,2]
+	}
 
-		* Q5 Connected
+	* Q5 Connected
+	capture {
 		svy, subpop(if hh_exp_quintile == 5 & elec_access == 1): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_Q5_CONN = e(b)[1,1]
 		scalar json_COPING_PCT_Q5_CONN   = e(b)[1,2]
+	}
 
-		* National Unelectrified Average
+	* National Unelectrified Average
+	capture {
 		svy, subpop(if elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_NAT_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]
@@ -772,6 +803,37 @@
 		scalar json_ELEC_STOVE_GRID_URB = e(b)[1,1] * 100
 		svy, subpop(if grid_hh == 1 & loc_urban_rural == 2): mean elec_stove_grid
 		scalar json_ELEC_STOVE_GRID_RUR = e(b)[1,1] * 100
+	}
+
+	* Disaggregated Grid WTP by Price Tier
+	capture {
+		svy, subpop(if wtp_grid_p100_upfront < .): mean wtp_grid_p100_upfront wtp_grid_p100_3m wtp_grid_p100_6m wtp_grid_p100_12m wtp_grid_p100_waived
+		scalar json_WTP_GRID_P100_UPFRONT = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P100_3M      = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P100_6M      = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P100_12M     = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P100_WAIVED  = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p57_upfront < .): mean wtp_grid_p57_upfront wtp_grid_p57_3m wtp_grid_p57_6m wtp_grid_p57_12m wtp_grid_p57_waived
+		scalar json_WTP_GRID_P57_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P57_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P57_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P57_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P57_WAIVED   = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p29_upfront < .): mean wtp_grid_p29_upfront wtp_grid_p29_3m wtp_grid_p29_6m wtp_grid_p29_12m wtp_grid_p29_waived
+		scalar json_WTP_GRID_P29_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P29_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P29_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P29_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P29_WAIVED   = e(b)[1,5] * 100
+
+		svy, subpop(if wtp_grid_p14_upfront < .): mean wtp_grid_p14_upfront wtp_grid_p14_3m wtp_grid_p14_6m wtp_grid_p14_12m wtp_grid_p14_waived
+		scalar json_WTP_GRID_P14_UPFRONT  = e(b)[1,1] * 100
+		scalar json_WTP_GRID_P14_3M       = e(b)[1,2] * 100
+		scalar json_WTP_GRID_P14_6M       = e(b)[1,3] * 100
+		scalar json_WTP_GRID_P14_12M      = e(b)[1,4] * 100
+		scalar json_WTP_GRID_P14_WAIVED   = e(b)[1,5] * 100
 	}
 
 	* Disaggregated Solar WTP by Price Tier
@@ -848,7 +910,8 @@
 		STOVE_ELEC_N STOVE_ELEC_U STOVE_ELEC_R ///
 		Q1_ELEC_ACC Q2_ELEC_ACC Q3_ELEC_ACC Q4_ELEC_ACC Q5_ELEC_ACC ///
 		Q1_MECS_ACC Q2_MECS_ACC Q3_MECS_ACC Q4_MECS_ACC Q5_MECS_ACC ///
-		MHH_ELEC_ACC FHH_ELEC_ACC MHH_MECS_ACC FHH_MECS_ACC ///
+		MHH_ELEC_ACC FHH_ELEC_ACC MHH_ELEC_T45 FHH_ELEC_T45 MHH_MECS_ACC FHH_MECS_ACC ///
+		SHARE_GRID SHARE_SOLAR SHARE_GEN SHARE_MINI SHARE_RECHAR SHARE_DRYCELL SHARE_NOELEC ///
 		WOMEN_FUEL_TIME MEN_FUEL_TIME WOMEN_FUEL_WORKDAYS ///
 		WOMEN_COOK_TIME MEN_COOK_TIME ///
 		PCT_STOVE_STACKING PCT_STACKING_DILUTION PCT_CLEAN_STOVE_OWNERSHIP ///
@@ -886,12 +949,11 @@
 		WTP_GRID_UPFRONT_MHH WTP_GRID_UPFRONT_FHH WTP_GRID_12M_MHH WTP_GRID_12M_FHH ///
 		WTP_SOLAR_UPFRONT_MHH WTP_SOLAR_UPFRONT_FHH ///
 		COOK_DEC_FEMALE_NAT COOK_DEC_MALE_NAT COOK_DEC_JOINT_NAT ///
-		REG_TOMBALI_ELEC REG_QUINARA_ELEC REG_OIO_ELEC REG_BIOMBO_ELEC REG_BOLAMABIJAGS_ELEC ///
-		REG_BAFAT_ELEC REG_GABU_ELEC REG_CACHEU_ELEC REG_SETOR_AUTNOMO_DE_BISSAU_ELEC REG_TOMBALI_GRID ///
-		REG_QUINARA_GRID REG_OIO_GRID REG_BIOMBO_GRID REG_BOLAMABIJAGS_GRID REG_BAFAT_GRID ///
-		REG_GABU_GRID REG_CACHEU_GRID REG_SETOR_AUTNOMO_DE_BISSAU_GRID REG_TOMBALI_SOLAR REG_QUINARA_SOLAR ///
-		REG_OIO_SOLAR REG_BIOMBO_SOLAR REG_BOLAMABIJAGS_SOLAR REG_BAFAT_SOLAR REG_GABU_SOLAR ///
-		REG_CACHEU_SOLAR REG_SETOR_AUTNOMO_DE_BISSAU_SOLAR ///
+		REG_KHARAS_ELEC REG_ERONGO_ELEC REG_HARDAP_ELEC REG_KAVANGO_E_ELEC REG_KAVANGO_W_ELEC ///
+		REG_KHOMAS_ELEC REG_KUNENE_ELEC REG_OHANGWENA_ELEC REG_OMAHEKE_ELEC REG_OMUSATI_ELEC ///
+		REG_OSHANA_ELEC REG_OSHIKOTO_ELEC REG_OTJOZONDJUPA_ELEC REG_ZAMBEZI_ELEC ///
+		REG_KHOMAS_GRID REG_ERONGO_GRID REG_OHANGWENA_GRID REG_OMUSATI_GRID REG_KAVANGO_E_GRID REG_ZAMBEZI_GRID ///
+		REG_OHANGWENA_SOLAR REG_OMUSATI_SOLAR REG_KAVANGO_E_SOLAR REG_ZAMBEZI_SOLAR ///
 		COPING_SPEND_Q1_UNEL COPING_PCT_Q1_UNEL ///
 		COPING_SPEND_Q1_CONN COPING_PCT_Q1_CONN ///
 		COPING_SPEND_Q3_UNEL COPING_PCT_Q3_UNEL ///
@@ -909,6 +971,10 @@
 		HAS_ELECTRIC_LIGHTS_NAT HAS_SOLAR_LIGHTS_NAT HAS_ANY_LIGHTS_NAT ///
 		HR_3STONE_NAT HR_TRAD_NAT HR_ICS_NAT HR_LPG_NAT HR_ELEC_NAT ///
 		ELEC_STOVE_GRID_NAT ELEC_STOVE_GRID_URB ELEC_STOVE_GRID_RUR ///
+		WTP_GRID_P100_UPFRONT WTP_GRID_P100_3M WTP_GRID_P100_6M WTP_GRID_P100_12M WTP_GRID_P100_WAIVED ///
+		WTP_GRID_P57_UPFRONT WTP_GRID_P57_3M WTP_GRID_P57_6M WTP_GRID_P57_12M WTP_GRID_P57_WAIVED ///
+		WTP_GRID_P29_UPFRONT WTP_GRID_P29_3M WTP_GRID_P29_6M WTP_GRID_P29_12M WTP_GRID_P29_WAIVED ///
+		WTP_GRID_P14_UPFRONT WTP_GRID_P14_3M WTP_GRID_P14_6M WTP_GRID_P14_12M WTP_GRID_P14_WAIVED ///
 		WTP_SOLAR_P100_UPFRONT WTP_SOLAR_P100_6M WTP_SOLAR_P100_12M WTP_SOLAR_P100_24M ///
 		WTP_SOLAR_P66_UPFRONT WTP_SOLAR_P66_6M WTP_SOLAR_P66_12M WTP_SOLAR_P66_24M ///
 		WTP_SOLAR_P33_UPFRONT WTP_SOLAR_P33_6M WTP_SOLAR_P33_12M WTP_SOLAR_P33_24M ///

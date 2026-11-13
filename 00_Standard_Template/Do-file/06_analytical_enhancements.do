@@ -507,26 +507,19 @@
 	*===========================================================================
 
 	capture drop coping_spend coping_pct
-	* Calculate total monthly spending on lighting substitutes from Section H / Section C
+	* Calculate total monthly spending on lighting substitutes (Section H + phone charging)
 	gen double coping_spend = 0
-	capture confirm variable SEC_H_Q06
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q06 < ., SEC_H_Q06, 0) // Candles monthly spend
-	capture confirm variable SEC_H_Q12
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q12 < ., SEC_H_Q12, 0) // Dry-cell batteries monthly spend
-	capture confirm variable SEC_H_Q18
-	if !_rc replace coping_spend = coping_spend + cond(SEC_H_Q18 < ., SEC_H_Q18, 0) // Kerosene / liquid fuel monthly spend
+	capture confirm variable lightfuel_exp_tot_m
+	if !_rc replace coping_spend = coping_spend + cond(lightfuel_exp_tot_m < ., lightfuel_exp_tot_m, 0)
 	capture confirm variable SEC_C_Q121
-	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0) // Fee-based mobile phone charging
+	if !_rc replace coping_spend = coping_spend + cond(SEC_C_Q121 < ., SEC_C_Q121, 0)
 
 	* Monthly budget share (% of total monthly consumption expenditure)
 	gen double coping_pct = .
-	capture confirm variable hh_exp_monthly
+	capture confirm variable exp_total_m
 	if !_rc {
-		replace coping_pct = (coping_spend / hh_exp_monthly) * 100 if hh_exp_monthly > 0 & hh_exp_monthly < .
-	}
-	else {
-		capture confirm variable exp_total_month
-		if !_rc replace coping_pct = (coping_spend / exp_total_month) * 100 if exp_total_month > 0 & exp_total_month < .
+		replace coping_pct = (coping_spend / exp_total_m) * 100 if exp_total_m > 0 & exp_total_m < .
+		replace coping_pct = 100 if coping_pct > 100 & coping_pct < .
 	}
 
 	lab var coping_spend "Monthly expenditure on alternative lighting & coping mechanisms"

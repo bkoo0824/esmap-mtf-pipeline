@@ -38,31 +38,31 @@ class TestAdversarialFigureNumbering(unittest.TestCase):
         self.body, self.annex = self.content.split(annex_marker, 1)
 
     def test_body_figure_sequence(self):
-        """Assert all figures in body follow strictly monotonic sequence: 1 through 12."""
+        """Assert all figures in body follow strictly monotonic sequence: 1 through 11."""
         body_figs = [int(m) for m in re.findall(r'!\[Figure (\d+):', self.body)]
         self.assertEqual(
             body_figs,
-            list(range(1, 13)),
-            f"Body figures are not strictly monotonic 1..12: got {body_figs}"
+            list(range(1, 12)),
+            f"Body figures are not strictly monotonic 1..11: got {body_figs}"
         )
 
     def test_annex_figure_sequence(self):
-        """Assert all figures in Annex 3 follow strictly monotonic sequence: 1 through 12."""
+        """Assert all figures in Annex 3 follow strictly monotonic sequence: 1 through 11."""
         annex_figs = [int(m) for m in re.findall(r'!\[Figure (\d+):', self.annex)]
         self.assertEqual(
             annex_figs,
-            list(range(1, 13)),
-            f"Annex figures are not strictly monotonic 1..12: got {annex_figs}"
+            list(range(1, 12)),
+            f"Annex figures are not strictly monotonic 1..11: got {annex_figs}"
         )
 
     def test_figure_syntax_validity(self):
         """Assert all figure image embeds use valid Markdown image syntax with chart token."""
         embeds = re.findall(r'!\[Figure (\d+): ([^\]]+)\]\(\{\{([^}]+)\}\}\)', self.content)
-        self.assertEqual(len(embeds), 24, f"Expected 24 figure embeds (12 body + 12 annex), found {len(embeds)}")
+        self.assertEqual(len(embeds), 22, f"Expected 22 figure embeds (11 body + 11 annex), found {len(embeds)}")
         
         # Verify chart token mapping between body and annex
-        body_embeds = embeds[:12]
-        annex_embeds = embeds[12:]
+        body_embeds = embeds[:11]
+        annex_embeds = embeds[11:]
         for (b_num, b_cap, b_tok), (a_num, a_cap, a_tok) in zip(body_embeds, annex_embeds):
             self.assertEqual(b_num, a_num, f"Figure number mismatch: {b_num} vs {a_num}")
             self.assertEqual(b_tok, a_tok, f"Figure token mismatch for Fig {b_num}: {b_tok} vs {a_tok}")
@@ -76,12 +76,11 @@ class TestAdversarialFigureNumbering(unittest.TestCase):
         self.assertIn("Figure 4 visualizes the national densification funnel", self.body)
         self.assertIn("Figure 5 presents the primary stated barriers", self.body)
         self.assertIn("Figure 6 plots the comparative cumulative willingness-to-pay demand curves", self.body)
-        self.assertIn("Figure 7 displays the 100% mutually exclusive financing segmentation", self.body)
-        self.assertIn("Figure 8 illustrates the distribution of primary cookstove technologies", self.body)
-        self.assertIn("Figure 9 displays the distribution of households across MECS cooking tiers", self.body)
-        self.assertIn("Figure 10 displays cookstove stacking patterns", self.body)
-        self.assertIn("Figure 11 displays comparative demographic profiles", self.body)
-        self.assertIn("Figure 12 illustrates the intra-household time-use burden", self.body)
+        self.assertIn("Figure 7 illustrates the distribution of primary cookstove technologies", self.body)
+        self.assertIn("Figure 8 displays the distribution of households across MECS cooking tiers", self.body)
+        self.assertIn("Figure 9 displays cookstove stacking patterns", self.body)
+        self.assertIn("Figure 10 displays comparative demographic profiles", self.body)
+        self.assertIn("Figure 11 illustrates the intra-household time-use burden", self.body)
 
 
 class TestAdversarialNeutralPhrasingAndBias(unittest.TestCase):
@@ -201,12 +200,12 @@ class TestAdversarialInjectedDocumentIntegrity(unittest.TestCase):
         self.assertEqual(unfilled_charts, [], f"Unfilled chart tokens found: {unfilled_charts}")
 
     def test_all_14_charts_embedded_and_files_exist(self):
-        """Assert all 12 chart image files are referenced and exist on disk with non-zero size."""
+        """Assert all 11 chart image files are referenced and exist on disk with non-zero size."""
         img_refs = re.findall(r'!\[Figure \d+: [^\]]+\]\((.+?\.(?:png|jpg|jpeg|svg))\)', self.md_text)
-        self.assertEqual(len(img_refs), 24, f"Expected 24 images in report (12 body + 12 annex), found {len(img_refs)}")
+        self.assertEqual(len(img_refs), 22, f"Expected 22 images in report (11 body + 11 annex), found {len(img_refs)}")
         
         unique_paths = set(img_refs)
-        self.assertEqual(len(unique_paths), 12, f"Expected exactly 12 unique chart paths, found {len(unique_paths)}")
+        self.assertEqual(len(unique_paths), 11, f"Expected exactly 11 unique chart paths, found {len(unique_paths)}")
         
         for p_str in unique_paths:
             p = Path(p_str)

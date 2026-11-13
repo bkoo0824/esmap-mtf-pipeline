@@ -27,21 +27,18 @@ All placeholders are replaced dynamically during calibration and report injectio
 --------------------------------------------------------------------------------
 {{CHART_ELEC_TIERS}}           : Figure 1  — Electricity Tier Distribution (01_elec_tier_distribution.png)
 {{CHART_SOURCE_MIX}}           : Figure 2  — Technology Source Mix & Dry-Cell Exclusion (11_electricity_source_mix.png)
-{{CHART_UNDER_GRID}}           : Figure 3  — Under-the-Grid Densification Funnel (10_under_the_grid_funnel.png)
-{{CHART_ELEC_RADAR}}           : Figure 4  — Electricity Attribute Performance Radar (03_elec_attribute_radar.png)
-{{CHART_QUINTILE_CURVE}}       : Figure 5  — Access Across Expenditure Quintiles (04_quintile_access_curve.png)
-{{CHART_GRID_BARRIERS}}        : Figure 6   — Grid Connection Barriers & WTP Relief (06_grid_barriers_wtp.png)
-{{CHART_WTP_GRID}}             : Figure 7a  — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
-{{CHART_WTP_SOLAR}}            : Figure 7b  — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
-{{CHART_WTP_COOKSTOVE}}        : Figure 7c  — Clean Cookstove WTP Cumulative Demand Curve (12c_wtp_cookstove.png)
-{{CHART_WTP_DEMAND}}           : Figure 7   — Fallback/Legacy WTP Demand Curve (12a_wtp_grid_connection.png)
-{{CHART_WTP_SEGMENTS}}         : Figure 8   — 100% Mutually Exclusive WTP Financing Segments (13_wtp_mutually_exclusive_stacked.png)
-{{CHART_STOVE_FUELS}}          : Figure 9  — Primary Cookstove Typology & Fuel Mix (07_stove_technology_fuels.png)
-{{CHART_COOKING_TIERS}}        : Figure 10 — MECS Cooking Tier Distribution (02_cooking_tier_distribution.png)
-{{CHART_STOVE_STACKING}}       : Figure 11 — Clean Cooking Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
-{{CHART_GENDER_ACCESS}}        : Figure 12 — Gender Demographics, Credit & Access Parity (08_gender_demographics_access.png)
-{{CHART_GENDER_FUEL}}          : Figure 13 — Gender Time-Use Burden for Fuel Collection (05_gender_fuel_collection_time.png)
-{{CHART_REGIONAL_GAP}}         : Figure 14 — Subnational Disparities in Electricity Access (09_regional_access_gap.png)
+{{CHART_QUINTILE_CURVE}}       : Figure 3  — Access Across Expenditure Quintiles (04_quintile_access_curve.png)
+{{CHART_UNDER_GRID}}           : Figure 4  — Under-the-Grid Densification Funnel (10_under_the_grid_funnel.png)
+{{CHART_GRID_BARRIERS}}        : Figure 5  — Grid Connection Barriers & WTP Relief (06_grid_barriers_wtp.png)
+{{CHART_WTP_DEMAND}}           : Figure 6  — Willingness to Pay Cumulative Demand Curves (12a_wtp_grid_connection.png)
+{{CHART_WTP_GRID}}             : Figure 6a — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
+{{CHART_WTP_SOLAR}}            : Figure 6b — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
+{{CHART_WTP_COOKSTOVE}}        : Figure 6c — Clean Cookstove WTP Cumulative Demand Curve (12c_wtp_cookstove.png)
+{{CHART_STOVE_FUELS}}          : Figure 7  — Primary Cookstove Typology & Fuel Mix (07_stove_technology_fuels.png)
+{{CHART_COOKING_TIERS}}        : Figure 8  — MECS Cooking Tier Distribution (02_cooking_tier_distribution.png)
+{{CHART_STOVE_STACKING}}       : Figure 9  — Clean Cooking Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
+{{CHART_GENDER_ACCESS}}        : Figure 10 — Gender Demographics, Credit & Access Parity (08_gender_demographics_access.png)
+{{CHART_GENDER_FUEL}}          : Figure 11 — Gender Time-Use Burden for Fuel Collection (05_gender_fuel_collection_time.png)
 
 --------------------------------------------------------------------------------
 3. EXECUTIVE SUMMARY & TABLE 1.1 DASHBOARD PLACEHOLDERS
@@ -330,50 +327,23 @@ To resolve these analytical deficiencies, the Energy Sector Management Assistanc
 
 This diagnostic report presents the comprehensive empirical findings of the **{{SURVEY_YEAR}} Multi-Tier Framework National Household Survey** in {{COUNTRY_NAME}}. The survey was administered using Computer-Assisted Personal Interviewing (CAPI) across a nationally representative sample covering all {{ADMIN1_COUNT}} administrative {{ADMIN1_UNIT_LABEL_PLURAL}} and {{STRATA_COUNT}} sampling strata. By evaluating the performance of electricity services across seven technical attributes and assessing cooking practices across six service dimensions, this diagnostic provides policymakers, utility managers, regulatory authorities, and international development financiers with an evidence-based roadmap.
 
-Crucially, the empirical diagnostic reveals three distinct population segments that require differentiated policy interventions:
-1. **Grid-Connected Households Requiring Service Quality Upgrades:** While physical reliability is comparatively strong (`{{OUTAGES_LT3_WK}}%` experience fewer than 3 interruptions per week), chronic voltage instability damages appliances for `{{PCT_VOLTAGE_DAMAGE}}%` of grid customers, and evening supply shortfalls (`{{PCT_EVE_SHORTAGE}}%`) restrict productive use and transition to Tier 5 service.
-2. **Under-the-Grid Unconnected Households (The Densification Opportunity):** A striking `{{UNDER_THE_GRID_NAT}}%` of households reside in communities where the low-voltage grid is already present (electrified Enumeration Areas), yet only `{{GRID_UPTAKE_NAT}}%` are connected. Closing this under-the-grid deficit through targeted connection fee financing represents the fastest, most cost-effective path to expanding national electrification.
-3. **Remote Off-Grid Households Requiring Distributed Solutions:** In remote settlements located beyond the physical reach of the national distribution network, households depend on standalone off-grid solar, where basic solar lanterns leave `{{PCT_SL_STUCK_T1}}%` constrained to Tier 1 service, and traditional biomass dominates cooking.
+### Core Diagnostic Highlights
 
-Analytical modeling of household willingness to pay across randomized price subsidy tiers and financing maturities is anchored in the experimental economics literature on rural electrification (Kenneth Lee, Edward Miguel, and Catherine Wolfram 2020), while intra-household time poverty and female labor supply dynamics are evaluated using home production frameworks (Taryn Dinkelman 2011).
+Nationwide, `{{ELEC_ACC_NAT}}%` of households have electricity access at Tier 1 or above (`{{ELEC_ACC_URB}}%` in urban areas vs. `{{ELEC_ACC_RUR}}%` in rural areas), while `{{ELEC_T0_NAT}}%` remain in Tier 0. The national grid serves `{{GRID_ACC_NAT}}%` of households (`{{GRID_ACC_URB}}%` urban vs. `{{GRID_ACC_RUR}}%` rural), and off-grid solar systems serve `{{SOLAR_ACC_NAT}}%` (`{{SOLAR_ACC_URB}}%` urban vs. `{{SOLAR_ACC_RUR}}%` rural). Crucially, in electrified communities where the low-voltage distribution network is already physically present, `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households remain unconnected. Raising the connection uptake rate from the current baseline of `{{GRID_UPTAKE_NAT}}%` to 60.0% would add **27.2 percentage points** to national access at minimal capital cost through last-mile densification.
 
----
+Household connection demand is highly responsive to financing terms. Upfront willingness to pay for a grid connection stands at only `{{WTP_GRID_UPFRONT_NAT}}%`, but surges to `{{WTP_GRID_12M_NAT}}%` when offered a 12-month installment plan and reaches `{{WTP_GRID_WAIVED_NAT}}%` under fee waivers. Among the households declining connection even when connection fees are waived (`{{WTP_GRID_NEVER_NAT}}%`), `{{REFUSE_WIRING_COST_NAT}}%` identify the upfront capital cost of internal household wiring as the primary barrier.
 
-### Core Diagnostic Highlights & Executive Dashboard
+In clean cooking, the national deficit is severe: solid biomass fuels serve over 95% of the population, with `{{THREESTONE_NAT}}%` cooking over three-stone open fires. Modern clean cooking services (MECS Tiers 4–5, comprising LPG and electricity) reach only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking confined to fewer than 0.2% (`{{STOVE_ELEC_N}}%`).
 
-* **Electricity Access Profile:** Nationwide, `{{ELEC_ACC_NAT}}%` of households have electricity access at Tier 1 or above (`{{ELEC_ACC_URB}}%` urban vs. `{{ELEC_ACC_RUR}}%` rural), while `{{ELEC_T0_NAT}}%` remain in Tier 0. The **national grid** serves `{{GRID_ACC_NAT}}%` of households (`{{GRID_ACC_URB}}%` urban vs. `{{GRID_ACC_RUR}}%` rural), and **off-grid solar systems** serve `{{SOLAR_ACC_NAT}}%` (`{{SOLAR_ACC_URB}}%` urban vs. `{{SOLAR_ACC_RUR}}%` rural).
-* **Grid Densification & Uptake:** In electrified communities, `{{UNDER_GRID_UNCONNECTED_NAT}}%` of households remain unconnected. Raising the connection uptake rate from `{{GRID_UPTAKE_NAT}}%` to 60.0% would add **27.2 percentage points** to national access at minimal capital cost.
-* **Willingness to Pay & Financing Flexibility:** Upfront grid connection willingness is `{{WTP_GRID_UPFRONT_NAT}}%`, but expands dramatically to `{{WTP_GRID_12M_NAT}}%` under a 12-month installment plan and `{{WTP_GRID_WAIVED_NAT}}%` under fee waivers; among the declining group (`{{WTP_GRID_NEVER_NAT}}%`), `{{REFUSE_WIRING_COST_NAT}}%` cite internal house wiring costs as the primary barrier.
-* **Modern Cooking Deficit:** Solid biomass fuels serve over 95% of the population, with `{{THREESTONE_NAT}}%` cooking over three-stone open fires. Modern clean fuels (LPG and electricity) serve only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking confined to fewer than 0.2% (`{{STOVE_ELEC_N}}%`).
-* **Gender Time Burden:** Adult women spend `{{WOMEN_FUEL_TIME}}` minutes daily gathering firewood (vs. `{{MEN_FUEL_TIME}}` for men), forfeiting **`{{WOMEN_FUEL_WORKDAYS}}` full 8-hour workdays per year** solely to fuel collection. Female heads face significant formal credit constraints (`{{CREDIT_ACCESS_FHH}}%` vs. `{{CREDIT_ACCESS_MHH}}%` for male heads).
-
-### Table 1.1: National MTF Executive Summary Dashboard
-
-| Energy Access Dimension / Metric | Nationwide (%) | Urban (%) | Rural (%) | Primary Bottleneck / Policy Driver |
-| :--- | :---: | :---: | :---: | :--- |
-| **Electricity Access Rate (Tier 1-5)** | `{{ELEC_ACC_NAT}}` | `{{ELEC_ACC_URB}}` | `{{ELEC_ACC_RUR}}` | Basic tier 1 lighting threshold |
-| **Electricity Tier 0 (No Access / Minimal)** | `{{ELEC_T0_NAT}}` | `{{ELEC_T0_URB}}` | `{{ELEC_T0_RUR}}` | Infrastructure coverage & connection fees |
-| **High Electricity Access (Tier 4 & 5)** | `{{ELEC_T45_NAT}}` | `{{ELEC_T45_URB}}` | `{{ELEC_T45_RUR}}` | Voltage stability & evening duration deficits |
-| **Main Electricity Source: National Grid** | `{{GRID_ACC_NAT}}` | `{{GRID_ACC_URB}}` | `{{GRID_ACC_RUR}}` | Grid network reach & utility densification |
-| **Main Electricity Source: Off-Grid Solar** | `{{SOLAR_ACC_NAT}}` | `{{SOLAR_ACC_URB}}` | `{{SOLAR_ACC_RUR}}` | Stand-alone SHS & solar lantern adoption |
-| **Living in Electrified EAs (Under the Grid)** | `{{UNDER_THE_GRID_NAT}}` | `{{UNDER_THE_GRID_URB}}` | `{{UNDER_THE_GRID_RUR}}` | Low-voltage grid presence in community |
-| **Grid Uptake Rate in Electrified EAs** | `{{GRID_UPTAKE_NAT}}` | `{{GRID_UPTAKE_URB}}` | `{{GRID_UPTAKE_RUR}}` | Connection affordability in grid zones |
-| **Under-the-Grid Unconnected Deficit** | `{{UNDER_GRID_UNCONNECTED_NAT}}` | `{{UNDER_GRID_UNCONNECTED_URB}}` | `{{UNDER_GRID_UNCONNECTED_RUR}}` | Connection fee & internal wiring barrier |
-| **Clean Cooking Access (MECS: Tier 4-5)** | `{{CLEAN_STOVE_NAT}}` | `{{CLEAN_STOVE_URB}}` | `{{CLEAN_STOVE_RUR}}` | Clean fuel supply chain & appliance cost |
-| **Transition Cooking Services (Tier 2-3)** | `{{TRANS_COOK_NAT}}` | `{{TRANS_COOK_URB}}` | `{{TRANS_COOK_RUR}}` | Improved Cookstove (ICS) adoption |
-| **Cooking No Access / High Exposure (Tier 0-1)** | `{{COOK_T01_NAT}}` | `{{COOK_T01_URB}}` | `{{COOK_T01_RUR}}` | Open fire & traditional biomass reliance |
-| **Primary Stove: Three-Stone / Open Fire** | `{{THREESTONE_NAT}}` | `{{THREESTONE_URB}}` | `{{THREESTONE_RUR}}` | Rural biomass reliance & free gathering |
+This reliance on traditional biomass imposes an acute intra-household time burden on women. While adult women average `{{WOMEN_FUEL_TIME}}` minutes per calendar day collecting firewood (compared to `{{MEN_FUEL_TIME}}` minutes for men), active fuel-collecting trips average 53.5 minutes, resulting in `{{WOMEN_FUEL_WORKDAYS}}` full 8-hour working days lost per woman each year solely to fuel gathering. In addition, female household heads encounter substantial formal credit constraints (`{{CREDIT_ACCESS_FHH}}%` vs. `{{CREDIT_ACCESS_MHH}}%` for male heads), reinforcing the urgency of flexible utility payment mechanisms.
 
 ---
 
-### Strategic Policy Recommendations Dashboard
+### Strategic Policy Recommendations
 
-1. **Power Quality & Reliability Upgrades:** Stabilize distribution transformer voltage and mitigate unscheduled outages (<3/wk) to enable existing grid customers to transition from Tiers 3/4 to Tier 5 service.
-2. **Accelerated Grid Densification:** Prioritize rapid last-mile infill connections in communities where the low-voltage network is already present (the `{{UNDER_THE_GRID_NAT}}%` under-the-grid population), adding up to 10.3 percentage points to national electrification at minimal capital cost.
-3. **Off-Grid Solar Scale-Up for Remote Communities:** Expand quality-certified standalone Solar Home Systems (SHS) and mini-grids to remote settlements beyond physical grid reach, with special logistics support for geographically isolated island territories.
-4. **Payment Flexibility & Smart Subsidies:** Deploy flexible 12-to-24 month utility installment plans alongside targeted connection fee subsidies to overcome severe household liquidity barriers, paired with social lifeline tariffs to protect ongoing affordability.
-5. **Dual-Track Clean Cooking Transition:** Scale up commercial supply chains for Improved Biomass Cookstoves (ICS) in biomass-dependent rural areas and expand urban LPG distribution, while establishing technical prerequisites (voltage stabilization) for future e-cooking pilots.
-6. **Gender Equity & Time Poverty Alleviation:** Close gender credit disparities through targeted energy financing for female-headed households and invest in clean cooking to eliminate female firewood gathering drudgery and liberate productive labor.
+To achieve the SDG 7 access targets and maximize socioeconomic returns, national policy and development financing should focus on six core priorities. First, power utilities must prioritize distribution network quality and voltage surge protection to eliminate appliance damage (`{{PCT_VOLTAGE_DAMAGE}}%` of grid consumers) and address evening supply shortfalls (`{{PCT_EVE_SHORTAGE}}%`), which is also an indispensable technical prerequisite for future electric cooking adoption. Second, last-mile grid densification represents the fastest, lowest-cost pathway to expand access; programs should scale on-bill connection installment facilities spread over 12 to 24 months alongside standardized pre-wired 'ready boards' to overcome internal house wiring barriers. Third, for remote populations beyond network reach, off-grid strategies must transition from basic solar lanterns toward quality-certified multi-light Solar Home Systems and climate-resilient mini-grids, supported by PAYGo and RBF financing.
+
+Fourth, utility regulatory frameworks must sustain progressive volumetric lifeline tariffs and flexible digital prepaid metering to prevent post-connection payment distress. Fifth, clean cooking strategy requires a dual-track transition: accelerating the commercial distribution of Improved Cookstoves (ICS) in biomass-dependent rural areas, expanding urban LPG cylinder retail networks, and conducting targeted e-cooking pilots in high-reliability grid zones, accompanied by public education on the health hazards of stove stacking. Finally, gender equity must be mainstreamed by deploying tailored on-bill financing to overcome the `{{CREDIT_ACCESS_FHH}}%` female credit barrier and investing in clean cooking to eliminate female fuel-gathering drudgery.
 
 ---
 
@@ -605,11 +575,6 @@ Figure 6 plots the comparative cumulative willingness-to-pay demand curves acros
 ![Figure 6: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
 *Figure 6: Comparative cumulative willingness-to-pay demand curves across payment modalities.*
 
-Figure 7 displays the 100% mutually exclusive financing segmentation for unconnected households, classifying families by the minimum level of financial support required to achieve connection.
-
-![Figure 7: Mutually Exclusive Financing Target Segments for Unconnected Households]({{CHART_WTP_SEGMENTS}})
-*Figure 7: Mutually exclusive financing target segments for unconnected households (summing to 100%) based on minimum financing relief required.*
-
 #### Segment 3: Off-Grid Solar Market Dynamics & Island Electrification
 For households residing in remote settlements located beyond the physical reach of the national distribution network, decentralized off-grid solar solutions represent the primary electrification pathway. Existing off-grid solar adopters currently utilize standalone systems predominantly for task lighting and mobile phone charging, which satisfies Tier 1 service requirements (`{{PCT_SL_STUCK_T1}}%`). Expanding service depth to support domestic entertainment, refrigeration, and productive appliances requires stimulating adoption of higher-capacity Solar Home Systems (SHS).
 
@@ -629,10 +594,10 @@ Cooking energy in {{COUNTRY_NAME}} is characterized by an overwhelming reliance 
 
 Nationwide, `{{STOVE_3STONE_N}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves serve `{{STOVE_TRAD_N}}%` of households nationally (`{{STOVE_TRAD_U}}%` urban vs. `{{STOVE_TRAD_R}}%` rural). **Improved Cookstoves (ICS)** represent only `{{STOVE_ICS_N}}%` nationwide (`{{STOVE_ICS_U}}%` in urban areas and `{{STOVE_ICS_R}}%` in rural areas), indicating that the commercial market for high-efficiency biomass stoves remains nascent. Modern clean fuel stoves (LPG and electric) are used by only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking accounting for `{{STOVE_ELEC_N}}%` nationwide.
 
-Figure 8 illustrates the distribution of primary cookstove technologies and fuels across national, urban, and rural populations.
+Figure 7 illustrates the distribution of primary cookstove technologies and fuels across national, urban, and rural populations.
 
-![Figure 8: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
-*Figure 8: Primary cookstove technologies (three-stone, traditional, ICS, clean) and primary fuels (wood, charcoal, LPG, electricity) across National, Urban, and Rural populations in {{COUNTRY_NAME}}.*
+![Figure 7: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
+*Figure 7: Primary cookstove technologies (three-stone, traditional, ICS, clean) and primary fuels (wood, charcoal, LPG, electricity) across National, Urban, and Rural populations in {{COUNTRY_NAME}}.*
 
 Table 3.1 details the distribution of primary cookstoves across localities alongside primary fuel types and ISO emission tiers.
 
@@ -657,12 +622,12 @@ In the MTF assessment of access to clean cooking solutions, households are evalu
 * **Tiers 2 and 3 (Improved / In Transition):** Households reaching aggregate Tier 2 or 3 have improved cooking services, primarily through high-efficiency Improved Cookstoves (ICS).
 * **Tiers 0 and 1 (No Access / High Exposure):** Households in aggregate Tier 0 or 1 have no access to clean cooking and remain exposed to severe indoor air pollution, burning raw biomass in unvented cooking environments.
 
-Figure 9 displays the distribution of households across MECS cooking tiers nationwide, in urban areas, and in rural areas.
+Figure 8 displays the distribution of households across MECS cooking tiers nationwide, in urban areas, and in rural areas.
 
-![Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
-*Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) tier distribution across National, Urban, and Rural populations.*
+![Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
+*Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) tier distribution across National, Urban, and Rural populations.*
 
-As shown in Figure 9, the vast majority of households (`{{COOK_T01_NAT}}%` nationwide; `{{COOK_T01_URB}}%` urban and `{{COOK_T01_RUR}}%` rural) remain in **Tier 0 or Tier 1 (No Access)**. Full modern energy cooking services (Tiers 4–5) reach only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas and `{{CLEAN_STOVE_RUR}}%` in rural areas).
+As shown in Figure 8, the vast majority of households (`{{COOK_T01_NAT}}%` nationwide; `{{COOK_T01_URB}}%` urban and `{{COOK_T01_RUR}}%` rural) remain in **Tier 0 or Tier 1 (No Access)**. Full modern energy cooking services (Tiers 4–5) reach only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas and `{{CLEAN_STOVE_RUR}}%` in rural areas).
 
 #### Cookstove Time-Use Analysis by Technology
 Household survey data reveal that cooking technology directly determines domestic time expenditure:
@@ -684,10 +649,10 @@ Under standard MTF methodology, the Exposure attribute is evaluated based on the
 
 **Epidemiological Evidence and WHO IAQ Guidelines:** Epidemiological studies (Burnett et al. 2014; Smith and Peel 2010) and World Health Organization (WHO 2014) Indoor Air Quality Guidelines emphasize the severe non-linearity of the dose-response relationship between fine particulate matter (PM2.5) exposure and cardiopulmonary health outcomes. Because the health damage curve is supra-linear at elevated exposure levels, retaining even occasional secondary use of an open fire (1–2 cooking sessions per week) dilutes more than 80% of the potential respiratory and cardiovascular benefits of clean cooking adoption. Meaningful health protection requires achieving near-complete displacement of traditional biomass combustion.
 
-Figure 10 displays cookstove stacking patterns and the exposure dilution effect among clean cookstove owners.
+Figure 9 displays cookstove stacking patterns and the exposure dilution effect among clean cookstove owners.
 
-![Figure 10: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
-*Figure 10: Stove stacking patterns and the exposure dilution effect among clean cookstove owners in {{COUNTRY_NAME}}.*
+![Figure 9: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
+*Figure 9: Stove stacking patterns and the exposure dilution effect among clean cookstove owners in {{COUNTRY_NAME}}.*
 
 ---
 
@@ -716,10 +681,10 @@ In {{COUNTRY_NAME}}, `{{MHH_SHARE}}%` of households are headed by men (MHH) and 
 
 Female household heads average `{{HEAD_AGE_FHH}}` years of age, compared to `{{HEAD_AGE_MHH}}` years for male household heads. Regarding marital status, `{{HEAD_MARITAL_WIDOW_FHH}}%` of female heads and `{{HEAD_MARITAL_WIDOW_MHH}}%` of male heads are widowed, while `{{HEAD_MARITAL_MARRIED_FHH}}%` of female heads and `{{HEAD_MARITAL_MARRIED_MHH}}%` of male heads are married or cohabiting. Educational attainment distributions indicate that `{{HEAD_EDUC_NONE_FHH}}%` of female heads and `{{HEAD_EDUC_NONE_MHH}}%` of male heads report no formal schooling; primary education completion is `{{HEAD_EDUC_PRIM_FHH}}%` for female heads and `{{HEAD_EDUC_PRIM_MHH}}%` for male heads; secondary completion is `{{HEAD_EDUC_SEC_FHH}}%` for female heads and `{{HEAD_EDUC_SEC_MHH}}%` for male heads; and higher education completion stands at `{{HEAD_EDUC_HIGH_FHH}}%` for female heads and `{{HEAD_EDUC_HIGH_MHH}}%` for male heads. Access to loans or credit from formal financial institutions is reported by `{{CREDIT_ACCESS_FHH}}%` of female heads, compared to `{{CREDIT_ACCESS_MHH}}%` of male heads.
 
-Figure 11 displays comparative demographic profiles, educational attainment, credit access, and electricity access parity across female- and male-headed households.
+Figure 10 displays comparative demographic profiles, educational attainment, credit access, and electricity access parity across female- and male-headed households.
 
-![Figure 11: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
-*Figure 11: Demographic characteristics, educational attainment, credit access, and electricity access parity by gender of household head in {{COUNTRY_NAME}}.*
+![Figure 10: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
+*Figure 10: Demographic characteristics, educational attainment, credit access, and electricity access parity by gender of household head in {{COUNTRY_NAME}}.*
 
 Table 4.1 presents the complete demographic and socioeconomic profile across household headship.
 
@@ -757,14 +722,14 @@ In seminal econometric work on the employment effects of infrastructure expansio
 
 Time-use data from the {{SURVEY_YEAR}} MTF survey in {{COUNTRY_NAME}} provide empirical verification of this home production burden. Adult women spend an average of `{{WOMEN_COOK_TIME}}` minutes per day preparing meals, compared to `{{MEN_COOK_TIME}}` minutes for adult men.
 
-In addition to cooking, adult women bear the primary responsibility for fuelwood collection, spending an average of `{{WOMEN_FUEL_TIME}}` minutes per day collecting firewood (compared to `{{MEN_FUEL_TIME}}` minutes for adult men). In collecting communities, fuel-gathering trips average 48 to 53 minutes per trip; over a 12-month period, this cumulative burden equates to 81 hours or **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per woman** solely to fuel gathering. Combining cooking and fuel gathering, adult women dedicate over 86 minutes daily to household energy chores.
+In addition to cooking, adult women bear the primary responsibility for fuelwood collection and preparation. In firewood-gathering communities, 99.3% of adult women actively participate in collection, with each trip requiring an average of 53.5 minutes (undertaken 1 to 3 times per week). In addition, fuel preparation takes an average of 21.1 minutes daily. Annualized across 365 calendar days, women spend an average of `{{WOMEN_FUEL_TIME}}` minutes per calendar day collecting firewood (compared to `{{MEN_FUEL_TIME}}` minutes for adult men), which equates to approximately 81 hours or **`{{WOMEN_FUEL_WORKDAYS}}` full eight-hour working days lost per woman each year** solely to fuel gathering. When combined with daily cooking (`{{WOMEN_COOK_TIME}}` minutes), adult women dedicate over **1.8 hours (108 minutes) every single day** to domestic energy chores.
 
-The substantial time spent collecting firewood bundles over long distances deprives rural women of opportunities for agricultural commercialization, micro-enterprise operations, child care, and schooling. Transitioning to modern energy cooking services and high-efficiency cookstoves directly frees female labor from domestic chores, serving as a powerful catalyst for female wage employment, enterprise formation, and human capital accumulation.
+The substantial time spent collecting and preparing firewood bundles over long distances deprives rural women of opportunities for agricultural commercialization, micro-enterprise operations, child care, and schooling. Transitioning to modern energy cooking services and high-efficiency cookstoves directly frees female labor from domestic chores, serving as a powerful catalyst for female wage employment, enterprise formation, and human capital accumulation.
 
-Figure 12 illustrates the intra-household time-use burden for meal preparation and firewood collection across adult women and men.
+Figure 11 illustrates the intra-household time-use burden for meal preparation and firewood collection across adult women and men.
 
-![Figure 12: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
-*Figure 12: Intra-household time-use burden for fuelwood collection and cooking across demographic groups in {{COUNTRY_NAME}}.*
+![Figure 11: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
+*Figure 11: Intra-household time-use burden for fuelwood collection and cooking across demographic groups in {{COUNTRY_NAME}}.*
 
 ---
 
@@ -868,23 +833,20 @@ The following publication-grade charts summarize the complete empirical diagnost
 * **Figure 6:** Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking
   ![Figure 6: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
 
-* **Figure 7:** Mutually Exclusive Financing Target Segments for Unconnected Households
-  ![Figure 7: Mutually Exclusive Financing Target Segments for Unconnected Households]({{CHART_WTP_SEGMENTS}})
+* **Figure 7:** Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations
+  ![Figure 7: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
 
-* **Figure 8:** Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations
-  ![Figure 8: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
+* **Figure 8:** Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution
+  ![Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
 
-* **Figure 9:** Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution
-  ![Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
+* **Figure 9:** Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners
+  ![Figure 9: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
 
-* **Figure 10:** Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners
-  ![Figure 10: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
+* **Figure 10:** Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head
+  ![Figure 10: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
 
-* **Figure 11:** Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head
-  ![Figure 11: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
-
-* **Figure 12:** Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups
-  ![Figure 12: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
+* **Figure 11:** Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups
+  ![Figure 11: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
 
 ---
 

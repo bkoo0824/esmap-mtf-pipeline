@@ -1224,27 +1224,25 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     figure_catalog = [
         ("Figure 1", "Figure 1: Electricity Access Tier Distribution", "01_elec_tier_distribution.png", "Fig01_Elec_Tiers", "Electricity Diagnostic"),
         ("Figure 2", "Figure 2: Primary Electricity Technology Distribution & Dry-Cell Exclusion", "11_electricity_source_mix.png", "Fig02_Source_Mix", "Electricity Diagnostic"),
-        ("Figure 3", "Figure 3: Under-the-Grid Densification & Grid Uptake Funnel", "10_under_the_grid_funnel.png", "Fig03_Under_Grid_Funnel", "Electricity Infill Policy"),
-        ("Figure 4", "Figure 4: Electricity Attribute Performance Radar (Grid vs Off-Grid)", "03_elec_attribute_radar.png", "Fig04_Attribute_Radar", "Quality & Reliability"),
-        ("Figure 5", "Figure 5: Energy Access Across Expenditure Quintiles (Q1 to Q5)", "04_quintile_access_curve.png", "Fig05_Quintiles", "Equity & Poverty"),
-        ("Figure 6", "Figure 6: Grid Connection Barriers & Payment Modalities", "06_grid_barriers_wtp.png", "Fig06_Grid_Barriers_WTP", "Consumer Affordability"),
-        ("Figure 7a", "Figure 7a: Grid Connection WTP Cumulative Demand Curve", "12a_wtp_grid_connection.png", "Fig07a_Grid_WTP", "Demand Modeling"),
-        ("Figure 7b", "Figure 7b: Off-Grid Solar WTP Cumulative Demand Curve", "12b_wtp_solar_device.png", "Fig07b_Solar_WTP", "Demand Modeling"),
+        ("Figure 3", "Figure 3: Energy Access Across Expenditure Quintiles (Q1 to Q5)", "04_quintile_access_curve.png", "Fig03_Quintiles", "Equity & Poverty"),
+        ("Figure 4", "Figure 4: Under-the-Grid Densification & Grid Uptake Funnel", "10_under_the_grid_funnel.png", "Fig04_Under_Grid_Funnel", "Electricity Infill Policy"),
+        ("Figure 5", "Figure 5: Grid Connection Barriers & Payment Modalities", "06_grid_barriers_wtp.png", "Fig05_Grid_Barriers_WTP", "Consumer Affordability"),
+        ("Figure 6a", "Figure 6a: Grid Connection WTP Cumulative Demand Curve", "12a_wtp_grid_connection.png", "Fig06a_Grid_WTP", "Demand Modeling"),
+        ("Figure 6b", "Figure 6b: Off-Grid Solar WTP Cumulative Demand Curve", "12b_wtp_solar_device.png", "Fig06b_Solar_WTP", "Demand Modeling"),
     ]
     if has_cook_wtp:
-        figure_catalog.append(("Figure 7c", "Figure 7c: Clean Cookstove WTP Cumulative Demand Curve", "12c_wtp_cookstove.png", "Fig07c_Cookstove_WTP", "Demand Modeling"))
+        figure_catalog.append(("Figure 6c", "Figure 6c: Clean Cookstove WTP Cumulative Demand Curve", "12c_wtp_cookstove.png", "Fig06c_Cookstove_WTP", "Demand Modeling"))
 
     figure_catalog.extend([
-        ("Figure 8", "Figure 8: Target Consumer Segments by Minimum Financing Requirement", "13_wtp_mutually_exclusive_stacked.png", "Fig08_WTP_Segments", "Market Segmentation"),
-        ("Figure 9", "Figure 9: Primary Cookstove Typology & Primary Cooking Fuels", "07_stove_technology_fuels.png", "Fig09_Stove_Fuels", "Clean Cooking (MECS)"),
-        ("Figure 10", "Figure 10: MECS Clean Cooking Tier Distribution", "02_cooking_tier_distribution.png", "Fig10_Cooking_Tiers", "Clean Cooking (MECS)"),
-        ("Figure 11", "Figure 11: Cookstove Stacking Patterns & Exposure Dilution Effect", "14_stove_stacking_matrix.png", "Fig11_Stove_Stacking", "Clean Cooking (MECS)"),
-        ("Figure 12", "Figure 12: Gender Demographics, Educational Attainment & Access Parity", "08_gender_demographics_access.png", "Fig12_Gender_Parity", "Gender & Social Inclusion"),
-        ("Figure 13", "Figure 13: Gender Time-Use Burden for Fuel Gathering", "05_gender_fuel_collection_time.png", "Fig13_Gender_Fuel_Time", "Gender & Social Inclusion"),
+        ("Figure 7", "Figure 7: Primary Cookstove Typology & Primary Cooking Fuels", "07_stove_technology_fuels.png", "Fig07_Stove_Fuels", "Clean Cooking (MECS)"),
+        ("Figure 8", "Figure 8: MECS Clean Cooking Tier Distribution", "02_cooking_tier_distribution.png", "Fig08_Cooking_Tiers", "Clean Cooking (MECS)"),
+        ("Figure 9", "Figure 9: Cookstove Stacking Patterns & Exposure Dilution Effect", "14_stove_stacking_matrix.png", "Fig09_Stove_Stacking", "Clean Cooking (MECS)"),
+        ("Figure 10", "Figure 10: Gender Demographics, Educational Attainment & Access Parity", "08_gender_demographics_access.png", "Fig10_Gender_Parity", "Gender & Social Inclusion"),
+        ("Figure 11", "Figure 11: Gender Time-Use Burden for Fuel Gathering", "05_gender_fuel_collection_time.png", "Fig11_Gender_Fuel_Time", "Gender & Social Inclusion"),
     ])
 
     if not skip_regional:
-        figure_catalog.append(("Figure 14", "Figure 14: Subnational Disparities in Electricity Access", "09_regional_access_gap.png", "Fig14_Regional_Access_Gap", "Subnational Disparities"))
+        figure_catalog.append(("Figure 12", "Figure 12: Subnational Disparities in Electricity Access", "09_regional_access_gap.png", "Fig12_Regional_Access_Gap", "Subnational Disparities"))
     else:
         # Note omission in index header
         ws_idx.cell(3, 1, f"Note: Subnational Regional Disparities figure ({skip_reason})").font = font_subtitle
@@ -1649,79 +1647,11 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
         auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 08: Mutually Exclusive WTP Segments (13_wtp_mutually_exclusive_stacked.png)
+    # FIG 07: Cookstove Typology & Fuels (07_stove_technology_fuels.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig08_WTP_Segments")
+    ws = wb.create_sheet(title="Fig07_Stove_Fuels")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 8: Target Consumer Segments by Minimum Financing Requirement").font = font_title
-    ws.cell(2, 1, "Source: 13_wtp_mutually_exclusive_stacked.png | Mutually exclusive breakdown strictly summing to 100%").font = font_subtitle
-
-    headers = ["Technology Target", "Can Pay Upfront (%)", "Needs 3M Plan (%)", "Needs 6M Plan (%)", "Needs 12M Plan (%)", "Needs 100% Subsidy (%)", "Never / Unwilling (%)", "Total Sum (%)"]
-    for c_idx, h in enumerate(headers, 1):
-        cell = ws.cell(4, c_idx, h)
-        cell.font = font_th
-        cell.fill = fill_navy
-        cell.alignment = align_center
-
-    # Calculate mutually exclusive segments from values (strictly sums to 100%)
-    g_upfront = g("WTP_GRID_UPFRONT_NAT", 19.6)
-    g_3m_cum  = g("WTP_GRID_3M_NAT", 23.8)
-    g_6m_cum  = g("WTP_GRID_6M_NAT", 32.7)
-    g_12m_cum = g("WTP_GRID_12M_NAT", 45.5)
-    g_waived  = g("WTP_GRID_WAIVED_NAT", 73.7)
-
-    g_m3  = max(0.0, g_3m_cum - g_upfront)
-    g_m6  = max(0.0, g_6m_cum - max(g_3m_cum, g_upfront))
-    g_m12 = max(0.0, g_12m_cum - max(g_6m_cum, g_3m_cum, g_upfront))
-    g_wvd = max(0.0, g_waived - max(g_12m_cum, g_6m_cum, g_3m_cum, g_upfront))
-    g_nvr = max(0.0, 100.0 - (g_upfront + g_m3 + g_m6 + g_m12 + g_wvd))
-
-    s_upfront = g("WTP_SOLAR_UPFRONT_NAT", 20.5)
-    s_6m_cum  = g("WTP_SOLAR_6M_NAT", 28.0)
-    s_12m_cum = g("WTP_SOLAR_12M_NAT", 42.2)
-    s_24m_cum = g("WTP_SOLAR_24M_NAT", 55.0)
-
-    s_m3  = 0.0
-    s_m6  = max(0.0, s_6m_cum - s_upfront)
-    s_m12 = max(0.0, s_12m_cum - max(s_6m_cum, s_upfront))
-    s_m24 = max(0.0, s_24m_cum - max(s_12m_cum, s_6m_cum, s_upfront))
-    s_nvr = max(0.0, 100.0 - (s_upfront + s_m6 + s_m12 + s_m24))
-
-    c_upfront = g("WTP_COOK_UPFRONT_NAT", 18.7)
-    c_3m_cum  = g("WTP_COOK_3M_NAT", 24.6)
-    c_6m_cum  = g("WTP_COOK_6M_NAT", 36.4)
-    c_12m_cum = g("WTP_COOK_12M_NAT", 44.7)
-
-    c_m3  = max(0.0, c_3m_cum - c_upfront)
-    c_m6  = max(0.0, c_6m_cum - max(c_3m_cum, c_upfront))
-    c_m12 = max(0.0, c_12m_cum - max(c_6m_cum, c_3m_cum, c_upfront))
-    c_nvr = max(0.0, 100.0 - (c_upfront + c_m3 + c_m6 + c_m12))
-
-    seg_rows = [
-        ("National Grid Connection", round(g_upfront, 1), round(g_m3, 1), round(g_m6, 1), round(g_m12, 1), round(g_wvd, 1), round(g_nvr, 1)),
-        ("Off-Grid Solar Home System", round(s_upfront, 1), round(s_m3, 1), round(s_m6, 1), round(s_m12 + s_m24, 1), 0.0, round(s_nvr, 1)),
-        ("Clean Cookstove", round(c_upfront, 1), round(c_m3, 1), round(c_m6, 1), round(c_m12, 1), 0.0, round(c_nvr, 1)),
-    ]
-    for r_idx, (tgt, p1, p2, p3, p4, p5, p6) in enumerate(seg_rows, 5):
-        ws.cell(r_idx, 1, tgt).alignment = align_left
-        ws.cell(r_idx, 2, p1).alignment = align_right
-        ws.cell(r_idx, 3, p2).alignment = align_right
-        ws.cell(r_idx, 4, p3).alignment = align_right
-        ws.cell(r_idx, 5, p4).alignment = align_right
-        ws.cell(r_idx, 6, p5).alignment = align_right
-        ws.cell(r_idx, 7, p6).alignment = align_right
-        ws.cell(r_idx, 8, f"=SUM(B{r_idx}:G{r_idx})").alignment = align_right
-        for c in range(1, 9):
-            ws.cell(r_idx, c).font = font_td if c < 8 else font_td_bold
-            ws.cell(r_idx, c).border = table_border
-    auto_fit_cols(ws)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # FIG 09: Cookstove Typology & Fuels (07_stove_technology_fuels.png)
-    # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig09_Stove_Fuels")
-    ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 9: Primary Cookstove Typology & Primary Cooking Fuels").font = font_title
+    ws.cell(1, 1, "Figure 7: Primary Cookstove Typology & Primary Cooking Fuels").font = font_title
     ws.cell(2, 1, "Source: 07_stove_technology_fuels.png | Breakdown across National, Urban, and Rural populations").font = font_subtitle
 
     headers = ["Stove Technology Category", "National (%)", "Urban (%)", "Rural (%)", "Primary Fuel Used", "Recommended Color"]
@@ -1760,11 +1690,11 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 10: MECS Cooking Tiers (02_cooking_tier_distribution.png)
+    # FIG 08: MECS Cooking Tiers (02_cooking_tier_distribution.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig10_Cooking_Tiers")
+    ws = wb.create_sheet(title="Fig08_Cooking_Tiers")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 10: Multi-Tier Framework MECS Cooking Tier Distribution").font = font_title
+    ws.cell(1, 1, "Figure 8: Multi-Tier Framework MECS Cooking Tier Distribution").font = font_title
     ws.cell(2, 1, "Source: 02_cooking_tier_distribution.png | Six-tier classification based on cooking attributes").font = font_subtitle
 
     headers = ["MECS Cooking Tier", "National (%)", "Urban (%)", "Rural (%)", "Access Status"]
@@ -1803,11 +1733,11 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 11: Stove Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
+    # FIG 09: Stove Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig11_Stove_Stacking")
+    ws = wb.create_sheet(title="Fig09_Stove_Stacking")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 11: Clean Cooking Stacking & Exposure Dilution Dynamics").font = font_title
+    ws.cell(1, 1, "Figure 9: Clean Cooking Stacking & Exposure Dilution Dynamics").font = font_title
     ws.cell(2, 1, "Source: 14_stove_stacking_matrix.png | Multi-stove stacking behavior and HAP dilution").font = font_subtitle
 
     ws.cell(4, 1, "Subplot 1: National Cooking Practice Typology (% of National Population)").font = font_section
@@ -1860,11 +1790,11 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 12: Gender Parity & Demographics (08_gender_demographics_access.png)
+    # FIG 10: Gender Parity & Demographics (08_gender_demographics_access.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig12_Gender_Parity")
+    ws = wb.create_sheet(title="Fig10_Gender_Parity")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 12: Gender Demographics, Credit & Access Parity").font = font_title
+    ws.cell(1, 1, "Figure 10: Gender Demographics, Credit & Access Parity").font = font_title
     ws.cell(2, 1, "Source: 08_gender_demographics_access.png | Panel A: Head Education; Panel B: Access & Financial Inclusion").font = font_subtitle
 
     ws.cell(4, 1, "Panel A: Educational Attainment of Household Head by Gender (%)").font = font_section
@@ -1926,11 +1856,11 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 13: Gender Fuel Collection Time (05_gender_fuel_collection_time.png)
+    # FIG 11: Gender Fuel Collection Time (05_gender_fuel_collection_time.png)
     # ─────────────────────────────────────────────────────────────────────────
-    ws = wb.create_sheet(title="Fig13_Gender_Fuel_Time")
+    ws = wb.create_sheet(title="Fig11_Gender_Fuel_Time")
     ws.views.sheetView[0].showGridLines = True
-    ws.cell(1, 1, "Figure 13: Gender Time-Use Burden for Fuel Gathering").font = font_title
+    ws.cell(1, 1, "Figure 11: Gender Time-Use Burden for Fuel Gathering").font = font_title
     ws.cell(2, 1, "Source: 05_gender_fuel_collection_time.png | Daily time allocated to collecting firewood and biomass").font = font_subtitle
 
     headers = ["Demographic Group", "Daily Time Spent Gathering Fuel (Minutes/Day)", "Hours per Week (Est.)", "Full Working Days Lost per Year (8h Days)"]
@@ -1960,12 +1890,12 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     auto_fit_cols(ws)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # FIG 14: Subnational Disparities (09_regional_access_gap.png) [Conditional]
+    # FIG 12: Subnational Disparities (09_regional_access_gap.png) [Conditional]
     # ─────────────────────────────────────────────────────────────────────────
     if not skip_regional:
-        ws = wb.create_sheet(title="Fig14_Regional_Access_Gap")
+        ws = wb.create_sheet(title="Fig12_Regional_Access_Gap")
         ws.views.sheetView[0].showGridLines = True
-        ws.cell(1, 1, "Figure 14: Subnational Disparities in Electricity Access").font = font_title
+        ws.cell(1, 1, "Figure 12: Subnational Disparities in Electricity Access").font = font_title
         ws.cell(2, 1, "Source: 09_regional_access_gap.png | Administrative regions disaggregated by technology with 95% CIs").font = font_subtitle
 
         headers = ["Administrative Region / County", "Grid Access (%)", "Grid [95% CI]", "Off-Grid Solar (%)", "Solar [95% CI]", "Total Electricity Access (%)", "Total Access [95% CI]"]
