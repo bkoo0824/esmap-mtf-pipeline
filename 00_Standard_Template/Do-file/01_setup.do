@@ -28,5 +28,4 @@
 	di "Expenditure summary (N$):"
 	summarize exp_total_yr exp_total_m [aw=hh_wt], detail
 
-	save "$wip_hh/$master_dta", replace
 	di " 01_setup.do complete — Master dataset validated."

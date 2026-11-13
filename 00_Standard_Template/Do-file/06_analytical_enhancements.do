@@ -85,51 +85,14 @@
 	*  Source: time_collecting.dta  — individual-level, filtered by sex/age
 	*===========================================================================
 
-	preserve
-		local fn_time_coll = cond("$fn_time_coll" != "", "$fn_time_coll", "time_collecting.dta")
-		use "$raw_hh/`fn_time_coll'", clear
-		capture confirm variable interview__id
-		if _rc {
-			capture confirm variable interview__key
-			if !_rc clonevar interview__id = interview__key
-		}
-
-		* Recode frequency
-		replace SEC_I_Q12 = 1440 if SEC_I_Q12 > 1440 & SEC_I_Q12 != .
-		gen wk_coll = .
-		replace wk_coll = (SEC_I_Q12/60)*7           if SEC_I_Q13 == 1
-		replace wk_coll = (SEC_I_Q12/60)             if SEC_I_Q13 == 2
-		replace wk_coll = (SEC_I_Q12/60)*2           if SEC_I_Q13 == 3
-		replace wk_coll = (SEC_I_Q12/60)*(7/14)      if SEC_I_Q13 == 4
-		replace wk_coll = (SEC_I_Q12/60)*(7/21)      if SEC_I_Q13 == 5
-		replace wk_coll = (SEC_I_Q12/60)*(7/30)      if SEC_I_Q13 == 6
-		replace wk_coll = (SEC_I_Q12/60)*(7/60)      if SEC_I_Q13 == 7
-		replace wk_coll = (SEC_I_Q12/60)*(7/90)      if SEC_I_Q13 == 8
-		replace wk_coll = (SEC_I_Q12/60)*(7/120)     if SEC_I_Q13 == 9
-		replace wk_coll = (SEC_I_Q12/60)*(7/30)      if SEC_I_Q13 == 19  // as needed → monthly
-
-		** Annual hours
-		gen yr_coll_hr = wk_coll * 52
-
-		** By demographic group directly from time_collecting__id:
-		** 1=Women 15+, 2=Girls <15, 3=Men 15+, 4=Boys <15
-		gen women_fuel_hr_yr = yr_coll_hr if time_collecting__id == 1
-		gen girls_fuel_hr_yr = yr_coll_hr if time_collecting__id == 2
-		gen men_fuel_hr_yr   = yr_coll_hr if time_collecting__id == 3
-		gen boys_fuel_hr_yr  = yr_coll_hr if time_collecting__id == 4
-
-		bys interview__id: egen women_fuel_hr_yr_hh = total(women_fuel_hr_yr)
-		bys interview__id: egen girls_fuel_hr_yr_hh = total(girls_fuel_hr_yr)
-		bys interview__id: egen men_fuel_hr_yr_hh   = total(men_fuel_hr_yr)
-		bys interview__id: egen boys_fuel_hr_yr_hh  = total(boys_fuel_hr_yr)
-
-		keep interview__id women_fuel_hr_yr_hh men_fuel_hr_yr_hh ///
-			girls_fuel_hr_yr_hh boys_fuel_hr_yr_hh
-		duplicates drop
-		save "$wip_hh/fuel_time_by_sex.dta", replace
-	restore
-
-	merge 1:1 interview__id using "$wip_hh/fuel_time_by_sex.dta", nogen
+	* Demographic fuel hours already merged from time_collecting.dta in 00_build_master_dataset.do
+	capture confirm variable women_fuel_hr_yr_hh
+	if _rc {
+		gen women_fuel_hr_yr_hh = .
+		gen men_fuel_hr_yr_hh = .
+		gen girls_fuel_hr_yr_hh = .
+		gen boys_fuel_hr_yr_hh = .
+	}
 
 	** Equivalent working days (÷8 hrs/day) and school days lost
 	gen women_fuel_workdays_yr = women_fuel_hr_yr_hh / 8

@@ -302,6 +302,8 @@
 				if "`var'" == "elec_access" & `g'==2 scalar json_FHH_ELEC_ACC = `val' * 100
 				if "`var'" == "mecs_access"  & `g'==1 scalar json_MHH_MECS_ACC  = `val' * 100
 				if "`var'" == "mecs_access"  & `g'==2 scalar json_FHH_MECS_ACC  = `val' * 100
+				if "`var'" == "elc_t45"      & `g'==1 scalar json_MHH_ELEC_T45  = `val' * 100
+				if "`var'" == "elc_t45"      & `g'==2 scalar json_FHH_ELEC_T45  = `val' * 100
 			}
 			local col = "C"
 		}
@@ -346,6 +348,27 @@
 	* Clean stove ownership %
 	svy: mean clean_stove
 	scalar json_PCT_CLEAN_STOVE_OWNERSHIP = e(b)[1,1] * 100
+
+	* Primary electricity technology source mix (qualifying sources vs dry-cell exclusion)
+	capture {
+		capture drop tech_grid tech_solar tech_gen tech_mini tech_rechar tech_drycell tech_noelec
+		gen byte tech_grid    = (elec_tech_type == 1)
+		gen byte tech_solar   = inlist(elec_tech_type, 4, 5, 6)
+		gen byte tech_gen     = (elec_tech_type == 3)
+		gen byte tech_mini    = (elec_tech_type == 2)
+		gen byte tech_rechar  = (elec_tech_type == 7)
+		gen byte tech_drycell = (SEC_C_Q162 == 8)
+		gen byte tech_noelec  = (SEC_C_Q162 == 111 | elec_tech_type == 8 & SEC_C_Q162 != 8)
+		svy: mean tech_grid tech_solar tech_gen tech_mini tech_rechar tech_drycell tech_noelec
+		scalar json_SHARE_GRID    = e(b)[1,1] * 100
+		scalar json_SHARE_SOLAR   = e(b)[1,2] * 100
+		scalar json_SHARE_GEN     = e(b)[1,3] * 100
+		scalar json_SHARE_MINI    = e(b)[1,4] * 100
+		scalar json_SHARE_RECHAR  = e(b)[1,5] * 100
+		scalar json_SHARE_DRYCELL = e(b)[1,6] * 100
+		scalar json_SHARE_NOELEC  = e(b)[1,7] * 100
+		drop tech_*
+	}
 
 	* Stove type disaggregations for Table 2
 	capture drop stove_3stone
@@ -877,7 +900,8 @@
 		STOVE_ELEC_N STOVE_ELEC_U STOVE_ELEC_R ///
 		Q1_ELEC_ACC Q2_ELEC_ACC Q3_ELEC_ACC Q4_ELEC_ACC Q5_ELEC_ACC ///
 		Q1_MECS_ACC Q2_MECS_ACC Q3_MECS_ACC Q4_MECS_ACC Q5_MECS_ACC ///
-		MHH_ELEC_ACC FHH_ELEC_ACC MHH_MECS_ACC FHH_MECS_ACC ///
+		MHH_ELEC_ACC FHH_ELEC_ACC MHH_ELEC_T45 FHH_ELEC_T45 MHH_MECS_ACC FHH_MECS_ACC ///
+		SHARE_GRID SHARE_SOLAR SHARE_GEN SHARE_MINI SHARE_RECHAR SHARE_DRYCELL SHARE_NOELEC ///
 		WOMEN_FUEL_TIME MEN_FUEL_TIME WOMEN_FUEL_WORKDAYS ///
 		WOMEN_COOK_TIME MEN_COOK_TIME ///
 		PCT_STOVE_STACKING PCT_STACKING_DILUTION PCT_CLEAN_STOVE_OWNERSHIP ///
@@ -948,18 +972,18 @@
 		WTP_COOK_P66_UPFRONT WTP_COOK_P66_6M WTP_COOK_P66_12M WTP_COOK_P66_24M ///
 		WTP_COOK_P33_UPFRONT WTP_COOK_P33_6M WTP_COOK_P33_12M WTP_COOK_P33_24M
 
-	local n : word count `scalars_list'
-	local i = 1
+	local first = 1
 	foreach sc of local scalars_list {
-		capture {
+		capture confirm scalar json_`sc'
+		if !_rc {
 			local v = string(scalar(json_`sc'), "%8.1f")
-			if `i' < `n' file write jf `"  "{{`sc'}}": `v',"' _newline
-			else          file write jf `"  "{{`sc'}}": `v'"'  _newline
+			if !`first' file write jf "," _newline
+			file write jf `"  "{{`sc'}}": `v'"'
+			local first = 0
 		}
-		local i = `i' + 1
 	}
 
-	file write jf `"}"' _newline
+	file write jf _newline `"}"' _newline
 	file close jf
 
 	di " 07_export.do complete (10 sheets + expanded JSON)"

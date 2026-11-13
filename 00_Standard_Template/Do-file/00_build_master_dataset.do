@@ -36,7 +36,7 @@
 
 	local fn_hhroster = cond("$fn_hhroster" != "", "$fn_hhroster", "hhroster.dta")
 
-	** Household size
+	** Demographics: Household size & head characteristics from hhroster.dta
 	use "$raw_hh/`fn_hhroster'", clear
 	capture confirm variable interview__id
 	if _rc {
@@ -46,19 +46,7 @@
 	bys interview__id: gen hhsize = _N
 	lab var hhsize "Household Size"
 	keep if SEC_A1_Q4 == 1               // keep household head
-	keep interview__id hhsize
-	duplicates drop
-	save "$wip_hh/hhsize.dta", replace
-
-	** Household head demographics from hhroster.dta
-	use "$raw_hh/`fn_hhroster'", clear
-	capture confirm variable interview__id
-	if _rc {
-		capture confirm variable interview__key
-		if !_rc clonevar interview__id = interview__key
-	}
-	keep if SEC_A1_Q4 == 1
-	keep interview__id SEC_A1_Q3 SEC_A1_Q5 SEC_A1_Q7 SEC_A1_Q8 SEC_A1_Q10
+	keep interview__id hhsize SEC_A1_Q3 SEC_A1_Q5 SEC_A1_Q7 SEC_A1_Q8 SEC_A1_Q10
 	
 	clonevar hh_head_gender = SEC_A1_Q3
 	lab define hh_head_gender 1 "Male HH Head (MHH)" 2 "Female HH Head (FHH)", replace
@@ -83,8 +71,9 @@
 	clonevar hh_head_marital = SEC_A1_Q10
 	lab var hh_head_marital "Marital Status of Household Head"
 
+	keep interview__id hhsize hh_head_gender hh_head_age hh_head_educ hh_head_marital
 	duplicates drop
-	save "$wip_hh/headgender.dta", replace
+	save "$wip_hh/demographics.dta", replace
 
 
 	*===========================================================================
@@ -102,9 +91,8 @@
 	gen hh_wt = (firstsampleweight / second_stage_prob) / response_rate
 	lab var hh_wt "Final Calibrated Household Weight"
 
-	** Merge household size and head characteristics
-	merge 1:1 interview__id using "$wip_hh/hhsize.dta", nogen
-	merge 1:1 interview__id using "$wip_hh/headgender.dta", nogen
+	** Merge demographics (hhsize and head characteristics)
+	merge 1:1 interview__id using "$wip_hh/demographics.dta", nogen
 
 	** Population weight:
 	gen pop_wt = hh_wt * hhsize
@@ -330,20 +318,20 @@
 	** Clean frequency "Other, specify" responses
 	capture confirm variable SEC_I_Q07_oth
 	if !_rc {
-		replace fuel_buy_freq = 3  if SEC_I_Q07_oth == "twice a week"
-		replace fuel_buy_freq = 6  if SEC_I_Q07_oth == "few times a month"
-		replace fuel_buy_freq = 12 if inlist(SEC_I_Q07_oth, "3 times per week", "3 times a week", "three times per week")
-		replace fuel_buy_freq = 13 if inlist(SEC_I_Q07_oth, "3 times a month", "3 times in a month")
-		replace fuel_buy_freq = 14 if SEC_I_Q07_oth == "After 2 days"
-		replace fuel_buy_freq = 15 if inlist(SEC_I_Q07_oth, "Every Year", "Once in a  year", "Once in a year", "after a year", "every 1 year", "every year", "once in a year") | inlist(SEC_I_Q07_oth, "one's a year", "once a year", "Rarely in a year", "few times in a year")
-		replace fuel_buy_freq = 16 if SEC_I_Q07_oth == "2 years"
-		replace fuel_buy_freq = 17 if inlist(SEC_I_Q07_oth, "4 Times per weeek", "4 times a week")
-		replace fuel_buy_freq = 18 if SEC_I_Q07_oth == "5 times a month"
-		replace fuel_buy_freq = 19 if SEC_I_Q07_oth == "After 8 months"
-		replace fuel_buy_freq = 20 if inlist(SEC_I_Q07_oth, "Twice in a year", "twice a year")
-		replace fuel_buy_freq = 21 if SEC_I_Q07_oth == "Twice per month"
-		replace fuel_buy_freq = 22 if inlist(SEC_I_Q07_oth, "not purchased", "ever since it was bought it has not been purchased")
-		replace fuel_buy_freq = 23 if inlist(SEC_I_Q07_oth, "when they want to braai", "when there is no electricity", "When they need it", "Bought it the time they are using it", "only when there is no gas", "When there is no electricity", "when there is no gas") | inlist(SEC_I_Q07_oth, "when they want to braai outside", "Only when they want to braai", "only when they want to buy", "Whenever they need it", "Only when the wood finishes", "when it finishes  they buy", "When a need it qa") | inlist(SEC_I_Q07_oth, "when they need it", "when they want to cook outside", "rarely", "when it finishes", "when she goes back to mariental", "occasionally", "when he gets money") | inlist(SEC_I_Q07_oth, "when wood is done", "When the gas finished")
+		replace fuel_buy_freq = 3  if inlist(lower(SEC_I_Q07_oth), "twice a week", "twice per week")
+		replace fuel_buy_freq = 6  if inlist(lower(SEC_I_Q07_oth), "few times a month", "twice per month", "twice a month")
+		replace fuel_buy_freq = 12 if inlist(lower(SEC_I_Q07_oth), "3 times per week", "3 times a week", "three times per week")
+		replace fuel_buy_freq = 13 if inlist(lower(SEC_I_Q07_oth), "3 times a month", "3 times in a month")
+		replace fuel_buy_freq = 14 if lower(SEC_I_Q07_oth) == "after 2 days"
+		replace fuel_buy_freq = 15 if inlist(lower(SEC_I_Q07_oth), "every year", "once in a year", "once a year", "after a year")
+		replace fuel_buy_freq = 16 if inlist(lower(SEC_I_Q07_oth), "2 years", "every 2 years")
+		replace fuel_buy_freq = 17 if inlist(lower(SEC_I_Q07_oth), "4 times per week", "4 times a week")
+		replace fuel_buy_freq = 18 if lower(SEC_I_Q07_oth) == "5 times a month"
+		replace fuel_buy_freq = 19 if lower(SEC_I_Q07_oth) == "after 8 months"
+		replace fuel_buy_freq = 20 if inlist(lower(SEC_I_Q07_oth), "twice in a year", "twice a year")
+		replace fuel_buy_freq = 21 if lower(SEC_I_Q07_oth) == "twice per month"
+		replace fuel_buy_freq = 22 if inlist(lower(SEC_I_Q07_oth), "not purchased", "never")
+		replace fuel_buy_freq = 23 if inlist(lower(SEC_I_Q07_oth), "as needed", "when needed", "rarely", "occasionally")
 	}
 
 	** Clean "As need arises" to mode frequency
@@ -715,15 +703,15 @@
 
 	capture confirm variable SEC_I_Q13_oth
 	if !_rc {
-		replace SEC_I_Q13 = 3  if SEC_I_Q13_oth == "twice a week"
-		replace SEC_I_Q13 = 12 if inlist(SEC_I_Q13_oth, "3 times a week", "3 times per week", "3 tomes per week", "3 time per week", "three times a week")
-		replace SEC_I_Q13 = 13 if inlist(SEC_I_Q13_oth, "4 times a week", "4 times per week")
-		replace SEC_I_Q13 = 14 if SEC_I_Q13_oth == "5 days a week"
-		replace SEC_I_Q13 = 15 if inlist(SEC_I_Q13_oth, "2 days", "after 2 days")
-		replace SEC_I_Q13 = 16 if inlist(SEC_I_Q13_oth, "once a year", "Every year")
-		replace SEC_I_Q13 = 17 if SEC_I_Q13_oth == "3 times a month"
-		replace SEC_I_Q13 = 18 if SEC_I_Q13_oth == "Twice per month"
-		replace SEC_I_Q13 = 19 if inlist(SEC_I_Q13_oth, "when they need to go get", "only when they need to cook outside", "When they need to", "when she goes to mariental", "occasionally", "when they need it", "rarely") | inlist(SEC_I_Q13_oth, "When there is no electricity", "when there is no electricity", "only if the kids are at home", "few times in a year", "when it's done", "only when they want to braai") | inlist(SEC_I_Q13_oth, "when they want to cook outside", "when they want to cook food outside", "when it finishes", "only when they need to braai")
+		replace SEC_I_Q13 = 3  if inlist(lower(SEC_I_Q13_oth), "twice a week", "twice per week")
+		replace SEC_I_Q13 = 12 if inlist(lower(SEC_I_Q13_oth), "3 times a week", "3 times per week", "three times a week")
+		replace SEC_I_Q13 = 13 if inlist(lower(SEC_I_Q13_oth), "4 times a week", "4 times per week")
+		replace SEC_I_Q13 = 14 if lower(SEC_I_Q13_oth) == "5 days a week"
+		replace SEC_I_Q13 = 15 if inlist(lower(SEC_I_Q13_oth), "2 days", "after 2 days")
+		replace SEC_I_Q13 = 16 if inlist(lower(SEC_I_Q13_oth), "once a year", "every year")
+		replace SEC_I_Q13 = 17 if lower(SEC_I_Q13_oth) == "3 times a month"
+		replace SEC_I_Q13 = 18 if inlist(lower(SEC_I_Q13_oth), "twice per month", "twice a month")
+		replace SEC_I_Q13 = 19 if inlist(lower(SEC_I_Q13_oth), "as needed", "when needed", "occasionally", "rarely")
 	}
 
 	replace SEC_I_Q12 = 1440 if SEC_I_Q12 > 1440 & SEC_I_Q12 != .
@@ -755,7 +743,20 @@
 	gen cs_fcol_fpre = SEC_I_Q12_total + SEC_I_Q14_total
 	lab var cs_fcol_fpre "Fuel collection + prep time (hr/week)"
 
-	keep interview__id SEC_I_Q12_total SEC_I_Q14_total cs_fcol_fpre
+	** Annual hours by demographic group (time_collecting__id: 1=Women 15+, 2=Girls <15, 3=Men 15+, 4=Boys <15)
+	gen yr_coll_hr = SEC_I_Q12_week * 52
+	gen women_fuel_hr_yr = yr_coll_hr if time_collecting__id == 1
+	gen girls_fuel_hr_yr = yr_coll_hr if time_collecting__id == 2
+	gen men_fuel_hr_yr   = yr_coll_hr if time_collecting__id == 3
+	gen boys_fuel_hr_yr  = yr_coll_hr if time_collecting__id == 4
+
+	bys interview__id: egen women_fuel_hr_yr_hh = total(women_fuel_hr_yr)
+	bys interview__id: egen girls_fuel_hr_yr_hh = total(girls_fuel_hr_yr)
+	bys interview__id: egen men_fuel_hr_yr_hh   = total(men_fuel_hr_yr)
+	bys interview__id: egen boys_fuel_hr_yr_hh  = total(boys_fuel_hr_yr)
+
+	keep interview__id SEC_I_Q12_total SEC_I_Q14_total cs_fcol_fpre ///
+		women_fuel_hr_yr_hh men_fuel_hr_yr_hh girls_fuel_hr_yr_hh boys_fuel_hr_yr_hh
 	duplicates drop
 	save "$wip_hh/fuel_time.dta", replace
 

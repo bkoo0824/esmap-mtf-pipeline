@@ -60,12 +60,10 @@
 	replace mainstove = 8 if inlist(SEC_G_Q05, 16)                // biofuel
 	replace mainstove = 555 if inlist(SEC_G_Q05, 555)             // other
 
-	* Correct misclassified gas stoves (fuel=gas but stove type wrong per Kat's code)
-	replace mainstove = 4 if !inlist(mainstove, 4) & SEC_G_Q16__15 == 1 & ///
-		SEC_G_Q16__1 == 0 & SEC_G_Q16__2 == 0 & SEC_G_Q16__3 == 0 & SEC_G_Q16__4 == 0 & ///
-		SEC_G_Q16__5 == 0 & SEC_G_Q16__6 == 0 & SEC_G_Q16__7 == 0 & SEC_G_Q16__8 == 0 & ///
-		SEC_G_Q16__9 == 0 & SEC_G_Q16__10 == 0 & SEC_G_Q16__11 == 0 & SEC_G_Q16__12 == 0 & ///
-		SEC_G_Q16__13 == 0 & SEC_G_Q16__14 == 0 & SEC_G_Q16__111 == 0 & SEC_G_Q16__555 == 0
+	* Correct misclassified gas stoves (fuel=gas and no other fuels used)
+	tempvar q16_fuel_count
+	egen `q16_fuel_count' = rowtotal(SEC_G_Q16__*)
+	replace mainstove = 4 if mainstove != 4 & SEC_G_Q16__15 == 1 & `q16_fuel_count' == 1
 
 	lab define mainstove ///
 		1 "3-Stone / Open Fire"        ///

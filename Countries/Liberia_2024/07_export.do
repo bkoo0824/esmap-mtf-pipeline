@@ -762,22 +762,22 @@
 		REG_BOMI_GRID REG_BONG_GRID REG_GBARPOLU_GRID REG_GRAND_BASSA_GRID REG_GRAND_CAPE_MOUNT_GRID \
 		REG_GRAND_GEDEH_GRID REG_GRAND_KRU_GRID REG_LOFA_GRID REG_MARGIBI_GRID REG_MARYLAND_GRID \
 		REG_MONTSERRADO_GRID REG_NIMBA_GRID REG_RIVER_CESS_GRID REG_RIVER_GEE_GRID REG_SINOE_GRID \
-		REG_BOMI_SOLAR REG_BONG_SOLAR REG_GBARPOLU_SOLAR REG_GRAND_BASSA_SOLAR REG_GRAND_CAPE_MOUNT_SOLAR \
-		REG_GRAND_GEDEH_SOLAR REG_GRAND_KRU_SOLAR REG_LOFA_SOLAR REG_MARGIBI_SOLAR REG_MARYLAND_SOLAR \
+		REG_BOMI_SOLAR REG_BONG_SOLAR REG_GBARPOLU_SOLAR REG_GRAND_BASSA_SOLAR REG_GRAND_CAPE_MOUNT_SOLAR ///
+		REG_GRAND_GEDEH_SOLAR REG_GRAND_KRU_SOLAR REG_LOFA_SOLAR REG_MARGIBI_SOLAR REG_MARYLAND_SOLAR ///
 		REG_MONTSERRADO_SOLAR REG_NIMBA_SOLAR REG_RIVER_CESS_SOLAR REG_RIVER_GEE_SOLAR REG_SINOE_SOLAR
 
-	local n : word count `scalars_list'
-	local i = 1
+	local first = 1
 	foreach sc of local scalars_list {
-		capture {
+		capture confirm scalar json_`sc'
+		if !_rc {
 			local v = string(scalar(json_`sc'), "%8.1f")
-			if `i' < `n' file write jf `"  "{{`sc'}}": `v',"' _newline
-			else          file write jf `"  "{{`sc'}}": `v'"'  _newline
+			if !`first' file write jf "," _newline
+			file write jf `"  "{{`sc'}}": `v'"'
+			local first = 0
 		}
-		local i = `i' + 1
 	}
 
-	file write jf `"}"' _newline
+	file write jf _newline `"}"' _newline
 	file close jf
 
 	di " 07_export.do complete (10 sheets + expanded JSON)"

@@ -111,22 +111,38 @@ TIER_COLORS = {
 }
 
 # ─── UTILITIES ────────────────────────────────────────────────────────────────
+_SHEETS_CACHE = {}
+_JSON_CACHE = None
+
 def load_sheet(sheet_name: str) -> pd.DataFrame:
+    global _SHEETS_CACHE
+    if not _SHEETS_CACHE and XLS_PATH.exists():
+        try:
+            _SHEETS_CACHE = pd.read_excel(XLS_PATH, sheet_name=None, index_col=0)
+        except Exception:
+            _SHEETS_CACHE = {}
+    if sheet_name in _SHEETS_CACHE:
+        return _SHEETS_CACHE[sheet_name]
     return pd.read_excel(XLS_PATH, sheet_name=sheet_name, index_col=0)
 
 
 def load_json() -> dict:
+    global _JSON_CACHE
+    if _JSON_CACHE is not None:
+        return _JSON_CACHE
     if not JSON_PATH.exists():
         print(f"[warn] {JSON_PATH} not found — using zeros for JSON values", file=sys.stderr)
-        return {}
+        _JSON_CACHE = {}
+        return _JSON_CACHE
     with open(JSON_PATH, encoding="utf-8") as f:
         raw = f.read().strip()
     raw = re.sub(r',\s*\}', '}', raw)
     try:
-        return json.loads(raw)
+        _JSON_CACHE = json.loads(raw)
     except Exception as e:
         print(f"[warn] JSON parse issue: {e}", file=sys.stderr)
-        return {}
+        _JSON_CACHE = {}
+    return _JSON_CACHE
 
 
 def save_fig(fig, filename: str):
@@ -507,8 +523,9 @@ def chart_gender_demographics_access():
 
     # Panel B: Electricity Tier Ranking & Credit Access
     metrics = ["Electricity\nAccess Rate", "High Access\n(Tier 4-5)", "WTP Grid\nUpfront", "Access to\nCredit/Loans"]
-    mhh_acc = [g("MHH_ELEC_ACC"), g("ELEC_T45_NAT") + 1.2, g("WTP_GRID_UPFRONT_MHH"), g("CREDIT_ACCESS_MHH")]
-    fhh_acc = [g("FHH_ELEC_ACC"), g("ELEC_T45_NAT") - 1.5, g("WTP_GRID_UPFRONT_FHH"), g("CREDIT_ACCESS_FHH")]
+    t45_default = g("ELEC_T45_NAT", 0.0)
+    mhh_acc = [g("MHH_ELEC_ACC"), g("MHH_ELEC_T45", t45_default), g("WTP_GRID_UPFRONT_MHH"), g("CREDIT_ACCESS_MHH")]
+    fhh_acc = [g("FHH_ELEC_ACC"), g("FHH_ELEC_T45", t45_default), g("WTP_GRID_UPFRONT_FHH"), g("CREDIT_ACCESS_FHH")]
 
     x2 = np.arange(len(metrics))
     b3 = ax2.bar(x2 - w/2, mhh_acc, width=w, label="Male-Headed (MHH)", color=WB_NAVY)
@@ -698,9 +715,14 @@ def chart_electricity_source_mix():
         "Dry-Cell Battery / Torch [EXCLUDED]",
         "No Electricity"
     ]
-    grid_share = float(vals.get("GRID_ACC_NAT", 39.5))
-    solar_share = float(vals.get("SOLAR_ACC_NAT", 5.3))
-    shares = [grid_share, solar_share, 1.6, 0.5, 0.2, 33.0, 19.9]
+    grid_share = float(vals.get("SHARE_GRID", vals.get("GRID_ACC_NAT", 39.5)))
+    solar_share = float(vals.get("SHARE_SOLAR", vals.get("SOLAR_ACC_NAT", 5.3)))
+    gen_share = float(vals.get("SHARE_GEN", 1.6))
+    mini_share = float(vals.get("SHARE_MINI", 0.5))
+    rechar_share = float(vals.get("SHARE_RECHAR", 0.2))
+    drycell_share = float(vals.get("SHARE_DRYCELL", 33.0))
+    noelec_share = float(vals.get("SHARE_NOELEC", 19.9))
+    shares = [grid_share, solar_share, gen_share, mini_share, rechar_share, drycell_share, noelec_share]
     colors = [WB_NAVY, "#F39C12", "#E67E22", "#16A085", "#27AE60", "#BDC3C7", "#95A5A6"]
 
     fig, ax = plt.subplots(figsize=(11, 6.2), dpi=150)

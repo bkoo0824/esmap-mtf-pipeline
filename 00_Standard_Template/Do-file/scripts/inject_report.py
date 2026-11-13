@@ -1325,14 +1325,19 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
 
     grid_s = g("GRID_ACC_NAT", 26.3)
     sol_s  = g("SOLAR_ACC_NAT", 8.9)
+    gen_s  = g("SHARE_GEN", 1.6)
+    mini_s = g("SHARE_MINI", 0.5)
+    rec_s  = g("SHARE_RECHAR", 0.2)
+    dry_s  = g("SHARE_DRYCELL", 33.0)
+    noel_s = g("SHARE_NOELEC", max(0.0, 100.0 - (grid_s + sol_s + gen_s + mini_s + rec_s + dry_s)))
     src_data = [
         ("National Grid", grid_s, "Qualifying Source (Modern)", "#002244"),
         ("Off-Grid Solar (SHS / Solar Lantern)", sol_s, "Qualifying Source (Modern)", "#F39C12"),
-        ("Electric Generator", 1.6, "Qualifying Source (Modern)", "#E67E22"),
-        ("Mini-Grid / Micro-Hydro", 0.5, "Qualifying Source (Modern)", "#16A085"),
-        ("Rechargeable Battery / Inverter", 0.2, "Qualifying Source (Modern)", "#27AE60"),
-        ("Dry-Cell Battery / Flashlight / Torch", 33.0, "STRICTLY EXCLUDED (SDG 7)", "#BDC3C7"),
-        ("No Electricity Source Reported", max(0.0, 100.0 - (grid_s + sol_s + 1.6 + 0.5 + 0.2 + 33.0)), "Unconnected Deficit", "#95A5A6"),
+        ("Electric Generator", gen_s, "Qualifying Source (Modern)", "#E67E22"),
+        ("Mini-Grid / Micro-Hydro", mini_s, "Qualifying Source (Modern)", "#16A085"),
+        ("Rechargeable Battery / Inverter", rec_s, "Qualifying Source (Modern)", "#27AE60"),
+        ("Dry-Cell Battery / Flashlight / Torch", dry_s, "STRICTLY EXCLUDED (SDG 7)", "#BDC3C7"),
+        ("No Electricity Source Reported", noel_s, "Unconnected Deficit", "#95A5A6"),
     ]
     for r_idx, (tech, sh, st, c_hex) in enumerate(src_data, 6):
         ws.cell(r_idx, 1, tech).alignment = align_left
@@ -1395,14 +1400,43 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
         cell.fill = fill_navy
         cell.alignment = align_center
 
+    disagg_raw = get_summary_sheet_data("Disagg_UrbanRural")
+    attr_row_map = {}
+    if disagg_raw and len(disagg_raw) > 1:
+        for row in disagg_raw[1:]:
+            if row and row[0]:
+                attr_row_map[str(row[0]).strip()] = row
+
+    def get_attr_vals(var, def_gu, def_gr, def_ou, def_orr):
+        if var in attr_row_map:
+            r = attr_row_map[var]
+            try: gu = float(r[4]) if len(r) > 4 and r[4] is not None else def_gu
+            except: gu = def_gu
+            try: gr = float(r[5]) if len(r) > 5 and r[5] is not None else def_gr
+            except: gr = def_gr
+            try: ou = float(r[6]) if len(r) > 6 and r[6] is not None else def_ou
+            except: ou = def_ou
+            try: orr = float(r[7]) if len(r) > 7 and r[7] is not None else def_orr
+            except: orr = def_orr
+            return (gu, gr, ou, orr)
+        return (def_gu, def_gr, def_ou, def_orr)
+
+    c_vals = get_attr_vals("elc_cap_tier", 5.0, 5.0, 0.91, 0.75)
+    a_vals = get_attr_vals("elc_avbl_tier", 3.02, 3.54, 2.27, 2.41)
+    r_vals = get_attr_vals("elc_rel_tier_adj", 4.04, 4.00, 4.93, 4.99)
+    q_vals = get_attr_vals("elc_qual_tier_adj", 4.56, 4.79, 5.0, 5.0)
+    af_vals = get_attr_vals("elc_affrd_tier", 5.0, 5.0, 5.0, 5.0)
+    l_vals = get_attr_vals("elc_leg_tier_adj", 4.99, 4.81, 5.0, 5.0)
+    s_vals = get_attr_vals("elc_sft_tier", 4.98, 5.0, 5.0, 5.0)
+
     radar_data = [
-        ("Capacity", 5.0, 5.0, 0.91, 0.75, "Solar systems severely limited to Tier 0-1 loads"),
-        ("Availability", 3.02, 3.54, 2.27, 2.41, "Evening hours available (solar depends on battery)"),
-        ("Reliability", 4.04, 4.00, 4.93, 4.99, "Grid suffers frequent unscheduled blackouts"),
-        ("Quality", 4.56, 4.79, 5.0, 5.0, "Grid voltage fluctuations damage appliances"),
-        ("Affordability", 5.0, 5.0, 5.0, 5.0, "Basic consumption basket vs household income"),
-        ("Formality (Legality)", 4.99, 4.81, 5.0, 5.0, "Direct utility billing vs informal resale"),
-        ("Health & Safety", 4.98, 5.0, 5.0, 5.0, "Absence of electrocutions / exposed wiring accidents"),
+        ("Capacity", c_vals[0], c_vals[1], c_vals[2], c_vals[3], "Solar systems severely limited to Tier 0-1 loads"),
+        ("Availability", a_vals[0], a_vals[1], a_vals[2], a_vals[3], "Evening hours available (solar depends on battery)"),
+        ("Reliability", r_vals[0], r_vals[1], r_vals[2], r_vals[3], "Grid suffers frequent unscheduled blackouts"),
+        ("Quality", q_vals[0], q_vals[1], q_vals[2], q_vals[3], "Grid voltage fluctuations damage appliances"),
+        ("Affordability", af_vals[0], af_vals[1], af_vals[2], af_vals[3], "Basic consumption basket vs household income"),
+        ("Formality (Legality)", l_vals[0], l_vals[1], l_vals[2], l_vals[3], "Direct utility billing vs informal resale"),
+        ("Health & Safety", s_vals[0], s_vals[1], s_vals[2], s_vals[3], "Absence of electrocutions / exposed wiring accidents"),
     ]
     for r_idx, (attr, gu, gr, ou, orr, desc) in enumerate(radar_data, 5):
         ws.cell(r_idx, 1, attr).alignment = align_left
@@ -1629,10 +1663,44 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
         cell.fill = fill_navy
         cell.alignment = align_center
 
+    # Calculate mutually exclusive segments from values (strictly sums to 100%)
+    g_upfront = g("WTP_GRID_UPFRONT_NAT", 19.6)
+    g_3m_cum  = g("WTP_GRID_3M_NAT", 23.8)
+    g_6m_cum  = g("WTP_GRID_6M_NAT", 32.7)
+    g_12m_cum = g("WTP_GRID_12M_NAT", 45.5)
+    g_waived  = g("WTP_GRID_WAIVED_NAT", 73.7)
+
+    g_m3  = max(0.0, g_3m_cum - g_upfront)
+    g_m6  = max(0.0, g_6m_cum - max(g_3m_cum, g_upfront))
+    g_m12 = max(0.0, g_12m_cum - max(g_6m_cum, g_3m_cum, g_upfront))
+    g_wvd = max(0.0, g_waived - max(g_12m_cum, g_6m_cum, g_3m_cum, g_upfront))
+    g_nvr = max(0.0, 100.0 - (g_upfront + g_m3 + g_m6 + g_m12 + g_wvd))
+
+    s_upfront = g("WTP_SOLAR_UPFRONT_NAT", 20.5)
+    s_6m_cum  = g("WTP_SOLAR_6M_NAT", 28.0)
+    s_12m_cum = g("WTP_SOLAR_12M_NAT", 42.2)
+    s_24m_cum = g("WTP_SOLAR_24M_NAT", 55.0)
+
+    s_m3  = 0.0
+    s_m6  = max(0.0, s_6m_cum - s_upfront)
+    s_m12 = max(0.0, s_12m_cum - max(s_6m_cum, s_upfront))
+    s_m24 = max(0.0, s_24m_cum - max(s_12m_cum, s_6m_cum, s_upfront))
+    s_nvr = max(0.0, 100.0 - (s_upfront + s_m6 + s_m12 + s_m24))
+
+    c_upfront = g("WTP_COOK_UPFRONT_NAT", 18.7)
+    c_3m_cum  = g("WTP_COOK_3M_NAT", 24.6)
+    c_6m_cum  = g("WTP_COOK_6M_NAT", 36.4)
+    c_12m_cum = g("WTP_COOK_12M_NAT", 44.7)
+
+    c_m3  = max(0.0, c_3m_cum - c_upfront)
+    c_m6  = max(0.0, c_6m_cum - max(c_3m_cum, c_upfront))
+    c_m12 = max(0.0, c_12m_cum - max(c_6m_cum, c_3m_cum, c_upfront))
+    c_nvr = max(0.0, 100.0 - (c_upfront + c_m3 + c_m6 + c_m12))
+
     seg_rows = [
-        ("National Grid Connection", 19.6, 4.2, 8.9, 12.8, 28.2, 26.3),
-        ("Off-Grid Solar Home System", 20.5, 0.0, 7.5, 14.2, 0.0, 57.8),
-        ("Clean Cookstove", 18.7, 5.8, 11.8, 8.4, 0.0, 55.3),
+        ("National Grid Connection", round(g_upfront, 1), round(g_m3, 1), round(g_m6, 1), round(g_m12, 1), round(g_wvd, 1), round(g_nvr, 1)),
+        ("Off-Grid Solar Home System", round(s_upfront, 1), round(s_m3, 1), round(s_m6, 1), round(s_m12 + s_m24, 1), 0.0, round(s_nvr, 1)),
+        ("Clean Cookstove", round(c_upfront, 1), round(c_m3, 1), round(c_m6, 1), round(c_m12, 1), 0.0, round(c_nvr, 1)),
     ]
     for r_idx, (tgt, p1, p2, p3, p4, p5, p6) in enumerate(seg_rows, 5):
         ws.cell(r_idx, 1, tgt).alignment = align_left
@@ -1834,16 +1902,18 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     m_acc = g("MHH_ELEC_ACC", 30.6)
     f_acc = g("FHH_ELEC_ACC", 37.8)
     t45   = g("ELEC_T45_NAT", 7.5)
+    m_t45 = g("MHH_ELEC_T45", t45)
+    f_t45 = g("FHH_ELEC_T45", t45)
     m_wtp = g("WTP_GRID_UPFRONT_MHH", 40.9)
     f_wtp = g("WTP_GRID_UPFRONT_FHH", 41.8)
     m_crd = g("CREDIT_ACCESS_MHH", 12.0)
     f_crd = g("CREDIT_ACCESS_FHH", 14.5)
 
     parity_rows = [
-        ("Electricity Access Rate (Tier 1+)", m_acc, f_acc, "FHH Parity Advantage (+7.2%p)"),
-        ("High-Tier Access (Tier 4-5)", round(t45 + 1.2, 2), round(t45 - 1.5, 2), "MHH Advantage in High Loads"),
+        ("Electricity Access Rate (Tier 1+)", m_acc, f_acc, "FHH Parity Comparison"),
+        ("High-Tier Access (Tier 4-5)", round(m_t45, 2), round(f_t45, 2), "High Load Access by Gender"),
         ("Grid Connection WTP Upfront", m_wtp, f_wtp, "Parity / Comparable WTP"),
-        ("Access to Credit / Formal Loans", m_crd, f_crd, "Severe National Deficit in Credit"),
+        ("Access to Credit / Formal Loans", m_crd, f_crd, "Credit Access by Gender"),
     ]
     for r_idx, (met, m_v, f_v, st) in enumerate(parity_rows, start_gb + 2):
         ws.cell(r_idx, 1, met).alignment = align_left

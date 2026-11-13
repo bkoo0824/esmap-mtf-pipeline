@@ -820,18 +820,18 @@
 		REG_IMO_SOLAR REG_RIVERS_SOLAR REG_BAYELSA_SOLAR REG_DELTA_SOLAR REG_LAGOS_SOLAR ///
 		REG_OGUN_SOLAR
 
-	local n : word count `scalars_list'
-	local i = 1
+	local first = 1
 	foreach sc of local scalars_list {
-		capture {
+		capture confirm scalar json_`sc'
+		if !_rc {
 			local v = string(scalar(json_`sc'), "%8.1f")
-			if `i' < `n' file write jf `"  "{{`sc'}}": `v',"' _newline
-			else          file write jf `"  "{{`sc'}}": `v'"'  _newline
+			if !`first' file write jf "," _newline
+			file write jf `"  "{{`sc'}}": `v'"'
+			local first = 0
 		}
-		local i = `i' + 1
 	}
 
-	file write jf `"}"' _newline
+	file write jf _newline `"}"' _newline
 	file close jf
 
 	di " 07_export.do complete (10 sheets + expanded JSON)"

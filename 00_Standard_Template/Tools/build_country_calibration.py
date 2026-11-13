@@ -69,10 +69,10 @@ def extract_codebook(data_dir: Path) -> List[Dict[str, Any]]:
             continue
 
         try:
-            reader = pd.read_stata(fpath, iterator=True)
-            var_labels = reader.variable_labels()
-            val_labels = reader.value_labels()
-            df = pd.read_stata(fpath, convert_categoricals=False)
+            with pd.io.stata.StataReader(fpath, convert_categoricals=False) as reader:
+                var_labels = reader.variable_labels()
+                val_labels = reader.value_labels()
+                df = reader.read()
             total_rows = len(df)
 
             for col in df.columns:
