@@ -436,10 +436,16 @@ def load_values(
             "| **Traditional Stove** | Uninsulated artisanal metal/clay brazier | Charcoal / Firewood | Tier 0–1 | Tier 1 (10–19%) |\n"
             "| **Improved Cookstove (ICS)** | Insulated combustion chamber, ceramic liner | Firewood / Charcoal | Tier 2–3 | Tier 2–3 (20–39%) |\n"
             "| **Clean Fuel: LPG** | Pressurized liquefied petroleum gas burner | Bottled LPG | Tier 4–5 | Tier 4 (>=40%) |\n"
-            "| **Clean Fuel: Electric** | Electric resistance plate, induction, or EPC | Grid electricity | Tier 5 | Tier 5 (>=50%) |\n"
-            "| **Clean Fuel: Solar** | Parabolic / box solar cooker | Solar radiation | Tier 5 | Tier 5 |\n"
-            "| **Clean Fuel: Biogas** | Piped methane from domestic/community digester | Biogas | Tier 5 | Tier 4–5 |"
+            "| **Clean Fuel: Electric** | Electric resistance plate, induction, or EPC | Grid electricity | Tier 5 | Tier 5 (>=50%) |\n\n"
+            "*Note: Advanced solar cookers and domestic biogas systems are recognized clean cooking technologies under MTF standards; however, as zero sampled households reported using them, they are excluded from the empirical adoption profile.*"
         )
+
+    # Calculate WTP_GRID_NON_CONNECT as complement of WTP_GRID_WAIVED_NAT
+    try:
+        wtp_waived = float(values.get("{{WTP_GRID_WAIVED_NAT}}", values.get("WTP_GRID_WAIVED_NAT", 94.0)))
+        values["{{WTP_GRID_NON_CONNECT}}"] = f"{max(0.0, 100.0 - wtp_waived):.1f}"
+    except (ValueError, TypeError):
+        values["{{WTP_GRID_NON_CONNECT}}"] = "6.0"
 
     # Chart paths (for MD injection as image links)
     active_charts = charts if charts is not None else CHARTS

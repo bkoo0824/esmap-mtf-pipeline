@@ -715,15 +715,18 @@ def chart_electricity_source_mix():
         "Dry-Cell Battery / Torch [EXCLUDED]",
         "No Electricity"
     ]
-    grid_share = float(vals.get("SHARE_GRID", vals.get("GRID_ACC_NAT", 39.5)))
-    solar_share = float(vals.get("SHARE_SOLAR", vals.get("SOLAR_ACC_NAT", 5.3)))
-    gen_share = float(vals.get("SHARE_GEN", 1.6))
-    mini_share = float(vals.get("SHARE_MINI", 0.5))
-    rechar_share = float(vals.get("SHARE_RECHAR", 0.2))
-    drycell_share = float(vals.get("SHARE_DRYCELL", 33.0))
-    noelec_share = float(vals.get("SHARE_NOELEC", 19.9))
+    grid_share = float(vals.get("SHARE_GRID", vals.get("GRID_ACC_NAT", 24.2)))
+    solar_share = float(vals.get("SHARE_SOLAR", vals.get("SOLAR_ACC_NAT", 39.7)))
+    gen_share = float(vals.get("SHARE_GEN", 0.0))
+    mini_share = float(vals.get("SHARE_MINI", 1.1))
+    rechar_share = float(vals.get("SHARE_RECHAR", 1.4))
+    drycell_share = float(vals.get("SHARE_DRYCELL", 17.3))
+    noelec_share = float(vals.get("SHARE_NOELEC", 16.3))
     shares = [grid_share, solar_share, gen_share, mini_share, rechar_share, drycell_share, noelec_share]
     colors = [WB_NAVY, "#F39C12", "#E67E22", "#16A085", "#27AE60", "#BDC3C7", "#95A5A6"]
+
+    formal_access = grid_share + solar_share + gen_share + mini_share + rechar_share
+    tier1_access = float(vals.get("{{ELEC_ACC_NAT}}", vals.get("ELEC_ACC_NAT", 46.9)))
 
     fig, ax = plt.subplots(figsize=(11, 6.2), dpi=150)
     y_pos = np.arange(len(techs))
@@ -738,7 +741,7 @@ def chart_electricity_source_mix():
     ax.invert_yaxis()
     ax.set_xlim(0, max(shares) + 12)
     ax.set_xlabel("% of National Population (Weighted)", fontsize=10, fontweight="bold")
-    ax.set_title("Primary Electricity Technology Distribution\n(Formal Source Access = 47.1% | MTF Tier 1+ Access = 31.4%)",
+    ax.set_title(f"Primary Electricity Technology Distribution\n(Formal Source Access = {formal_access:.1f}% | MTF Tier 1+ Access = {tier1_access:.1f}%)",
                  fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
 
     ax.spines[["top", "right"]].set_visible(False)
@@ -1203,7 +1206,7 @@ if __name__ == "__main__":
     chart_grid_wtp()
     chart_solar_wtp()
     chart_cookstove_wtp()
-    chart_wtp_mutually_exclusive_stacked()
+    # chart_wtp_mutually_exclusive_stacked()  # Dropped from report (redundant with 12a-c cumulative curves)
     chart_stove_stacking_matrix()
     chart_outage_intervals()
     chart_cookstove_time_use()
