@@ -1,39 +1,94 @@
-# ESMAP Multi-Tier Framework (MTF) Pipeline Monorepo
+# World Bank ESMAP Multi-Tier Framework (MTF) Pipeline Monorepo
 
 **World Bank Group | Energy Sector Management Assistance Program (ESMAP)**  
 *Global Survey & Access Analytics Team*
 
-This repository houses the version-controlled Stata econometric do-files, Python figure-generation scripts, and automated diagnostic report generators for national **Multi-Tier Framework (MTF)** household energy access diagnostics.
+This repository houses the global standard analytical codebase for national **Multi-Tier Framework (MTF)** household energy access diagnostics. It provides a dual-engine architecture: an open-source interactive analytical suite for non-technical researchers and a production-grade Stata econometric pipeline for macro-level country diagnostics.
+
+---
+
+## 🚀 3-Minute Quickstart for Team Members (No Stata Required)
+
+If you do not have a Stata license and want to explore MTF microdata, run policy simulations, or export custom charts and tables:
+
+1. **Download the Package:** Click the green **`[Code]`** button above ➔ **`[Download ZIP]`** and extract.
+2. **Place Data:** Drop your country `.dta` file into the `interactive_suite/Data/` folder.
+3. **Launch with 1-Click:**
+   - **Windows:** Double-click [`interactive_suite/run_mtf_local.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/run_mtf_local.bat)
+   - **Mac / Linux:** Run [`interactive_suite/run_mtf_local.sh`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/run_mtf_local.sh)
+4. **Get Updates:** When new tools are released, double-click [`interactive_suite/update_mtf.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/update_mtf.bat) (preserves your local `Data/` completely).
+
+👉 *See [`interactive_suite/LOCAL_SETUP_GUIDE.md`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/LOCAL_SETUP_GUIDE.md) for full step-by-step instructions.*
 
 ---
 
 ## 🔒 Data Privacy & Architecture Protocol
 
 ### Strict Code-Only Policy
-Under no circumstances is World Bank survey microdata (`*.dta`, `*.xlsx`, `Data/`) stored or committed in this repository.
-- **Microdata Storage:** Stored exclusively on institutional **OneDrive / SharePoint** under World Bank access controls.
+Under no circumstances is World Bank survey microdata (`*.dta`, `*.xlsx`, `Data/`) committed to this repository.
+- **Microdata Storage:** Stored exclusively on institutional **OneDrive / SharePoint** or secured air-gapped analytical drives under World Bank access controls.
 - **Code Repository:** Version-controlled exclusively on **GitHub**.
-- **Local Bridge:** Stata master do-files (`<Country>_MTF_Master.do`) bridge code and data dynamically using `c(username)` path blocks.
+- **Local Bridge:** Stata master do-files and the Python engine dynamically bridge code and microdata using relative `Data/` paths and user path fallbacks.
 
 ---
 
-## 📂 Repository Topology
+## 📂 4-Pillar Repository Topology
 
 ```
 esmap-mtf-pipeline/
 │
-├── 00_Standard_Template/         <-- Master Pipeline Engine
-│   ├── Do-file/                  <-- Core modules (00 to 07) & scripts/
-│   ├── Tools/                    <-- mtf_calibrator.py, cookstove forms, EXE builder
-│   └── README_PIPELINE_GUIDELINE.md
+├── interactive_suite/             <-- [Pillar 1] Non-Technical Team Interactive Analyzer
+│   ├── MTF_Interactive_Analyzer.ipynb  <-- 5-module Jupyter analysis suite & diagnostics
+│   ├── run_mtf_local.bat          <-- Windows 1-click launcher
+│   ├── run_mtf_local.sh           <-- Mac/Linux/Chromebook launcher
+│   ├── update_mtf.bat             <-- Windows 1-click GitHub updater
+│   ├── update_mtf.sh              <-- Mac/Linux 1-click GitHub updater
+│   ├── update_tools.py            <-- Safe GitHub updater engine (preserves Data/)
+│   ├── mtf_engine.py              <-- Vectorized survey-weighted calculation engine
+│   ├── country_tariff.csv         <-- Electricity tariff schedule benchmarks
+│   ├── LOCAL_SETUP_GUIDE.md       <-- Non-technical user guide
+│   └── Data/                      <-- Drop-in target for .dta microdata (.gitkeep)
 │
-├── Countries/                    <-- Country Implementations
-│   ├── Liberia_2024/             <-- 15 counties, LRD @ 192.5
-│   └── Nigeria_2024/             <-- 37 states, NGN @ 1,580, 26 cookstove types
+├── stata_pipeline/                <-- [Pillar 2] Expert Stata Econometric Engine
+│   ├── Do-file/                   <-- Core modules (00 to 07)
+│   │   ├── 00_build_master_dataset.do
+│   │   ├── 01_setup.do
+│   │   ├── 02_elec_attributes.do
+│   │   ├── 03_elec_aggregate.do
+│   │   ├── 04_cooking_attributes.do
+│   │   ├── 05_cooking_aggregate.do
+│   │   ├── 06_analytical_enhancements.do
+│   │   └── 07_export.do
+│   ├── scripts/                   <-- 14 publication charts & docx report injector
+│   │   ├── visualize.py
+│   │   └── inject_report.py
+│   ├── cookstove_calibration.csv  <-- Standard multi-tier stove typology
+│   ├── MTF_Report_Template.md     <-- Standard diagnostic chapter template
+│   └── README.md                  <-- Detailed Stata pipeline documentation
 │
-├── git_sync.py                   <-- Automated privacy check & sync helper
-└── .github/
-    └── hooks/pre-commit          <-- Automated pre-commit data leak blocker
+├── examples/                      <-- [Pillar 3] Reference Country Customization
+│   └── guinea_bissau_reference/   <-- Canonical sample harmonization & master runner
+│       ├── 00_country_harmonization.do
+│       ├── Guinea-Bissau_MTF_Master.do
+│       ├── cookstove_calibration.csv
+│       └── README.md
+│
+├── dev_tools/                     <-- [Pillar 4] Developer & Packaging Utilities
+│   ├── build_country_calibration.py  <-- Auto-generates country calibration templates
+│   ├── extract_other_specify.py   <-- Extracts open-ended survey text to Excel
+│   ├── mtf_calibrator.py          <-- Standalone Tkinter calibration GUI
+│   ├── mtf_calibrator.spec        <-- PyInstaller bundling specification
+│   ├── build_exe.bat              <-- Windows standalone EXE build script
+│   └── BUILD_WINDOWS_EXE.md       <-- Packaging manual
+│
+├── tests/                         <-- CI/CD & Automated Dual-Engine Parity Gate
+│   ├── test_engine_parity.py      <-- Stata vs. Python numerical equivalence tests
+│   ├── test_inject_report.py      <-- Word/Markdown report injection validator
+│   ├── test_adversarial_m1_*.py   <-- Adversarial robustness tests
+│   └── test_adversarial_m2_*.py   <-- Figure sequence and label monotonicity tests
+│
+├── requirements.txt               <-- Minimal Python dependencies
+└── git_sync.py                    <-- Pre-commit data leak scanner & sync tool
 ```
 
 ---
@@ -55,53 +110,3 @@ The pipeline generates publication-grade graphics (300 DPI) and full diagnostic 
      - **Figure 7c:** Clean cookstove demand across terms (Upfront, 3M, 6M, 12M).
    - **Mutually Exclusive Consumer Segments (100% Partition):** Minimum subsidy requirements without double-counting.
    - **Clean Cooking Stacking & Dilution:** Stacking dynamics and exposure dilution among clean stove owners.
-   - **Conditional Subnational Disparities:** Automatically suppressed if administrative divisions exceed 10 or average 95% CI width exceeds 25 percentage points to prevent imprecise or cluttered visualizations.
-
----
-
-## 🚀 Team Collaboration Workflow
-
-### For Data Scientists & Consultants
-
-1. **Clone the Repository:**
-   ```bash
-   git clone git@github.com:<your-org>/esmap-mtf-pipeline.git
-   cd esmap-mtf-pipeline
-   ```
-
-2. **Configure Your Local Path in Stata Master Do-File:**
-   Open `Countries/<Country>/<Country>_MTF_Master.do` and add your World Bank username and local OneDrive data path:
-   ```stata
-   * --- Data Scientist: Windows ---
-   if c(username) == "wb123456" {
-       global user "C:/Users/wb123456/OneDrive - WBG/06. Data Analysis"
-   }
-   ```
-
-3. **Create a Feature Branch:**
-   ```bash
-   git checkout -b feature/country-topic-update
-   ```
-
-4. **Synchronize & Push Safely:**
-   ```bash
-   # Run the sync helper (automatically checks for data leaks before staging):
-   python3 git_sync.py --sync -m "Update cooking attribute thresholds for Nigeria"
-   ```
-
-5. **Open a Pull Request:**
-   Submit a PR on GitHub for review by the Task Team Leader.
-
----
-
-## 🛠️ Sync Helper Commands (`git_sync.py`)
-
-| Command | Purpose |
-|:---|:---|
-| `python3 git_sync.py --status` | Run repository safety check and view git status |
-| `python3 git_sync.py --sync -m "message"` | Safety scan, stage safe files, commit, and push |
-| `python3 git_sync.py --pull` | Safely pull latest commits from remote |
-| `python3 git_sync.py --import-country <Name> --source <Path>` | Import country do-files from local data analysis directory |
-
----
-*Maintained by Bryan Koo, Senior Energy Specialist, World Bank ESMAP.*

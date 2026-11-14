@@ -23,7 +23,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT_PATH = (REPO_ROOT / "00_Standard_Template" / "Do-file" / "scripts" / "inject_report.py").resolve()
+SCRIPT_PATH = (REPO_ROOT / "stata_pipeline" / "scripts" / "inject_report.py").resolve()
 PYTHON_VENV = sys.executable
 
 sys.path.insert(0, str(SCRIPT_PATH.parent))

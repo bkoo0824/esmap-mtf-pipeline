@@ -18,10 +18,10 @@
 *.csv.raw
 
 # 3. Data & Output Directories
-**/Data/
-**/Data/**
-**/Output/
-**/Output/**
+**/Data/*
+!**/Data/.gitkeep
+**/Output/*
+!**/Output/.gitkeep
 **/wip/
 **/wip/**
 **/clean/
@@ -44,6 +44,7 @@ env/
 build/
 dist/
 *.spec
+!dev_tools/*.spec
 .DS_Store
 Thumbs.db
 desktop.ini

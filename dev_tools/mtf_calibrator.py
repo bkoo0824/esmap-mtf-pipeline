@@ -1105,6 +1105,8 @@ def find_template_dir(custom_path: Optional[str] = None) -> Path:
         meipass_p = Path(sys._MEIPASS)
         if (meipass_p / "Do-file").exists():
             return meipass_p
+        if (meipass_p / "stata_pipeline" / "Do-file").exists():
+            return meipass_p / "stata_pipeline"
         if (meipass_p / "00_Standard_Template" / "Do-file").exists():
             return meipass_p / "00_Standard_Template"
         if (meipass_p / "00_MTF_Country_Pipeline_Standard" / "Do-file").exists():
@@ -1116,6 +1118,8 @@ def find_template_dir(custom_path: Optional[str] = None) -> Path:
     for p in search_chain:
         if (p / "Do-file").exists():
             return p
+        if (p / "stata_pipeline" / "Do-file").exists():
+            return p / "stata_pipeline"
         if (p / "00_Standard_Template" / "Do-file").exists():
             return p / "00_Standard_Template"
         if (p / "00_MTF_Country_Pipeline_Standard" / "Do-file").exists():
@@ -1128,6 +1132,8 @@ def find_template_dir(custom_path: Optional[str] = None) -> Path:
         home / "OneDrive - WBG" / "1_mtf_energy_global_survey" / "9_Data analysis_MTF countries" / "0_mtf_analysis_template" / "00_Standard_Template",
         home / "OneDrive - WBG" / "1_mtf_energy_global_survey" / "9_Data analysis_MTF countries" / "00_MTF_Country_Pipeline_Standard",
         # Local repo clone / Work directory
+        home / "github" / "esmap-mtf-pipeline" / "stata_pipeline",
+        home / "OneDrive" / "Work" / "04-Global_Analytics_&_ESMAP" / "2_MTF_Country_Surveys" / "esmap-mtf-pipeline" / "stata_pipeline",
         home / "OneDrive" / "Work" / "04-Global_Analytics_&_ESMAP" / "2_MTF_Country_Surveys" / "esmap-mtf-pipeline" / "00_Standard_Template",
     ]
     # Only test Linux path on POSIX/Unix systems to prevent C:\media\... fallback on Windows

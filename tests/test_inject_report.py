@@ -25,7 +25,7 @@ from PIL import Image
 
 # Add script directory to sys.path for direct function imports
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT_PATH = (REPO_ROOT / "00_Standard_Template" / "Do-file" / "scripts" / "inject_report.py").resolve()
+SCRIPT_PATH = (REPO_ROOT / "stata_pipeline" / "scripts" / "inject_report.py").resolve()
 sys.path.insert(0, str(SCRIPT_PATH.parent))
 
 import inject_report
