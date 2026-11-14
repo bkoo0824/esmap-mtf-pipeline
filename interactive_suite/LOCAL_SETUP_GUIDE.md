@@ -26,9 +26,10 @@ This guide provides a comprehensive step-by-step manual for **team members witho
    *(Git users may alternatively run `git clone https://github.com/bkoo0824/esmap-mtf-pipeline.git`)*
 
 ### [Step 2] Place the Survey Microdata (.dta)
-1. Download the compiled country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) from the secure OneDrive link provided by Bryan Koo.
-2. Place this single `.dta` file directly inside the **`interactive_suite/Data/`** folder.  
-   *(Note: You do NOT need raw survey section modules; only the master `.dta` file is needed.)*
+1. You have two flexible options for your data:
+   - **Option A (Pre-compiled Master):** Place the official country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) directly inside the **`interactive_suite/Data/`** folder.
+   - **Option B (Raw Survey Solutions Modules):** Place the 15 raw Survey Solutions `.dta` files (`admin_info.dta`, `section_a1_hh_roster.dta`, `section_c_*.dta`, etc.) inside the **`interactive_suite/Data/`** folder.
+2. The engine will automatically detect your files: if the Master dataset is not yet compiled, it will invoke `mtf_builder.py` and compile it on the fly with zero numerical divergence from Stata!
 
 ### [Step 3] Install Python (Skip if Python 3.10+ is already installed)
 1. Go to the [Official Python Download Page](https://www.python.org/downloads/) and click **[Download Python]**.

@@ -25,15 +25,14 @@ The ESMAP MTF analytical architecture operates on a strict **Two-Track Confident
 +---------------------------------------------------------------------------------+
 ```
 
-### Institutional Roles:
-1. **STATA Lead (Data Scientist / Econometrician):**
-   - Compiles the 15 raw Survey Solutions modules (`section_a1`, `section_c`, etc.) into a **single, authoritative Master Dataset** (`MTF_2024_HH_<Country>_Master.dta`, ~40MB).
-   - Establishes national consumption aggregates, annualized expenditure, poverty quintiles, and survey sampling weights.
-   - Distributes the single `.dta` file to team members via secure World Bank OneDrive.
-2. **Non-STATA Users (Sector Economists, Policy Analysts, Consultants, TTLs):**
-   - Requires **no Stata license** and **no programming experience**.
-   - Places the single master `.dta` file into `interactive_suite/Data/`.
-   - Double-clicks a single launcher script to explore multi-tier metrics, test tariff/subsidy policy scenarios, and export publication-ready tables in their local web browser.
+### Institutional Roles & Dual Pipeline Independence:
+1. **STATA Pipeline (Econometric Production Lead):**
+   - Compiles the 15 raw Survey Solutions modules (`section_a1`, `section_c`, etc.) into an authoritative Master Dataset (`MTF_2024_HH_<Country>_Master.dta`, ~40MB) using `00_build_master_dataset.do`.
+   - Runs the Stata analysis sequence (`01_` through `07_`) to evaluate multi-tier indices and output standard tables and Word reports.
+2. **Non-STATA Pipeline (Autonomous Open-Source Architecture):**
+   - Completely independent from Stata: compiles raw modules directly into the Master dataset via `interactive_suite/mtf_builder.py` with verified $\le 0.01\%$ zero divergence.
+   - Alternatively ingests a pre-compiled master `.dta` file.
+   - Requires **no Stata license** and **no programming experience** to explore multi-tier metrics, test tariff/subsidy policy scenarios, and export publication-ready tables in their local web browser.
 
 ---
 
@@ -49,9 +48,10 @@ The ESMAP MTF analytical architecture operates on a strict **Two-Track Confident
    *(Git users may alternatively run: `git clone https://github.com/bkoo0824/esmap-mtf-pipeline.git`)*
 
 ### Step 2: Place the Survey Microdata (.dta)
-1. Download the official country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) from the secure World Bank OneDrive link provided by the project lead.
-2. Place this single `.dta` file directly into the **`interactive_suite/Data/`** folder.
-   > **Note:** Do NOT place raw survey section files (`section_a1.dta`, `section_b.dta`, etc.) here. Only the compiled master dataset is needed.
+You have two flexible options for your data:
+- **Option A (Pre-compiled Master):** Place the official country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) directly into the **`interactive_suite/Data/`** folder.
+- **Option B (Raw Survey Solutions Modules):** Place the 15 raw Survey Solutions `.dta` files (`admin_info.dta`, `section_a1_hh_roster.dta`, `section_c_*.dta`, etc.) directly into the **`interactive_suite/Data/`** folder.
+> **Note:** If only raw files are present, the analytical engine (`mtf_engine.py`) will automatically launch `mtf_builder.py` and compile the master dataset on the fly!
 
 ### Step 3: Install Python (One-Time Setup, ~1 Minute)
 *If Python 3.10+ is already installed on your machine, skip to Step 4.*
