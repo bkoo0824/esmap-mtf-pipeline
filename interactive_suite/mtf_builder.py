@@ -28,6 +28,7 @@ class MTFMasterBuilder:
         self.base_dir = Path(__file__).resolve().parent.parent
         self.raw_dir = Path(raw_dir) if raw_dir else self._find_raw_dir()
         self.config = self._load_config(config_path)
+        self.excel_recodes = self._load_excel_calibration()
         self.df_master: Optional[pd.DataFrame] = None
 
     def _load_config(self, config_path: Optional[Path]) -> Dict[str, Any]:
@@ -108,6 +109,57 @@ class MTFMasterBuilder:
         """Ensures interview__id is present by copying interview__key if necessary."""
         if "interview__id" not in df.columns and "interview__key" in df.columns:
             df["interview__id"] = df["interview__key"]
+        return df
+
+    def _load_excel_calibration(self) -> Dict[str, Dict[str, Any]]:
+        """Loads other_specify_calibration.xlsx if present, returning mapping of (var_name, text) -> recode_code."""
+        candidates = [
+            self.base_dir / "config" / "other_specify_calibration.xlsx",
+            self.base_dir / "Tools" / "other_specify_calibration.xlsx",
+            self.raw_dir / "other_specify_calibration.xlsx",
+            Path("other_specify_calibration.xlsx"),
+            Path("Tools/other_specify_calibration.xlsx"),
+            Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/other_specify_calibration.xlsx")
+        ]
+        for c in candidates:
+            if c.exists():
+                try:
+                    df_cal = pd.read_excel(c, sheet_name="Other_Specify_Recodes")
+                    code_col = "coordinator_approved_code" if "coordinator_approved_code" in df_cal.columns and df_cal["coordinator_approved_code"].notna().any() else "suggested_target_code"
+                    if "variable_name" in df_cal.columns and "raw_text_response" in df_cal.columns and code_col in df_cal.columns:
+                        recode_map: Dict[str, Dict[str, Any]] = {}
+                        valid_rows = df_cal[df_cal[code_col].notna()]
+                        for _, row in valid_rows.iterrows():
+                            var = str(row["variable_name"]).strip()
+                            txt = str(row["raw_text_response"]).strip().lower()
+                            code_raw = str(row[code_col]).strip()
+                            if code_raw in [".", "Missing", "missing"]:
+                                code_val = np.nan
+                            else:
+                                try:
+                                    code_val = float(code_raw)
+                                except ValueError:
+                                    code_val = code_raw
+                            if var not in recode_map:
+                                recode_map[var] = {}
+                            recode_map[var][txt] = code_val
+                        print(f"[*] Dynamic Calibration Active: Ingested {len(valid_rows)} recodes from {c.name}")
+                        return recode_map
+                except Exception as e:
+                    print(f"[!] Note: Could not read calibration sheet from {c}: {e}")
+        return {}
+
+    def _apply_excel_recodes(self, df: pd.DataFrame, parent_col: str, oth_col: str) -> pd.DataFrame:
+        """Applies dynamic Excel recodes from other_specify_calibration.xlsx to parent_col."""
+        if not hasattr(self, "excel_recodes") or not self.excel_recodes or oth_col not in df.columns:
+            return df
+        recodes = self.excel_recodes.get(oth_col, {})
+        if not recodes:
+            return df
+        for txt, new_code in recodes.items():
+            mask = df[oth_col].astype(str).str.lower().str.strip() == txt
+            if mask.sum() > 0:
+                df.loc[mask, parent_col] = new_code
         return df
 
     def build_all(self) -> pd.DataFrame:
@@ -499,6 +551,8 @@ class MTFMasterBuilder:
             stoves = stoves[~stoves["SEC_G_Q03"].isin(["Does not cook", "microwave oven"])]
 
         if "SEC_G_Q05_oth" in stoves.columns:
+            # Apply dynamic Excel recodes if available
+            stoves = self._apply_excel_recodes(stoves, "SEC_G_Q05", "SEC_G_Q05_oth")
             stoves.loc[stoves["SEC_G_Q05_oth"].astype(str).str.lower().str.strip().isin([
                 "fogareiro", "fugão a carvão", "fogareiro com carvão", "figareiro",
                 "fogão de carvão", "fogadeiro", "construído com pesas de ferro para cozinhar", "fogadero"
@@ -707,6 +761,7 @@ class MTFMasterBuilder:
                 12: 3.0, 13: 4.0, 14: 5.0, 15: 7.0 / 2.0, 16: 7.0 / 360.0, 17: 3.0 * (7.0 / 30.0),
                 18: 2.0 * (7.0 / 30.0), 19: 7.0 / 30.0
             }
+            tc = self._apply_excel_recodes(tc, "SEC_I_Q13", "SEC_I_Q13_oth")
             q13 = tc.get("SEC_I_Q13", np.nan)
             mult = q13.map(mult_map)
             tc["SEC_I_Q12_week"] = ((tc.get("SEC_I_Q12", 0.0).fillna(0.0) / 60.0) * mult).astype(np.float32)
