@@ -1,0 +1,92 @@
+# ==============================================================================
+# World Bank ESMAP Multi-Tier Framework (MTF) Country Configuration
+# Single Source of Truth for STATA and Python End-to-End Execution
+# ==============================================================================
+
+country: "Guinea-Bissau"
+country_iso3: "GNB"
+survey_year: 2024
+master_dta: "MTF_2024_HH_Guinea-Bissau_Master.dta"
+
+# Macroeconomic & Tariff Parameters
+currency: "XOF"
+usd_rate: 605.0
+lifeline_tariff: 128.0   # EAGB social tariff (XOF / kWh)
+basic_kwh_bundle: 365.0  # Annual kWh for Tier 3 basic electricity bundle (5% threshold)
+
+# Raw Survey Solutions Module Mappings (with primary & fallback filenames)
+raw_modules:
+  admin_info:
+    primary: "admin_info.dta"
+    fallbacks: ["admin.dta", "identification.dta"]
+  hhroster:
+    primary: "section_a1_hh_roster.dta"
+    fallbacks: ["hhroster.dta", "section_a1.dta"]
+  core_sections:
+    - "section_a2"
+    - "section_b"
+    - "section_c"
+    - "section_d"
+    - "section_e"
+    - "section_g"
+    - "section_k"
+    - "section_o"
+    - "section_q"
+    - "section_r"
+    - "section_s"
+  food:
+    primary: "section_o_food_roster.dta"
+    fallbacks: ["food.dta"]
+  nonfood_1mon:
+    primary: "section_o_nonfood_1mon_roster.dta"
+    fallbacks: ["nonfood_1mon.dta"]
+  nonfood_12mon:
+    primary: "section_o_nonfood_12mon_roster.dta"
+    fallbacks: ["nonfood_12mon.dta"]
+  generator:
+    primary: "section_c_generator_roster.dta"
+    fallbacks: ["sec_c_generator.dta"]
+  rechar_ba:
+    primary: "section_c_rechargeablebattery_roster.dta"
+    fallbacks: ["sec_c_rechar_ba.dta"]
+  fuel_consump:
+    primary: "section_i_fuel_consumption_roster.dta"
+    fallbacks: ["fuel_consumption.dta"]
+  fuel_h11:
+    primary: "section_h_fuel_h11_roster.dta"
+    fallbacks: ["fuel_h11.dta"]
+  solar_device:
+    primary: "section_c_solardevice_roster.dta"
+    fallbacks: ["solar_c_device.dta"]
+  cookstoves:
+    primary: "section_g_cookstoves_roster.dta"
+    fallbacks: ["cookstoves.dta"]
+  stove_fuel:
+    primary: "section_g_stovefuel_roster.dta"
+    fallbacks: ["stove_fuel.dta"]
+  time_coll:
+    primary: "section_i_time_collecting_roster.dta"
+    fallbacks: ["time_collecting.dta"]
+  time_use:
+    primary: "section_i_time_use_roster.dta"
+    fallbacks: ["time_use.dta"]
+  appliances:
+    primary: "section_f_appliance_roster.dta"
+    fallbacks: ["appliances.dta", "appliance.dta"]
+
+# Country-Specific Harmonization Settings
+harmonization:
+  # Head Education Recoding (SEC_A1_Q8 -> 0:None, 1:Primary, 2:Secondary, 3:Higher)
+  education_mapping:
+    none: [1, 555]
+    primary: [2]
+    secondary: [3, 4]
+    higher: [5, 6]
+  
+  # Cookstove ISO Emission Tiers (SEC_G_Q05 -> ISO Tier 0-5)
+  cookstove_iso_tiers:
+    tier_0: [1, 2]       # 3-stone / open fire, traditional wood
+    tier_1: [4]          # Portable rocket stove
+    tier_3: [3]          # Elephant cookstove
+    tier_4: [5, 6]       # Charcoal / Mbaula / Indoor wood
+    tier_5: [7, 8]       # Advanced gas / electric

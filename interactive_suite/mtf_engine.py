@@ -59,6 +59,28 @@ class MTFEngine:
     def __init__(self, data_path: str, tools_dir: Optional[str] = None):
         self.data_path = Path(data_path)
         self.tools_dir = Path(tools_dir) if tools_dir else self.data_path.parent.parent / "Tools"
+
+        if not self.data_path.exists():
+            # Check for raw survey files to auto-compile
+            raw_candidates = [self.data_path.parent, self.data_path.parent / "raw", Path("Data"), Path.cwd() / "Data"]
+            raw_found = None
+            for c in raw_candidates:
+                if c.exists() and (c / "admin_info.dta").exists():
+                    raw_found = c
+                    break
+            if raw_found:
+                print(f"[!] Target Master dataset '{self.data_path}' not found.")
+                print(f"    Auto-compiling from raw Survey Solutions files in '{raw_found}'...")
+                try:
+                    from mtf_builder import MTFMasterBuilder
+                except ImportError:
+                    from interactive_suite.mtf_builder import MTFMasterBuilder
+                builder = MTFMasterBuilder(raw_dir=raw_found)
+                builder.build_all()
+                self.data_path = builder.export_master(self.data_path)
+            else:
+                raise FileNotFoundError(f"Master dataset not found at '{self.data_path}', and no raw survey data available to auto-compile.")
+
         print(f"[*] Ingesting MTF Master dataset: {self.data_path}")
         self.df = pd.read_stata(self.data_path, convert_categoricals=False)
         print(f"    - Loaded {len(self.df):,} household observations across {len(self.df.columns):,} survey variables.")
@@ -430,8 +452,8 @@ class MTFEngine:
         # =====================================================================
         s10_rows = []
         if "hh_head_age" in df.columns:
-            m_age = svy_mean_val(df["hh_head_age"], w, mhh, decimals=2)
-            f_age = svy_mean_val(df["hh_head_age"], w, fhh, decimals=2)
+            m_age = svy_mean_val(df["hh_head_age"], w, mhh, decimals=1)
+            f_age = svy_mean_val(df["hh_head_age"], w, fhh, decimals=1)
             s10_rows.append({"Indicator": "Mean Age of Head", "Male HH Head (MHH)": m_age, "Female HH Head (FHH)": f_age})
             self.set_tok("HEAD_AGE_MHH", m_age)
             self.set_tok("HEAD_AGE_FHH", f_age)
@@ -655,7 +677,24 @@ def find_default_dataset() -> Optional[Path]:
         if search_dir.exists():
             dtas = list(search_dir.glob("*.dta"))
             if dtas:
-                return dtas[0]
+                # Avoid returning a raw module as if it were a master dataset
+                if not (search_dir / "admin_info.dta").exists():
+                    return dtas[0]
+
+    # If no pre-compiled master dataset found, check if raw Survey Solutions files exist
+    raw_dirs = [Path("Data"), Path("Data/raw"), Path("Data/wip_hh"), Path(".")]
+    for r_dir in raw_dirs:
+        if r_dir.exists() and (r_dir / "admin_info.dta").exists():
+            print(f"[*] No pre-compiled master dataset found, but raw Survey Solutions files detected in '{r_dir}'.")
+            print("    Initiating automated MTFMasterBuilder compilation...")
+            try:
+                from mtf_builder import MTFMasterBuilder
+            except ImportError:
+                from interactive_suite.mtf_builder import MTFMasterBuilder
+            builder = MTFMasterBuilder(raw_dir=r_dir)
+            builder.build_all()
+            target_out = Path("Data") / builder.config.get("master_dta", "MTF_Master.dta")
+            return builder.export_master(target_out)
 
     return None
 
