@@ -28,7 +28,9 @@ class MTFMasterBuilder:
         self.base_dir = Path(__file__).resolve().parent.parent
         self.raw_dir = Path(raw_dir) if raw_dir else self._find_raw_dir()
         self.config = self._load_config(config_path)
-        self.excel_recodes = self._load_excel_calibration()
+        self.excel_recodes: Dict[str, Dict[str, Any]] = {}
+        self.cookstove_typology: Dict[int, Dict[str, Any]] = {}
+        self._load_calibration_workbook()
         self.df_master: Optional[pd.DataFrame] = None
 
     def _load_config(self, config_path: Optional[Path]) -> Dict[str, Any]:
@@ -111,9 +113,27 @@ class MTFMasterBuilder:
             df["interview__id"] = df["interview__key"]
         return df
 
-    def _load_excel_calibration(self) -> Dict[str, Dict[str, Any]]:
-        """Loads other_specify_calibration.xlsx if present, returning mapping of (var_name, text) -> recode_code."""
+    def _load_calibration_workbook(self) -> None:
+        """Loads unified mtf_calibration_<country>.xlsx (or legacy standalone files) if present."""
+        iso3 = str(self.config.get("country_iso3", "")).lower().strip()
+        cname = str(self.config.get("country", "")).lower().replace(" ", "_").replace("-", "_").strip()
+
         candidates = [
+            # 1. Unified Country Workbooks
+            self.base_dir / "config" / f"mtf_calibration_{iso3}.xlsx",
+            self.base_dir / "config" / f"mtf_calibration_{cname}.xlsx",
+            self.base_dir / "examples" / "guinea_bissau_reference" / "mtf_calibration_guinea_bissau.xlsx",
+            self.base_dir / "config" / "mtf_calibration_standard.xlsx",
+            self.base_dir / "config" / "mtf_calibration.xlsx",
+            self.base_dir / "Tools" / f"mtf_calibration_{cname}.xlsx",
+            self.base_dir / "Tools" / "mtf_calibration.xlsx",
+            self.raw_dir / f"mtf_calibration_{iso3}.xlsx",
+            self.raw_dir / f"mtf_calibration_{cname}.xlsx",
+            self.raw_dir / "mtf_calibration.xlsx",
+            Path(f"/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/mtf_calibration_guinea_bissau.xlsx"),
+            Path("mtf_calibration_guinea_bissau.xlsx"),
+            Path("mtf_calibration.xlsx"),
+            # 2. Legacy Fallbacks
             self.base_dir / "config" / "other_specify_calibration.xlsx",
             self.base_dir / "Tools" / "other_specify_calibration.xlsx",
             self.raw_dir / "other_specify_calibration.xlsx",
@@ -121,33 +141,75 @@ class MTFMasterBuilder:
             Path("Tools/other_specify_calibration.xlsx"),
             Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/other_specify_calibration.xlsx")
         ]
+
         for c in candidates:
-            if c.exists():
-                try:
-                    df_cal = pd.read_excel(c, sheet_name="Other_Specify_Recodes")
+            if not c.exists():
+                continue
+            try:
+                xl = pd.ExcelFile(c)
+
+                # A. Ingest Other_Specify_Recodes
+                if "Other_Specify_Recodes" in xl.sheet_names:
+                    df_cal = xl.parse("Other_Specify_Recodes")
                     code_col = "coordinator_approved_code" if "coordinator_approved_code" in df_cal.columns and df_cal["coordinator_approved_code"].notna().any() else "suggested_target_code"
                     if "variable_name" in df_cal.columns and "raw_text_response" in df_cal.columns and code_col in df_cal.columns:
-                        recode_map: Dict[str, Dict[str, Any]] = {}
                         valid_rows = df_cal[df_cal[code_col].notna()]
                         for _, row in valid_rows.iterrows():
                             var = str(row["variable_name"]).strip()
                             txt = str(row["raw_text_response"]).strip().lower()
                             code_raw = str(row[code_col]).strip()
-                            if code_raw in [".", "Missing", "missing"]:
+                            if code_raw in [".", "Missing", "missing", "[Missing (.)]"]:
                                 code_val = np.nan
                             else:
                                 try:
                                     code_val = float(code_raw)
                                 except ValueError:
                                     code_val = code_raw
-                            if var not in recode_map:
-                                recode_map[var] = {}
-                            recode_map[var][txt] = code_val
-                        print(f"[*] Dynamic Calibration Active: Ingested {len(valid_rows)} recodes from {c.name}")
-                        return recode_map
-                except Exception as e:
-                    print(f"[!] Note: Could not read calibration sheet from {c}: {e}")
-        return {}
+                            if var not in self.excel_recodes:
+                                self.excel_recodes[var] = {}
+                            self.excel_recodes[var][txt] = code_val
+                        print(f"[*] Dynamic Recodes Active: Ingested {len(valid_rows)} recodes from {c.name}")
+
+                # B. Ingest Cookstove_Typology
+                if "Cookstove_Typology" in xl.sheet_names:
+                    df_cs = xl.parse("Cookstove_Typology")
+                    if "questionnaire_code" in df_cs.columns:
+                        for _, r in df_cs.iterrows():
+                            q_code_raw = str(r["questionnaire_code"]).strip()
+                            if not q_code_raw or q_code_raw == "nan":
+                                continue
+                            codes = [code_item.strip() for code_item in q_code_raw.split(",")]
+                            try:
+                                emit = float(r["iso_emission_tier"]) if pd.notna(r.get("iso_emission_tier")) and str(r.get("iso_emission_tier")).strip() != "" else np.nan
+                            except ValueError:
+                                emit = np.nan
+                            try:
+                                eff = float(r["efficiency_tier"]) if pd.notna(r.get("efficiency_tier")) and str(r.get("efficiency_tier")).strip() != "" else np.nan
+                            except ValueError:
+                                eff = np.nan
+                            s_group = str(r.get("stove_group", "")).strip()
+                            desc = str(r.get("stove_description", "")).strip()
+                            for c_str in codes:
+                                try:
+                                    c_int = int(float(c_str))
+                                    self.cookstove_typology[c_int] = {
+                                        "iso_emission_tier": emit,
+                                        "efficiency_tier": eff,
+                                        "stove_group": s_group,
+                                        "description": desc
+                                    }
+                                except ValueError:
+                                    pass
+                        print(f"[*] Dynamic Cookstove Typology Active: Ingested {len(self.cookstove_typology)} stove codes from {c.name}")
+
+                if self.excel_recodes or self.cookstove_typology:
+                    return
+            except Exception as e:
+                print(f"[!] Note: Could not read calibration from {c}: {e}")
+
+    def _load_excel_calibration(self) -> Dict[str, Dict[str, Any]]:
+        """Legacy helper returning loaded string recodes."""
+        return self.excel_recodes
 
     def _apply_excel_recodes(self, df: pd.DataFrame, parent_col: str, oth_col: str) -> pd.DataFrame:
         """Applies dynamic Excel recodes from other_specify_calibration.xlsx to parent_col."""
@@ -568,7 +630,12 @@ class MTFMasterBuilder:
         # Time-weighted emissions
         stype = stoves.get("SEC_G_Q05", pd.Series(np.nan, index=stoves.index))
         emit_tier = pd.Series(0.0, index=stoves.index)
-        if self.config.get("country_iso3") == "GNB" or self.config.get("country") == "Guinea-Bissau":
+        if hasattr(self, "cookstove_typology") and self.cookstove_typology:
+            for c_int, info in self.cookstove_typology.items():
+                t = info.get("iso_emission_tier")
+                if pd.notna(t):
+                    emit_tier.loc[stype == c_int] = float(t)
+        elif self.config.get("country_iso3") == "GNB" or self.config.get("country") == "Guinea-Bissau":
             emit_tier.loc[stype.isin([1, 2])] = 0.0
             emit_tier.loc[stype == 3] = 3.0
             emit_tier.loc[stype == 4] = 1.0

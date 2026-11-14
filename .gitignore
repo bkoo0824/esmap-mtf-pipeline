@@ -18,6 +18,8 @@
 *.xls
 *.xlsm
 *.csv.raw
+!config/mtf_calibration_standard.xlsx
+!examples/guinea_bissau_reference/mtf_calibration_guinea_bissau.xlsx
 
 # 3. Data & Output Directories
 **/Data/*

@@ -129,14 +129,39 @@ class CookstoveLoader:
          "stat_key_urb": "STOVE_ELEC_U", "stat_key_rur": "STOVE_ELEC_R"},
     ]
 
-    def __init__(self, csv_path: Optional[Path] = None):
+    def __init__(self, config_path: Optional[Path] = None):
         self.rows = []
-        if csv_path and csv_path.exists():
-            self._load_csv(csv_path)
+        if config_path and config_path.exists():
+            if config_path.suffix.lower() in [".xlsx", ".xlsm"]:
+                self._load_xlsx(config_path)
+            else:
+                self._load_csv(config_path)
         else:
-            if csv_path:
-                print(f"[WARN] cookstove_calibration.csv not found at {csv_path} — using built-in defaults.",
+            if config_path:
+                print(f"[WARN] Cookstove calibration not found at {config_path} — using built-in defaults.",
                       file=sys.stderr)
+            self.rows = self.DEFAULT_ROWS
+
+    def _load_xlsx(self, path: Path):
+        import openpyxl
+        try:
+            wb = openpyxl.load_workbook(path, data_only=True)
+            if "Cookstove_Typology" not in wb.sheetnames:
+                print(f"[WARN] Cookstove_Typology sheet not found in {path.name} — using defaults.", file=sys.stderr)
+                self.rows = self.DEFAULT_ROWS
+                return
+            ws = wb["Cookstove_Typology"]
+            headers = [str(cell.value).strip() if cell.value is not None else "" for cell in ws[1]]
+            self.rows = []
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if not any(row):
+                    continue
+                r_dict = {headers[i]: str(row[i]).strip() if i < len(row) and row[i] is not None else "" for i in range(len(headers)) if headers[i]}
+                if r_dict.get("questionnaire_code"):
+                    self.rows.append(r_dict)
+            print(f"  ✓ Cookstove calibration: {len(self.rows)} stove types loaded from {path.name} [Sheet: Cookstove_Typology]")
+        except Exception as e:
+            print(f"[WARN] Failed reading Cookstove_Typology from {path.name}: {e} — using defaults.", file=sys.stderr)
             self.rows = self.DEFAULT_ROWS
 
     def _load_csv(self, path: Path):
@@ -737,10 +762,10 @@ di " [0/7] Master dataset compilation: raw modules & expenditure..."
 do "$scripts/00_build_master_dataset.do"
 
 capture confirm file "$scripts/00_country_harmonization.do"
-if !_rc {
+if !_rc {{
     di " [0b/7] Country-specific harmonization & recoding..."
     do "$scripts/00_country_harmonization.do"
-}
+}}
 
 di " [1/7] Setup & survey design validation..."
 do "$scripts/01_setup.do"
@@ -1256,6 +1281,21 @@ def main():
     cname_clean = params["country_name"].lower().strip()
     cname_under = cname_clean.replace("-", "_")
     tools_dir = template_dir / "Tools"
+    config_dir = template_dir / "config"
+
+    # Excel Unified Candidates
+    excel_candidates = [
+        tools_dir / f"mtf_calibration_{cname_under}.xlsx",
+        tools_dir / f"mtf_calibration_{cname_clean}.xlsx",
+        country_dir / "Do-file" / "scripts" / f"mtf_calibration_{cname_under}.xlsx",
+        country_dir / f"mtf_calibration_{cname_under}.xlsx",
+        config_dir / f"mtf_calibration_{cname_under}.xlsx",
+        config_dir / "mtf_calibration_standard.xlsx",
+        tools_dir / "mtf_calibration_standard.xlsx",
+        tools_dir / "mtf_calibration.xlsx",
+    ]
+
+    # Legacy CSV Candidates
     country_scripts_csv = country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname_clean}.csv"
     country_scripts_csv_under = country_dir / "Do-file" / "scripts" / f"cookstove_calibration_{cname_under}.csv"
     country_scripts_csv_generic = country_dir / "Do-file" / "scripts" / "cookstove_calibration.csv"
@@ -1265,33 +1305,38 @@ def main():
 
     if args.cookstove_config:
         cookstove_csv_path = Path(args.cookstove_config).resolve()
-    elif tools_country_csv.exists() and "MUST EDIT" not in tools_country_csv.read_text(encoding="utf-8")[:300]:
-        cookstove_csv_path = tools_country_csv
-    elif tools_country_csv_under.exists() and "MUST EDIT" not in tools_country_csv_under.read_text(encoding="utf-8")[:300]:
-        cookstove_csv_path = tools_country_csv_under
-    elif country_scripts_csv.exists() and "MUST EDIT" not in country_scripts_csv.read_text(encoding="utf-8")[:300]:
-        cookstove_csv_path = country_scripts_csv
-    elif country_scripts_csv_under.exists() and "MUST EDIT" not in country_scripts_csv_under.read_text(encoding="utf-8")[:300]:
-        cookstove_csv_path = country_scripts_csv_under
-    elif tools_country_csv.exists():
-        cookstove_csv_path = tools_country_csv
-    elif tools_country_csv_under.exists():
-        cookstove_csv_path = tools_country_csv_under
-    elif country_scripts_csv.exists():
-        cookstove_csv_path = country_scripts_csv
-    elif country_scripts_csv_generic.exists():
-        cookstove_csv_path = country_scripts_csv_generic
-    elif tools_default_csv.exists():
-        cookstove_csv_path = tools_default_csv
     else:
-        # If no CSV exists at all, auto-generate country-specific template in Tools/
-        cookstove_csv_path = tools_dir / f"cookstove_calibration_{cname_clean}.csv"
-        try:
-            template_text = CookstoveLoader.generate_template_csv(params["country_name"])
-            safe_write_text(cookstove_csv_path, template_text)
-            print(f"  ★ Generated new country cookstove calibration template: {cookstove_csv_path.name}")
-        except Exception:
-            cookstove_csv_path = None
+        # Check Excel unified workbooks first
+        found_excel = next((p for p in excel_candidates if p.exists()), None)
+        if found_excel:
+            cookstove_csv_path = found_excel
+        elif tools_country_csv.exists() and "MUST EDIT" not in tools_country_csv.read_text(encoding="utf-8")[:300]:
+            cookstove_csv_path = tools_country_csv
+        elif tools_country_csv_under.exists() and "MUST EDIT" not in tools_country_csv_under.read_text(encoding="utf-8")[:300]:
+            cookstove_csv_path = tools_country_csv_under
+        elif country_scripts_csv.exists() and "MUST EDIT" not in country_scripts_csv.read_text(encoding="utf-8")[:300]:
+            cookstove_csv_path = country_scripts_csv
+        elif country_scripts_csv_under.exists() and "MUST EDIT" not in country_scripts_csv_under.read_text(encoding="utf-8")[:300]:
+            cookstove_csv_path = country_scripts_csv_under
+        elif tools_country_csv.exists():
+            cookstove_csv_path = tools_country_csv
+        elif tools_country_csv_under.exists():
+            cookstove_csv_path = tools_country_csv_under
+        elif country_scripts_csv.exists():
+            cookstove_csv_path = country_scripts_csv
+        elif country_scripts_csv_generic.exists():
+            cookstove_csv_path = country_scripts_csv_generic
+        elif tools_default_csv.exists():
+            cookstove_csv_path = tools_default_csv
+        else:
+            # If no calibration file exists at all, auto-generate country-specific template in Tools/
+            cookstove_csv_path = tools_dir / f"cookstove_calibration_{cname_clean}.csv"
+            try:
+                template_text = CookstoveLoader.generate_template_csv(params["country_name"])
+                safe_write_text(cookstove_csv_path, template_text)
+                print(f"  ★ Generated new country cookstove calibration template: {cookstove_csv_path.name}")
+            except Exception:
+                cookstove_csv_path = None
 
     # If country-specific CSV does not exist in Tools/, create one automatically for easy expert editing
     if tools_dir.exists() and not tools_country_csv.exists():

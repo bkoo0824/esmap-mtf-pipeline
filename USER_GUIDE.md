@@ -136,7 +136,8 @@ cd esmap-mtf-pipeline
 - **Core Stata Engine (`stata_pipeline/Do-file/`):** Universal econometric modules (`00_` through `07_`).
 - **Country Customization Reference (`examples/guinea_bissau_reference/`):**
   - `00_country_harmonization.do`: Country-specific verbatim text recoding and missing value guardrails.
-  - `cookstove_calibration.csv`: Multi-tier stove typology mapping.
+  - `mtf_calibration_guinea_bissau.xlsx`: Unified 4-sheet calibration workbook (Metadata, Cookstove Typology, Other-Specify Recodes, and Value Codebook).
+  - `cookstove_calibration.csv`: Legacy multi-tier stove typology mapping (deprecated in favor of unified workbook).
   - `Guinea-Bissau_MTF_Master.do`: Master orchestration do-file.
 - **Reporting Scripts (`stata_pipeline/scripts/`):** Publication-grade 300 DPI graphics (`visualize.py`) and automated Word report injection (`inject_report.py`).
 
@@ -168,10 +169,21 @@ global currency     "XOF"
 global usd_rate     605.0
 ```
 
-### Step 4: Country Harmonization & Guardrails (`00_country_harmonization.do`)
-1. Review country open-ended responses using `dev_tools/extract_other_specify.py`.
-2. Map local verbatim expressions (e.g., Portuguese artisanal braziers `"fogareiro"` to Code 2 Traditional Stove).
-3. **Zero-Assumption Rule:** Unclassified open-ended responses automatically recode to system missing (`.`). If unclassified responses exceed 5% of the sample, an automatic error alert is raised.
+### Step 4: Unified Calibration Workbook (`mtf_calibration_<country>.xlsx`)
+1. Generate or update the unified country calibration workbook using `dev_tools/extract_other_specify.py`:
+   ```bash
+   python dev_tools/extract_other_specify.py \
+       --data-dir "path/to/Data" \
+       --output "config/mtf_calibration_<country>.xlsx" \
+       --country "<Country>" \
+       --country-iso3 "<ISO3>"
+   ```
+2. Open `mtf_calibration_<country>.xlsx` in Microsoft Excel:
+   - **Sheet 1 (`Instructions_&_Metadata`)**: Verify country ISO3, wave year, currency exchange rate, and review status.
+   - **Sheet 2 (`Cookstove_Typology`)**: Clean Cooking Specialist reviews questionnaire codes, ISO 19867 emission tiers (0–5), and stove groups.
+   - **Sheet 3 (`Other_Specify_Recodes`)**: Survey Statistician reviews open-text CAPI verbatim responses and selects approved codes from dropdowns.
+   - **Sheet 4 (`Value_Codebook`)**: Reference catalog of pre-scanned microdata options.
+3. Both Python (`mtf_builder.py`, `mtf_engine.py`) and Stata (`mtf_calibrator.py`) automatically detect and ingest this single workbook. If unclassified responses exceed 5% of the sample, an automatic audit alert is raised.
 
 ### Step 5: Execute the Master Pipeline in Stata
 Execute the master do-file in Stata SE/MP:

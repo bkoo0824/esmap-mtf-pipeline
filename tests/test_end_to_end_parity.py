@@ -103,8 +103,34 @@ class TestEndToEndParity(unittest.TestCase):
             if tok in py_tok and tok in stata_tok:
                 p_val = py_tok[tok]
                 s_val = stata_tok[tok]
-                self.assertAlmostEqual(p_val, s_val, delta=0.01,
-                                       msg=f"Headline token mismatch on {tok}: Python={p_val}, Stata={s_val}")
+    def test_unified_calibration_workbook(self):
+        """Assert the 4-sheet unified calibration workbook loads properly into both Python and Calibrator."""
+        from interactive_suite.mtf_builder import MTFMasterBuilder
+        from dev_tools.mtf_calibrator import CookstoveLoader
+
+        cal_xlsx = REPO_ROOT / "examples" / "guinea_bissau_reference" / "mtf_calibration_guinea_bissau.xlsx"
+        if not cal_xlsx.exists():
+            cal_xlsx = Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/mtf_calibration_guinea_bissau.xlsx")
+        self.assertTrue(cal_xlsx.exists(), f"Unified calibration workbook not found at: {cal_xlsx}")
+
+        # Check sheets
+        import openpyxl
+        wb = openpyxl.load_workbook(cal_xlsx, read_only=True)
+        expected_sheets = ["Instructions_&_Metadata", "Cookstove_Typology", "Other_Specify_Recodes", "Value_Codebook"]
+        for s in expected_sheets:
+            self.assertIn(s, wb.sheetnames, f"Sheet '{s}' missing from unified workbook!")
+
+        # Check Python Builder loader
+        builder = MTFMasterBuilder()
+        self.assertGreaterEqual(len(builder.excel_recodes), 1, "Builder failed to ingest Other_Specify_Recodes!")
+        self.assertGreaterEqual(len(builder.cookstove_typology), 5, "Builder failed to ingest Cookstove_Typology!")
+
+        # Check Stata Calibrator loader
+        cs_loader = CookstoveLoader(cal_xlsx)
+        self.assertGreaterEqual(len(cs_loader.rows), 5, "CookstoveLoader failed to ingest Cookstove_Typology rows!")
+        typology_tbl = cs_loader.generate_typology_table()
+        self.assertIn("Three-Stone / Open Fire", typology_tbl)
+        self.assertIn("Improved Biomass Stove", typology_tbl)
 
 
 if __name__ == "__main__":

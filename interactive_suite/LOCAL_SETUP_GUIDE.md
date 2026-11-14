@@ -30,6 +30,7 @@ This guide provides a comprehensive step-by-step manual for **team members witho
    - **Option A (Pre-compiled Master):** Place the official country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) directly inside the **`interactive_suite/Data/`** folder.
    - **Option B (Raw Survey Solutions Modules):** Place the 15 raw Survey Solutions `.dta` files (`admin_info.dta`, `section_a1_hh_roster.dta`, `section_c_*.dta`, etc.) inside the **`interactive_suite/Data/`** folder.
 2. The engine will automatically detect your files: if the Master dataset is not yet compiled, it will invoke `mtf_builder.py` and compile it on the fly with zero numerical divergence from Stata!
+3. *(Optional)* Place your unified country calibration workbook (`mtf_calibration_<country>.xlsx`) in `config/` or `interactive_suite/Data/` if custom clean cooking emission tiers or open-text verbatim recodes are required.
 
 ### [Step 3] Install Python (Skip if Python 3.10+ is already installed)
 1. Go to the [Official Python Download Page](https://www.python.org/downloads/) and click **[Download Python]**.
