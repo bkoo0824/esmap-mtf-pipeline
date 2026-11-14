@@ -18,7 +18,8 @@ If you do not have a Stata license and want to explore MTF microdata, run policy
    - **Mac / Linux:** Run [`interactive_suite/run_mtf_local.sh`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/run_mtf_local.sh)
 4. **Get Updates:** When new tools are released, double-click [`interactive_suite/update_mtf.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/update_mtf.bat) (preserves your local `Data/` completely).
 
-👉 *See [`interactive_suite/LOCAL_SETUP_GUIDE.md`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/LOCAL_SETUP_GUIDE.md) for full step-by-step instructions.*
+👉 *See [**`USER_GUIDE.md`**](file:///home/bryan/github/esmap-mtf-pipeline/USER_GUIDE.md) for the comprehensive End-to-End User Manual (Non-STATA & STATA Workflows).*
+👉 *See [`interactive_suite/LOCAL_SETUP_GUIDE.md`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/LOCAL_SETUP_GUIDE.md) for quick non-technical instructions.*
 
 ---
 
