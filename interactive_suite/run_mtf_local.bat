@@ -68,14 +68,19 @@ echo  원하시는 작업 번호를 선택해 주세요 [기본값: 1]:
 echo.
 echo   [1] JupyterLab 대화형 분석기 실행 (웹 브라우저 노트북 환경)
 echo   [2] 1-Click 초고속 분석 엔진 실행 (엑셀 및 보고서용 JSON 파일 즉시 생성)
-echo   [3] GitHub 최신 도구 및 패치 업데이트
+echo   [3] 1-Click 오류 진단 및 지원 요청 (Report an Error to Bryan Koo)
+echo   [4] GitHub 최신 도구 및 패치 업데이트
 echo ===============================================================================
-set /p CHOICE="선택 (1/2/3, 기본값 Enter=1): "
+set /p CHOICE="선택 (1/2/3/4, 기본값 Enter=1): "
 
 if "%CHOICE%"=="2" (
     echo.
     python mtf_engine.py
-    if exist "Output" start "" "Output"
+    if %errorlevel% neq 0 (
+        python report_error.py --error "Engine crashed from launcher menu"
+    ) else (
+        if exist "Output" start "" "Output"
+    )
     echo.
     echo 아무 키나 누르시면 창이 닫힙니다...
     pause >nul
@@ -83,6 +88,15 @@ if "%CHOICE%"=="2" (
 )
 
 if "%CHOICE%"=="3" (
+    echo.
+    python report_error.py
+    echo.
+    echo 아무 키나 누르시면 창이 닫힙니다...
+    pause >nul
+    exit /b 0
+)
+
+if "%CHOICE%"=="4" (
     echo.
     python update_tools.py
     echo.

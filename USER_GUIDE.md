@@ -67,17 +67,22 @@ The ESMAP MTF analytical architecture operates on a strict **Two-Track Confident
 Choose the workflow that best fits your immediate need:
 
 #### Option A: 1-Click Production Engine (Fastest & Zero Coding - Recommended)
-If you want to calculate all 86+ MTF indicators and export both the formatted Excel workbook (`MTF_Full_Indicators.xlsx`) and the report token file (`mtf_report_values.json`) without opening a browser or writing code:
+If you want to calculate all 370+ MTF indicators (matching Stata 100% across 11 sheets) and export both the formatted Excel workbook (`MTF_Full_Indicators.xlsx`) and the report token file (`mtf_report_values.json`) without opening a browser or writing code:
 - **Windows Users:** Double-click **`run_engine.bat`**.
 - **Mac / Linux Users:** Double-click or run **`./run_engine.sh`**.
 > **What happens automatically:**  
-> The script auto-discovers your dataset in `Data/`, computes all survey-weighted indicators in 3 seconds, displays an executive summary table in the console, saves `Output/MTF_Full_Indicators.xlsx` and `Output/mtf_report_values.json`, and automatically opens the `Output/` folder!
+> The script auto-discovers your dataset in `Data/`, computes all survey-weighted indicators in 3 seconds, displays an executive summary table in the console, saves `Output/MTF_Full_Indicators.xlsx` (11 sheets including `Indicator_Catalog`) and `Output/mtf_report_values.json` (370+ tokens), and automatically opens the `Output/` folder!  
+> *If an unexpected error occurs during execution, it automatically generates `mtf_error_report.txt` and opens your email client pre-addressed to Bryan Koo.*
 
 #### Option B: Interactive Browser Notebook (JupyterLab)
 If you want to interactively explore data, run customized crosstabs, or simulate tariff policies:
 - **Windows Users:** Double-click **`run_mtf_local.bat`**.
 - **Mac / Linux Users:** Double-click or run **`./run_mtf_local.sh`**.
-- An interactive menu appears: press **Enter** (default: `[1]`) to launch JupyterLab in your browser.
+- An interactive menu appears: press **Enter** (default: `[1]`) to launch JupyterLab in your browser, or select:
+  - `[1]`: JupyterLab Interactive Notebook
+  - `[2]`: 1-Click Production Engine
+  - `[3]`: 1-Click Error Diagnostics & Support Dispatcher
+  - `[4]`: GitHub Tool Updates & Latest Patches
 
 > ⚠️ **Important UI Tip in JupyterLab:**  
 > When the browser opens, look at the tabs: **Always work inside `MTF_Interactive_Analyzer.ipynb`** (orange notebook icon with cells).  
@@ -100,18 +105,20 @@ When **`MTF_Interactive_Analyzer.ipynb`** is active, click any cell and press **
 4. **Module 4: 1-Click Production Engine & Full Export (`mtf_engine`)**
    - Runs the complete vectorized calculation engine right inside the notebook.
    - Displays headline findings and automatically exports:
-     - 📁 `Output/MTF_Full_Indicators.xlsx` (5-sheet Excel matrix: Headline, Electricity Tiers, Cooking Tiers, WTP, All Indicators)
-     - 📁 `Output/mtf_report_values.json` (340+ calibrated scalar tokens for Word report injection)
+     - 📁 `Output/MTF_Full_Indicators.xlsx` (11-sheet Stata-parity Excel matrix: Electricity Tiers, Cooking Tiers, Disagg Urban/Rural, Quintiles, Gender, Grid Barriers & WTP, Solar WTP, Appliances, Regional, Gender Profiles, Indicator Catalog)
+     - 📁 `Output/mtf_report_values.json` (370+ calibrated scalar tokens for Word report injection)
 5. **Module 5: Ad-hoc Custom Tables Export**
    - Exports custom cross-tabulations and simulation matrices directly to `MTF_Interactive_Analysis_Output.xlsx`.
-6. **Module 6: 1-Click Diagnostics & Remote Support**
+6. **Module 6: 1-Click Diagnostics & Support Dispatcher**
    - If you encounter any unexpected error, execute this cell.
-   - Generates an instant diagnostic log (`mtf_diagnostic_report.txt`) recording your environment, data file sizes, and variable integrity for one-click email support.
+   - Generates an instant diagnostic log (`mtf_error_report.txt`) recording your environment, data file sizes, and variable integrity, and automatically launches your email client pre-filled to Bryan Koo ([bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org)).
 
-### Step 6: Ongoing Updates & Maintenance
-- **Updating the Tools:** When new analytical modules or patches are released on GitHub, double-click **`update_mtf.bat`** (Windows) or **`update_mtf.sh`** (Mac/Linux).  
+### Step 6: 1-Click Error Reporting & Remote Support
+If you encounter any crash or data recognition issue:
+- **1-Click Dispatch:** Double-click **`report_error.bat`** (Windows) or run **`./report_error.sh`** (Mac/Linux).
+- The system automatically captures all environment and data diagnostics into `mtf_error_report.txt` and launches your email client pre-addressed to **Bryan Koo** ([bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org)). Simply attach the generated text file and click send.
+- **Updating the Tools:** When fixes or updates are released, double-click **`update_mtf.bat`** (Windows) or **`update_mtf.sh`** (Mac/Linux).  
   *Your local `Data/` folder and custom output files are 100% safe and will never be overwritten.*
-- **Technical Support:** Email your `mtf_diagnostic_report.txt` and a screenshot to **Bryan Koo** ([bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org)).
 
 ---
 
@@ -226,5 +233,5 @@ Yes. After the one-time initial package setup (~30 seconds), the local environme
 **Q2: Is our survey microdata exposed to GitHub?**  
 No. The repository enforces a strict `.gitignore` policy that blocks all `.dta`, `.xlsx`, and raw survey directories. GitHub hosts open-source code only. Microdata remains securely stored on institutional World Bank drives and local air-gapped disks.
 
-**Q3: What should I do if an error occurs in the interactive analyzer?**  
-Scroll to **Module 5** at the bottom of `MTF_Interactive_Analyzer.ipynb` and run the cell. Attach the generated `mtf_diagnostic_report.txt` file to an email and send it to [bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org) for instant technical support.
+**Q3: What should I do if an error occurs in the interactive analyzer or production engine?**  
+Double-click **`report_error.bat`** (Windows) or run **`./report_error.sh`** (Mac/Linux), or execute **Module 6** inside `MTF_Interactive_Analyzer.ipynb`. The system automatically audits your local environment, generates `mtf_error_report.txt`, and pops up an email composer pre-addressed to [bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org). Attach the file and click send for immediate support.

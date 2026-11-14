@@ -686,4 +686,25 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print("\n" + "!" * 74)
+        print(f"❌ [CRITICAL ERROR] Execution failed: {e}")
+        print("!" * 74)
+        print("[*] Automatically capturing diagnostic environment and error trace...")
+        try:
+            from report_error import collect_diagnostics, launch_email_client, REPORT_FILENAME, SUPPORT_EMAIL
+            report_text = collect_diagnostics(error_traceback=tb)
+            report_file = Path.cwd() / REPORT_FILENAME
+            report_file.write_text(report_text, encoding="utf-8")
+            print(f"✓ Saved error report bundle: {report_file.name}")
+            print(f"[*] Opening email draft to Bryan Koo ({SUPPORT_EMAIL})...")
+            launch_email_client(report_file, error_snippet=str(e))
+            print(f"\n📧 Bryan Koo ({SUPPORT_EMAIL})에게 전달할 메일 창이 열렸습니다.")
+            print(f"   폴더의 '{report_file.name}' 파일을 첨부하여 전송해 주세요!")
+        except Exception as err_report:
+            print(f"⚠️ Could not auto-dispatch error report: {err_report}")
+        sys.exit(1)

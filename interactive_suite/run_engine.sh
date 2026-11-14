@@ -22,7 +22,15 @@ else
 fi
 
 # 2. Execute MTF Engine
-python3 mtf_engine.py
+if ! python3 mtf_engine.py; then
+    echo ""
+    echo "==============================================================================="
+    echo " ❌ [오류 발생] MTF 엔진 실행 중 문제가 발생했습니다."
+    echo "    진단 로그를 생성하고 Bryan Koo에게 이메일 보고를 준비합니다..."
+    echo "==============================================================================="
+    python3 report_error.py --error "MTF Engine crashed during 1-click execution"
+    exit 1
+fi
 
 # 3. Open Output folder if available
 if [ -d "Output" ]; then

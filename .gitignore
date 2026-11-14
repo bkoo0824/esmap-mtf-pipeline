@@ -10,6 +10,8 @@
 *.gph
 *.smcl
 *.log
+*error_report.txt
+*diagnostic_report.txt
 
 # 2. Raw survey spreadsheets & sampling weights
 *.xlsx
