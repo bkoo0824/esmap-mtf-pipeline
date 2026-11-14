@@ -33,25 +33,38 @@
 
 	* For grid HHs: identify which attribute(s) = binding constraint at < Tier 4
 	foreach attr in cap avbl rel qual affrd leg sft {
+		capture drop deficit_`attr'
 		gen deficit_`attr' = (elc_`attr'_tier < 4) if elec_tech_type == 1
 		lab var deficit_`attr' "Grid HH deficit: `attr' tier < Tier 4"
 	}
-	* Use adjusted tiers for optional attributes
-	replace deficit_rel  = (elc_rel_tier_adj  < 4) if elec_tech_type == 1
-	replace deficit_qual = (elc_qual_tier_adj < 4) if elec_tech_type == 1
-	replace deficit_leg  = (elc_leg_tier_adj  < 4) if elec_tech_type == 1
 
 	* Overall: grid HH below Tier 4
+	capture drop deficit_any
 	gen deficit_any = (elc_aggr_tier < 4) if elec_tech_type == 1
 	lab var deficit_any "Grid HH with aggregate tier < Tier 4 (any deficit)"
 
-	* Which attribute is the binding minimum (causes the lowest aggregate)
+	* Multiple simultaneous binding constraints (Comment C18)
+	capture drop num_binding_deficits
+	egen num_binding_deficits = rowtotal(deficit_cap deficit_avbl deficit_rel deficit_qual deficit_affrd deficit_leg deficit_sft) if elec_tech_type == 1
+	lab var num_binding_deficits "Number of simultaneous binding constraints below Tier 4"
+
+	* Co-occurring binding constraint pairs (Availability + Reliability, Availability + Affordability, etc.)
+	capture drop deficit_avbl_rel deficit_avbl_affd deficit_rel_qual
+	gen byte deficit_avbl_rel  = (deficit_avbl == 1 & deficit_rel == 1) if elec_tech_type == 1
+	gen byte deficit_avbl_affd = (deficit_avbl == 1 & deficit_affrd == 1) if elec_tech_type == 1
+	gen byte deficit_rel_qual  = (deficit_rel == 1 & deficit_qual == 1) if elec_tech_type == 1
+	lab var deficit_avbl_rel  "Co-occurring deficit: Availability + Reliability"
+	lab var deficit_avbl_affd "Co-occurring deficit: Availability + Affordability"
+	lab var deficit_rel_qual  "Co-occurring deficit: Reliability + Quality"
+
+	* Primary binding minimum attribute
+	capture drop binding_attr
 	gen binding_attr = ""
 	foreach attr in cap avbl rel qual affrd leg sft {
 		replace binding_attr = "`attr'" ///
 			if elec_tech_type == 1 & elc_`attr'_tier == elc_aggr_tier & elc_aggr_tier < 4
 	}
-	lab var binding_attr "Binding deficit attribute for grid HH below Tier 4"
+	lab var binding_attr "Primary binding deficit attribute for grid HH below Tier 4"
 
 
 	*===========================================================================
@@ -59,11 +72,11 @@
 	*  Flag: owns clean fuel stove but Exposure tier ≤ 1 (biomass stacking)
 	*===========================================================================
 
+	capture drop stacking_dilution
 	gen stacking_dilution = 0
 	replace stacking_dilution = 1 if ///
-		clean_stove == 1 &         /// owns a clean fuel stove
-		cs_exp_tier <= 1 &         /// exposure tier pulled down by biomass use
-		cs_exp_tier != .
+		clean_stove == 1 & (trad_stove == 1 | ics == 1) & ///
+		cs_exp_tier <= 2 & cs_exp_tier != .
 	lab define stacking_dilution 0 "No dilution" 1 "Stove stacking dilution", replace
 	lab val stacking_dilution stacking_dilution
 	lab var stacking_dilution "Stove stacking dilution: clean stove owner but Exposure Tier ≤1"
@@ -171,8 +184,8 @@
 	lab var coping_spend "Monthly expenditure on coping lighting (candles/kerosene/batteries)"
 	lab var coping_pct   "Coping lighting expenditure as % of monthly total expenditure"
 
-	* Grid connection history & expenditure
-	capture drop grid_years grid_wait_days grid_monthly_spend
+	* Grid connection history & expenditure (Comment C22)
+	capture drop grid_years grid_wait_days grid_monthly_spend grid_tenure_cat
 	clonevar grid_years = SEC_C_Q06
 	lab var grid_years "Number of years connected to national grid"
 
@@ -182,7 +195,18 @@
 
 	gen grid_monthly_spend = SEC_C_Q23
 	replace grid_monthly_spend = SEC_C_Q25 if grid_monthly_spend == . | grid_monthly_spend == 0
-	lab var grid_monthly_spend "Monthly expenditure on grid electricity (N$)"
+	lab var grid_monthly_spend "Monthly expenditure on grid electricity ($currency)"
+
+	* Grid tenure categories (<1 yr, 1-2 yrs, 3-4 yrs, 5-9 yrs, 10+ yrs)
+	gen byte grid_tenure_cat = .
+	replace grid_tenure_cat = 1 if grid_years < 1 & grid_years != .
+	replace grid_tenure_cat = 2 if grid_years >= 1 & grid_years < 3
+	replace grid_tenure_cat = 3 if grid_years >= 3 & grid_years < 5
+	replace grid_tenure_cat = 4 if grid_years >= 5 & grid_years < 10
+	replace grid_tenure_cat = 5 if grid_years >= 10 & grid_years < .
+	lab define grid_tenure_cat 1 "<1 Year" 2 "1–2 Years" 3 "3–4 Years" 4 "5–9 Years" 5 "10+ Years", replace
+	lab val grid_tenure_cat grid_tenure_cat
+	lab var grid_tenure_cat "Grid connection tenure category"
 
 
 	*===========================================================================
@@ -219,33 +243,19 @@
 
 	capture confirm variable random_percentage
 	if !_rc {
-		* 100% full fee
-		gen byte wtp_grid_p100_upfront = (SEC_D_Q03 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p100_3m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p100_6m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p100_12m     = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p100_waived  = (wtp_grid_p100_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.95 & random_percentage <= 1.05 & grid_hh == 0 & SEC_D_Q03 < .
-
-		* 57% fee
-		gen byte wtp_grid_p57_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p57_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p57_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p57_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p57_waived   = (wtp_grid_p57_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.50 & random_percentage <= 0.65 & grid_hh == 0 & SEC_D_Q03 < .
-
-		* 29% fee
-		gen byte wtp_grid_p29_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p29_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p29_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p29_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p29_waived   = (wtp_grid_p29_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.25 & random_percentage <= 0.35 & grid_hh == 0 & SEC_D_Q03 < .
-
-		* 14% fee
-		gen byte wtp_grid_p14_upfront  = (SEC_D_Q03 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p14_3m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p14_6m       = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p14_12m      = (SEC_D_Q03 == 1 | SEC_D_Q04 == 1 | SEC_D_Q05 == 1 | SEC_D_Q06 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
-		gen byte wtp_grid_p14_waived   = (wtp_grid_p14_12m == 1 | SEC_D_Q07 == 1) if random_percentage >= 0.10 & random_percentage <= 0.20 & grid_hh == 0 & SEC_D_Q03 < .
+		* Vectorized WTP loops across price benchmarks and payment horizons (Comment C23)
+		local p_list "100 57 29 14"
+		foreach p of local p_list {
+			local p_cond "random_percentage >= 0.95 & random_percentage <= 1.05"
+			if "`p'" == "57" local p_cond "random_percentage >= 0.50 & random_percentage <= 0.65"
+			if "`p'" == "29" local p_cond "random_percentage >= 0.25 & random_percentage <= 0.35"
+			if "`p'" == "14" local p_cond "random_percentage >= 0.10 & random_percentage <= 0.20"
+			
+			foreach t in upfront 3m 6m 12m waived {
+				capture drop wtp_grid_p`p'_`t'
+				gen byte wtp_grid_p`p'_`t' = wtp_grid_`t' if `p_cond' & grid_hh == 0
+			}
+		}
 	}
 	else {
 		capture confirm variable index_random

@@ -16,7 +16,15 @@
 	di "---------------------------------------------------------"
 
 	* Verify and declare survey design
-	svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+		capture confirm variable psu_id
+	if !_rc {
+		svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
+	}
+	else {
+		capture confirm variable SEC_A_Q07
+		if !_rc svyset SEC_A_Q07 [pw=hh_wt], strata(strata_id) singleunit(centered)
+		else svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+	}
 	svydescribe
 
 	* Quick diagnostic summary of core disaggregation variables

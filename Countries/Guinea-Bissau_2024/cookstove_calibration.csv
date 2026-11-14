@@ -1,30 +1,30 @@
-# MTF Cookstove Calibration Form — Guinea-Bissau
-# ==============================================================================
-# INSTRUCTIONS FOR COUNTRY COORDINATORS & COOKSTOVE SPECIALISTS:
-#
-# 1. questionnaire_code (SEC_G_Q05 in Survey Solutions CAPI):
-#    1: 3-Stones/Open fire stove
-#    2: Traditional/Locally built stove
-#    3: Improved biomass stove
-#    4: Kerosene stove
-#    5: LPG stove
-#    6: Piped Natural Gas stove
-#    7: Electric stove
-#    8: Solar cooker
-#    555: Other, Specify
-#
-# 2. iso_emission_tier & efficiency_tier:
-#    - iso_emission_tier: ISO 19867 emission rating from 0 (open fire) to 5 (electric/solar).
-#    - efficiency_tier:   ISO thermal efficiency from 0 (< 10%) to 5 (>= 50%).
-#
-# 3. stove_group:
-#    open_fire | traditional | ics | clean_gas | clean_electric | clean_solar | clean_bio | transitional_bio | other
-# ==============================================================================
-questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur
-"1","Three-Stone / Open Fire",0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R
-"2,4","Traditional / Locally Built Stove",0,0,traditional,Wood / Charcoal / Kerosene,Uninsulated local brazier or kerosene burner,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R
-"3","Improved Biomass Stove (ICS)",3,2,ics,Firewood / Charcoal,Enclosed combustion chamber with insulation; confirm tier with country expert,STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
-"5,6","Clean Fuel: LPG / Piped Gas",4,4,clean_gas,Bottled LPG / Piped Natural Gas,Clean gaseous fuel; Tier 4-5 depending on ventilation,STOVE_CLEAN_N,STOVE_CLEAN_U,STOVE_CLEAN_R
-"7","Clean Fuel: Electric Stove",5,5,clean_electric,Grid electricity,Tier 5 when used as primary stove,STOVE_ELEC_N,STOVE_ELEC_U,STOVE_ELEC_R
-"8","Solar Cooker",5,5,clean_solar,Solar radiation,High insolation clean cooking,STOVE_SOLAR_N,STOVE_SOLAR_U,STOVE_SOLAR_R
-555,"Other Cookstove",,,,Other / Unspecified,Recode from open-text responses after reviewing data,STOVE_OTHER_N,STOVE_OTHER_U,STOVE_OTHER_R
+# MTF Cookstove Calibration Form — Guinea-Bissau,,,,,,,,,,
+# ==============================================================================,,,,,,,,,,
+# INSTRUCTIONS FOR COUNTRY COORDINATORS & COOKSTOVE SPECIALISTS:,,,,,,,,,,
+#,,,,,,,,,,
+# 1. questionnaire_code (SEC_G_Q05 in Survey Solutions CAPI):,,,,,,,,,,
+#    1: 3-Stones/Open fire stove,,,,,,,,,,
+#    2: Traditional/Locally built stove,,,,,,,,,,
+#    3: Improved biomass stove,,,,,,,,,,
+#    4: Kerosene stove,,,,,,,,,,
+#    5: LPG stove,,,,,,,,,,
+#    6: Piped Natural Gas stove,,,,,,,,,,
+#    7: Electric stove,,,,,,,,,,
+#    8: Solar cooker,,,,,,,,,,
+#    555: Other, Specify,,,,,,,,,
+#,,,,,,,,,,
+# 2. iso_emission_tier & efficiency_tier:,,,,,,,,,,
+#    - iso_emission_tier: ISO 19867 emission rating from 0 (open fire) to 5 (electric/solar).,,,,,,,,,,
+#    - efficiency_tier:   ISO thermal efficiency from 0 (< 10%) to 5 (>= 50%).,,,,,,,,,,
+#,,,,,,,,,,
+# 3. stove_group:,,,,,,,,,,
+#    open_fire | traditional | ics | clean_gas | clean_electric | clean_solar | clean_bio | transitional_bio | other,,,,,,,,,,
+# ==============================================================================,,,,,,,,,,
+questionnaire_code,stove_description,iso_emission_tier,efficiency_tier,stove_group,primary_fuel,notes,stat_key_nat,stat_key_urb,stat_key_rur,
+1,Three-Stone / Open Fire,0,0,open_fire,Gathered firewood,Very low thermal efficiency (< 10%),STOVE_3STONE_N,STOVE_3STONE_U,STOVE_3STONE_R,
+"2,4",Traditional / Locally Built Stove,0,0,traditional,Wood / Charcoal / Kerosene,Uninsulated local brazier or kerosene burner,STOVE_TRAD_N,STOVE_TRAD_U,STOVE_TRAD_R,
+3,Improved Biomass Stove (ICS),3,2,ics,Firewood / Charcoal,Enclosed combustion chamber with insulation, confirm tier with country expert,STOVE_ICS_N,STOVE_ICS_U,STOVE_ICS_R
+"5,6",Clean Fuel: LPG / Piped Gas,4,4,clean_gas,Bottled LPG / Piped Natural Gas,Clean gaseous fuel, Tier 4-5 depending on ventilation,STOVE_CLEAN_N,STOVE_CLEAN_U,STOVE_CLEAN_R
+7,Clean Fuel: Electric Stove,5,5,clean_electric,Grid electricity,Tier 5 when used as primary stove,STOVE_ELEC_N,STOVE_ELEC_U,STOVE_ELEC_R,
+8,Solar Cooker,5,5,clean_solar,Solar radiation,High insolation clean cooking,STOVE_SOLAR_N,STOVE_SOLAR_U,STOVE_SOLAR_R,
+555,Other Cookstove,,,,Other / Unspecified,Recode from open-text responses after reviewing data,STOVE_OTHER_N,STOVE_OTHER_U,STOVE_OTHER_R,

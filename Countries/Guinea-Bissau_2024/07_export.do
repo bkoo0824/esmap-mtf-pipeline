@@ -341,6 +341,20 @@
 	svy, subpop(if elec_tech_type == 1): mean dis_frq
 	scalar json_AVG_OUTAGES_PER_WEEK = e(b)[1,1]
 
+	* Grid tenure vs monthly spend correlation (Comment C22)
+	capture {
+		correlate grid_years grid_monthly_spend if elec_tech_type == 1
+		scalar json_CORR_GRID_TENURE_SPEND = r(rho)
+	}
+
+	* Multiple binding constraints incidence (Comment C18)
+	capture {
+		count if elec_tech_type == 1 & num_binding_deficits >= 2 & num_binding_deficits < .
+		local multi_n = r(N)
+		count if elec_tech_type == 1
+		scalar json_PCT_MULTIPLE_CONSTRAINTS = (`multi_n' / r(N)) * 100
+	}
+
 	* Voltage damage %
 	svy, subpop(if elec_tech_type == 1): mean deficit_qual
 	scalar json_PCT_VOLTAGE_DAMAGE = e(b)[1,1] * 100
@@ -359,14 +373,11 @@
 		gen byte tech_rechar  = (elec_tech_type == 7)
 		gen byte tech_drycell = (SEC_C_Q162 == 8)
 		gen byte tech_noelec  = (SEC_C_Q162 == 111 | elec_tech_type == 8 & SEC_C_Q162 != 8)
-		svy: mean tech_grid tech_solar tech_gen tech_mini tech_rechar tech_drycell tech_noelec
-		scalar json_SHARE_GRID    = e(b)[1,1] * 100
-		scalar json_SHARE_SOLAR   = e(b)[1,2] * 100
-		scalar json_SHARE_GEN     = e(b)[1,3] * 100
-		scalar json_SHARE_MINI    = e(b)[1,4] * 100
-		scalar json_SHARE_RECHAR  = e(b)[1,5] * 100
-		scalar json_SHARE_DRYCELL = e(b)[1,6] * 100
-		scalar json_SHARE_NOELEC  = e(b)[1,7] * 100
+		foreach v in grid solar gen mini rechar drycell noelec {
+			scalar json_SHARE_`=strupper("`v'")' = 0.0
+			capture svy: mean tech_`v'
+			if !_rc scalar json_SHARE_`=strupper("`v'")' = e(b)[1,1] * 100
+		}
 		drop tech_*
 	}
 
@@ -448,6 +459,10 @@
 			}
 		}
 		local row = `row' + 1
+	}
+
+	capture {
+		scalar json_WTP_GRID_NON_CONNECT = max(0.0, 100.0 - scalar(json_WTP_GRID_WAIVED_NAT))
 	}
 
 	* Grid history & spending (means in levels)
@@ -929,7 +944,7 @@
 		GRID_YEARS_NAT GRID_YEARS_URB GRID_YEARS_RUR ///
 		GRID_WAIT_DAYS_NAT GRID_MONTHLY_SPEND_NAT GRID_MONTHLY_SPEND_URB GRID_MONTHLY_SPEND_RUR ///
 		WTP_GRID_UPFRONT_NAT WTP_GRID_UPFRONT_URB WTP_GRID_UPFRONT_RUR ///
-		WTP_GRID_3M_NAT WTP_GRID_6M_NAT WTP_GRID_12M_NAT WTP_GRID_WAIVED_NAT WTP_GRID_NEVER_NAT ///
+		WTP_GRID_3M_NAT WTP_GRID_6M_NAT WTP_GRID_12M_NAT WTP_GRID_WAIVED_NAT WTP_GRID_NON_CONNECT WTP_GRID_NEVER_NAT ///
 		REFUSE_WIRING_COST_NAT ///
 		WTP_SOLAR_UPFRONT_NAT WTP_SOLAR_6M_NAT WTP_SOLAR_12M_NAT WTP_SOLAR_24M_NAT WTP_SOLAR_NEVER_NAT ///
 		REFUSE_SOLAR_COST_NAT SRF_AWARE_NAT SRF_AWARE_URB SRF_AWARE_RUR ///

@@ -98,6 +98,25 @@
 	gen pop_wt = hh_wt * hhsize
 	lab var pop_wt "Final Population Weight (hh_wt × hhsize)"
 
+	** Sampling Unit / EA cluster uniqueness (Comment C21)
+	capture confirm variable SEC_A_Q07
+	if !_rc {
+		capture drop psu_id
+		egen psu_id = group(SEC_A_Q07)
+	}
+	else {
+		capture confirm variable SEC_A_Q06
+		if !_rc {
+			capture drop psu_id
+			egen psu_id = group(SEC_A_Q06)
+		}
+		else {
+			capture drop psu_id
+			egen psu_id = group(SEC_A_Q05)
+		}
+	}
+	lab var psu_id "Sampling Primary Sampling Unit / Enumeration Area ID (unique clusters)"
+
 	** Locality (Urban / Rural):
 	gen loc_urban_rural = .
 	replace loc_urban_rural = 1 if SEC_A_Q03 == 1    // Urban
@@ -305,6 +324,11 @@
 	*===========================================================================
 
 	local fn_fuel_consump = cond("$fn_fuel_consump" != "", "$fn_fuel_consump", "fuel_consumption.dta")
+	capture confirm file "$raw_hh/`fn_fuel_consump'"
+	if _rc {
+		capture confirm file "$raw_hh/section_i_fuel_consumption_roster.dta"
+		if !_rc local fn_fuel_consump "section_i_fuel_consumption_roster.dta"
+	}
 	use "$raw_hh/`fn_fuel_consump'", clear
 	capture confirm variable interview__id
 	if _rc {
@@ -651,31 +675,64 @@
 
 	merge 1:1 interview__id using "$wip_hh/mainstove_fuel_avail.dta", nogen
 
-	** C. Stacking summary from cookstoves roster
+	** C. Stacking summary & time-weighted emission tier from cookstoves roster (Bryan's Methodology)
 	preserve
 		use "$wip_hh/cookstoves_clean.dta", clear
-		gen stove_type = .
-		replace stove_type = 1 if inlist(SEC_G_Q05, 1, 2, 3, 5, 22)
-		replace stove_type = 2 if inlist(SEC_G_Q05, 4, 6, 7, 8, 9, 20, 21)
-		replace stove_type = 3 if inlist(SEC_G_Q05, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23)
-		duplicates tag interview__id, gen(stacking)
-		keep interview__id cookstoves__id stove_type stacking
-		reshape wide stove_type stacking, i(interview__id) j(cookstoves__id)
-		capture drop stacking2 stacking3 stacking4 stacking5
-		gen stove_stacking = stacking1 + 1
-
-		gen clean_stove = inlist(3, stove_type1, stove_type2, stove_type3)
-		gen ics         = inlist(2, stove_type1, stove_type2, stove_type3)
-		gen trad_stove  = inlist(1, stove_type1, stove_type2, stove_type3)
-		gen multi_biomass_stacking = (stove_stacking >= 2 & clean_stove == 0)
-
-		lab var clean_stove    "Uses clean fuel stove (LPG/elec/biogas/solar)"
-		lab var ics            "Uses Improved Cookstove (ICS)"
-		lab var trad_stove     "Uses traditional stove / 3-stone fire"
-		lab var stove_stacking "Number of stoves owned"
+		
+		* Stove ISO emission tier by stove type (SEC_G_Q05)
+		gen emit_tier = .
+		if "$country_iso3" == "GNB" | "$country" == "Guinea-Bissau" {
+			replace emit_tier = 0 if inlist(SEC_G_Q05, 1, 2)
+			replace emit_tier = 3 if inlist(SEC_G_Q05, 3)
+			replace emit_tier = 1 if inlist(SEC_G_Q05, 4)
+			replace emit_tier = 4 if inlist(SEC_G_Q05, 5, 6)
+			replace emit_tier = 5 if inlist(SEC_G_Q05, 7, 8)
+		}
+		else {
+			replace emit_tier = 0 if inlist(SEC_G_Q05, 1, 2, 3, 5, 22)
+			replace emit_tier = 3 if inlist(SEC_G_Q05, 4, 6, 7, 8, 9, 20, 21)
+			replace emit_tier = 4 if inlist(SEC_G_Q05, 10, 11, 12, 13, 14, 23)
+			replace emit_tier = 5 if inlist(SEC_G_Q05, 15, 16, 17, 18, 19)
+		}
+		replace emit_tier = 0 if emit_tier == .
+		
+		* Weekly cooking time per stove
+		gen double daily_mins = cond(SEC_G_Q21 < ., SEC_G_Q21, 0) + ///
+		                        cond(SEC_G_Q22a < ., SEC_G_Q22a, 0) + ///
+		                        cond(SEC_G_Q22b < ., SEC_G_Q22b, 0) + ///
+		                        cond(SEC_G_Q22c < ., SEC_G_Q22c, 0)
+		gen double days_week = cond(SEC_G_Q19 < ., SEC_G_Q19, 1)
+		replace days_week = 1 if days_week < 1
+		gen double weekly_time = daily_mins * days_week
+		replace weekly_time = 1 if weekly_time <= 0
+		
+		gen double weighted_emit = emit_tier * weekly_time
+		gen byte is_clean = (emit_tier >= 4)
+		gen byte is_trad  = (emit_tier == 0)
+		gen byte is_ics   = (emit_tier == 3)
+		
+		collapse (sum) weighted_emit weekly_time ///
+		         (count) num_stoves = SEC_G_Q05 ///
+		         (max) clean_stove = is_clean ///
+		               trad_stove  = is_trad ///
+		               ics         = is_ics, by(interview__id)
+		
+		gen double weighted_emit_tier = round(weighted_emit / weekly_time)
+		replace weighted_emit_tier = 5 if weighted_emit_tier > 5 & weighted_emit_tier < .
+		replace weighted_emit_tier = 0 if weighted_emit_tier < 0
+		gen byte stove_stacking = (num_stoves >= 2)
+		gen byte multi_biomass_stacking = (stove_stacking == 1 & clean_stove == 0)
+		gen byte stacking_dilution = (clean_stove == 1 & (trad_stove == 1 | ics == 1))
+		
+		lab var weighted_emit_tier "Household cooking time-weighted emission tier (0-5)"
+		lab var clean_stove        "Uses clean fuel stove (LPG/elec/biogas/solar)"
+		lab var ics                "Uses Improved Cookstove (ICS)"
+		lab var trad_stove         "Uses traditional stove / 3-stone fire"
+		lab var stove_stacking     "Number of stoves owned"
 		lab var multi_biomass_stacking "Stacks multiple biomass stoves"
-
-		keep interview__id clean_stove ics trad_stove stove_stacking multi_biomass_stacking
+		lab var stacking_dilution  "Stove stacking dilution: clean stove owner using biomass stove"
+		
+		keep interview__id clean_stove ics trad_stove stove_stacking multi_biomass_stacking weighted_emit_tier stacking_dilution
 		duplicates drop
 		save "$wip_hh/stoves_summary.dta", replace
 	restore
@@ -854,7 +911,7 @@
 		has_fan has_micro has_wash has_ac has_geyser has_torch (. = 0)
 
 	* Declare survey design on master
-	svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+	svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
 
 	save "$wip_hh/$master_dta", replace
 	di "========================================================="

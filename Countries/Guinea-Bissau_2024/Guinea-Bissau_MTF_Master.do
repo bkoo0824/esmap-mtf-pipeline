@@ -47,6 +47,8 @@ global wip_hh    "$user/Data/wip_hh"
 global clean     "$user/Data/clean"
 global output    "$user/Output"
 global scripts   "$user/Do-file"
+global tools     "$user/Tools"
+global country_iso3 "GNB"
 global out_sl    "$output"
 
 * Parameters

@@ -11,18 +11,23 @@ di " Validating Master Dataset: MTF_2024_HH_Guinea-Bissau_Master.dta"
 di " Total Observations: " _N
 di "---------------------------------------------------------"
 
-* Verify and declare survey design
-capture confirm numeric variable SEC_A_Q06
-if _rc != 0 {
-    capture drop psu_id
-    egen psu_id = group(SEC_A_Q06)
-    lab var psu_id "Primary Sampling Unit (Numeric EA ID)"
-    local psu_use "psu_id"
+* Verify and declare survey design (PSU = 315 unique EA clusters)
+capture confirm variable psu_id
+if !_rc {
+    svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
 }
 else {
-    local psu_use "SEC_A_Q06"
+    capture confirm variable SEC_A_Q07
+    if !_rc {
+        capture drop psu_id
+        egen psu_id = group(SEC_A_Q07)
+        lab var psu_id "Primary Sampling Unit (315 Unique EAs)"
+        svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
+    }
+    else {
+        svyset SEC_A_Q06 [pw=hh_wt], strata(strata_id) singleunit(centered)
+    }
 }
-svyset `psu_use' [pw=hh_wt], strata(strata_id) singleunit(centered)
 svydescribe
 
 * Quick diagnostic summary of core disaggregation variables

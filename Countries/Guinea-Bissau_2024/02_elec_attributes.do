@@ -239,10 +239,10 @@
 	** Grid outage duration (hours + minutes → decimal hours)
 	gen SEC_C_Q30_hr  = SEC_C_Q30a
 	replace SEC_C_Q30_hr  = . if SEC_C_Q30_hr  == 888
-	replace SEC_C_Q30_hr  = 0 if SEC_C_Q29 == 111    // "no outages"
+	replace SEC_C_Q30_hr  = 0 if inlist(SEC_C_Q29, 0, 111)    // "no outages"
 	gen SEC_C_Q30_min = SEC_C_Q30b
 	replace SEC_C_Q30_min = . if SEC_C_Q30_min == 888
-	replace SEC_C_Q30_min = 0 if SEC_C_Q29 == 111
+	replace SEC_C_Q30_min = 0 if inlist(SEC_C_Q29, 0, 111)
 	replace SEC_C_Q30_min = 0 if SEC_C_Q30_hr != . & SEC_C_Q30_min == .
 	replace SEC_C_Q30_hr  = 0 if SEC_C_Q30_hr == . & SEC_C_Q30_min != .
 	gen SEC_C_Q30 = SEC_C_Q30_hr + (SEC_C_Q30_min / 60)
@@ -250,10 +250,10 @@
 	** Mini-grid outage duration
 	gen SEC_C_Q68_hr  = SEC_C_Q68a
 	replace SEC_C_Q68_hr  = . if SEC_C_Q68_hr  == 888
-	replace SEC_C_Q68_hr  = 0 if SEC_C_Q67 == 111
+	replace SEC_C_Q68_hr  = 0 if inlist(SEC_C_Q67, 0, 111)
 	gen SEC_C_Q68_min = SEC_C_Q68b
 	replace SEC_C_Q68_min = . if SEC_C_Q68_min == 888
-	replace SEC_C_Q68_min = 0 if SEC_C_Q67 == 111
+	replace SEC_C_Q68_min = 0 if inlist(SEC_C_Q67, 0, 111)
 	gen SEC_C_Q68 = SEC_C_Q68_hr + (SEC_C_Q68_min / 60)
 
 	foreach v in SEC_C_Q29 SEC_C_Q30 SEC_C_Q67 SEC_C_Q68 {

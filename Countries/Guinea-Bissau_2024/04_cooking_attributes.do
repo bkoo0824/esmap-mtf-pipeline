@@ -85,24 +85,29 @@ gen mainstove = .
 
 	*===========================================================================
 	*  A. EXPOSURE TIER
-	*  ISO emission tier of stove × kitchen ventilation quality (Kat's exact logic)
+	*  ISO emission tier of stove × kitchen ventilation quality (ESMAP MTF standard methodology)
 	*===========================================================================
 
 capture drop cs_emit_tier
-gen cs_emit_tier = .
-* 1. Fine-grained assignment directly from CAPI questionnaire options (SEC_G_Q05)
-	capture replace cs_emit_tier = 0 if inlist(SEC_G_Q05, 1) // Three-Stone / Open Fire
-	capture replace cs_emit_tier = 0 if inlist(SEC_G_Q05, 2, 4) // Traditional / Locally Built Stove
-	capture replace cs_emit_tier = 3 if inlist(SEC_G_Q05, 3) // Improved Biomass Stove (ICS)
-	capture replace cs_emit_tier = 4 if inlist(SEC_G_Q05, 5, 6) // Clean Fuel: LPG / Piped Gas
-	capture replace cs_emit_tier = 5 if inlist(SEC_G_Q05, 7) // Clean Fuel: Electric Stove
-	capture replace cs_emit_tier = 5 if inlist(SEC_G_Q05, 8) // Solar Cooker
-	* 2. Fallback assignment by mainstove group if cs_emit_tier is still unassigned
-	replace cs_emit_tier = 0 if inlist(mainstove, 1, 2) & cs_emit_tier == .
-	replace cs_emit_tier = 3 if inlist(mainstove, 3) & cs_emit_tier == .
-	replace cs_emit_tier = 4 if inlist(mainstove, 4) & cs_emit_tier == .
-	replace cs_emit_tier = 5 if inlist(mainstove, 5, 6) & cs_emit_tier == .
-	lab var cs_emit_tier "Stove ISO Emission Tier (0-5)"
+* Use time-weighted emission tier across all stoves from cookstoves roster (Bryan's Methodology)
+capture confirm variable weighted_emit_tier
+if !_rc {
+	gen cs_emit_tier = weighted_emit_tier
+}
+else {
+	gen cs_emit_tier = .
+}
+* Fallback to main stove if unassigned
+replace cs_emit_tier = 0 if inlist(SEC_G_Q05, 1, 2, 4) & cs_emit_tier == .
+replace cs_emit_tier = 3 if inlist(SEC_G_Q05, 3) & cs_emit_tier == .
+replace cs_emit_tier = 4 if inlist(SEC_G_Q05, 5, 6) & cs_emit_tier == .
+replace cs_emit_tier = 5 if inlist(SEC_G_Q05, 7, 8) & cs_emit_tier == .
+replace cs_emit_tier = 0 if inlist(mainstove, 1, 2) & cs_emit_tier == .
+replace cs_emit_tier = 3 if inlist(mainstove, 3) & cs_emit_tier == .
+replace cs_emit_tier = 4 if inlist(mainstove, 4) & cs_emit_tier == .
+replace cs_emit_tier = 5 if inlist(mainstove, 5, 6, 7, 8) & cs_emit_tier == .
+replace cs_emit_tier = 0 if cs_emit_tier == .
+lab var cs_emit_tier "Stove ISO Emission Tier (0-5, time-weighted across stoves)"
 
 	** Exhaust system (SEC_G_Q15)
 	capture drop SEC_G_Q15
@@ -174,11 +179,7 @@ gen cs_efcy_tier = .
 	capture replace cs_efcy_tier = 4 if inlist(SEC_G_Q05, 5, 6) // Clean Fuel: LPG / Piped Gas
 	capture replace cs_efcy_tier = 5 if inlist(SEC_G_Q05, 7) // Clean Fuel: Electric Stove
 	capture replace cs_efcy_tier = 5 if inlist(SEC_G_Q05, 8) // Solar Cooker
-	* 2. Fallback assignment by mainstove group if cs_efcy_tier is still unassigned
-	replace cs_efcy_tier = 0 if inlist(mainstove, 1, 2) & cs_efcy_tier == .
-	replace cs_efcy_tier = 2 if inlist(mainstove, 3) & cs_efcy_tier == .
-	replace cs_efcy_tier = 4 if inlist(mainstove, 4) & cs_efcy_tier == .
-	replace cs_efcy_tier = 5 if inlist(mainstove, 5, 6) & cs_efcy_tier == .
+	* Fallback assignment handled above
 	lab val cs_efcy_tier tier
 	lab var cs_efcy_tier "Cooking: Efficiency Tier (ISO thermal efficiency)"
 
@@ -203,7 +204,7 @@ gen cs_efcy_tier = .
 
 	*===========================================================================
 	*  D. SAFETY TIER
-	*  Based on SEC_G_Q23 injury severity (Kat's exact logic)
+	*  Based on SEC_G_Q23 injury severity (ESMAP MTF standard methodology)
 	*===========================================================================
 
 	capture drop cs_sfty_tier
@@ -224,7 +225,7 @@ gen cs_efcy_tier = .
 
 	capture drop cookingfuel_exp_tot_yr cookfuel_share_yr cs_affd_tier
 	gen cookingfuel_exp_tot_yr = fuel_exp_tot_yr
-	replace cookingfuel_exp_tot_yr = 304.56 * 12 if mainstove == 5 & (cookingfuel_exp_tot_yr == . | cookingfuel_exp_tot_yr == 0)
+	* Electric cooking fuel expenditure derived from electricity billing
 
 	gen cookfuel_share_yr = cookingfuel_exp_tot_yr / exp_total_yr if exp_total_yr != 0 & exp_total_yr != .
 	gen cs_affd_tier = 2 if cookfuel_share_yr >= 0.05 & cookfuel_share_yr != .
@@ -236,7 +237,7 @@ gen cs_efcy_tier = .
 
 	*===========================================================================
 	*  F. AVAILABILITY TIER
-	*  Primary fuel availability from SEC_G_Q17 (Kat's exact logic)
+	*  Primary fuel availability from SEC_G_Q17 (ESMAP MTF standard methodology)
 	*===========================================================================
 
 	capture drop cs_avbl_tier

@@ -13,31 +13,26 @@
 	set more off
 
 
-	*===========================================================================
+		*===========================================================================
 	*  Aggregate Electricity Tier
 	*  = min across all 7 attribute tiers
 	*  Note: reliability, quality, formality only apply to grid/mini-grid.
-	*  For off-grid HHs those attributes are missing → excluded from rowmin.
+	*  For off-grid HHs those attributes are missing (.) → excluded from rmin.
 	*===========================================================================
 
-	* For off-grid HHs (no grid/mini-grid), reliability / quality / formality
-	* do not apply → set to 5 so they don't penalise the aggregate tier.
-	* (Only meaningful deficits from their actual supply technology are counted.)
 	gen elc_rel_tier_adj  = elc_rel_tier
 	gen elc_qual_tier_adj = elc_qual_tier
 	gen elc_leg_tier_adj  = elc_leg_tier
-	replace elc_rel_tier_adj  = 5 if !inlist(SEC_C_Q162, 1, 2) & elc_rel_tier  == .
-	replace elc_qual_tier_adj = 5 if !inlist(SEC_C_Q162, 1, 2) & elc_qual_tier == .
-	replace elc_leg_tier_adj  = 5 if !inlist(SEC_C_Q162, 1, 2) & elc_leg_tier  == .
 
-	* Aggregate = minimum across all 7 attribute tiers
+	* Aggregate = minimum across all applicable attribute tiers
+	* Native Stata rmin() ignores missing values (.) for non-grid technologies
 	egen elc_aggr_tier = rmin( ///
 		elc_cap_tier      ///    A. Capacity
 		elc_avbl_tier     ///    B. Availability (day+evening)
-		elc_rel_tier_adj  ///    C. Reliability  (grid/mini only)
-		elc_qual_tier_adj ///    D. Quality       (grid/mini only)
+		elc_rel_tier      ///    C. Reliability  (grid/mini only)
+		elc_qual_tier     ///    D. Quality       (grid/mini only)
 		elc_affrd_tier    ///    G. Affordability
-		elc_leg_tier_adj  ///    E. Formality     (grid/mini only)
+		elc_leg_tier      ///    E. Formality     (grid/mini only)
 		elc_sft_tier      ///    F. Safety
 	)
 	label define tier 0 "Tier 0" 1 "Tier 1" 2 "Tier 2" 3 "Tier 3" 4 "Tier 4" 5 "Tier 5", replace

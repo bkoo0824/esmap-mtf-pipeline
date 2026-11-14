@@ -341,6 +341,20 @@
 	svy, subpop(if elec_tech_type == 1): mean dis_frq
 	scalar json_AVG_OUTAGES_PER_WEEK = e(b)[1,1]
 
+	* Grid tenure vs monthly spend correlation (Comment C22)
+	capture {
+		correlate grid_years grid_monthly_spend if elec_tech_type == 1
+		scalar json_CORR_GRID_TENURE_SPEND = r(rho)
+	}
+
+	* Multiple binding constraints incidence (Comment C18)
+	capture {
+		count if elec_tech_type == 1 & num_binding_deficits >= 2 & num_binding_deficits < .
+		local multi_n = r(N)
+		count if elec_tech_type == 1
+		scalar json_PCT_MULTIPLE_CONSTRAINTS = (`multi_n' / r(N)) * 100
+	}
+
 	* Voltage damage %
 	svy, subpop(if elec_tech_type == 1): mean deficit_qual
 	scalar json_PCT_VOLTAGE_DAMAGE = e(b)[1,1] * 100

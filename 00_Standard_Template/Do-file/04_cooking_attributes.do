@@ -85,16 +85,25 @@
 
 	*===========================================================================
 	*  A. EXPOSURE TIER
-	*  ISO emission tier of stove × kitchen ventilation quality (Kat's exact logic)
+	*  ISO emission tier of stove × kitchen ventilation quality (ESMAP MTF standard methodology)
 	*===========================================================================
 
 	capture drop cs_emit_tier SEC_G_Q15 vent_strc vent_tier cs_exp_tier
-	gen cs_emit_tier = .
-	replace cs_emit_tier = 0 if inlist(mainstove, 1, 2)
-	replace cs_emit_tier = 3 if mainstove == 3
-	replace cs_emit_tier = 4 if mainstove == 4
-	replace cs_emit_tier = 5 if inlist(mainstove, 5, 6, 7, 8)
-	lab var cs_emit_tier "Stove ISO Emission Tier (0–5)"
+	* Use time-weighted emission tier across all stoves from cookstoves roster
+	capture confirm variable weighted_emit_tier
+	if !_rc {
+		gen cs_emit_tier = weighted_emit_tier
+	}
+	else {
+		gen cs_emit_tier = .
+	}
+	* Fallback by mainstove group if unassigned
+	replace cs_emit_tier = 0 if inlist(mainstove, 1, 2) & cs_emit_tier == .
+	replace cs_emit_tier = 3 if mainstove == 3 & cs_emit_tier == .
+	replace cs_emit_tier = 4 if inlist(mainstove, 4, 5, 6) & cs_emit_tier == .
+	replace cs_emit_tier = 5 if inlist(mainstove, 7, 8) & cs_emit_tier == .
+	replace cs_emit_tier = 0 if cs_emit_tier == .
+	lab var cs_emit_tier "Stove ISO Emission Tier (0–5, time-weighted across stoves)"
 
 	** Exhaust system (SEC_G_Q15)
 	capture drop SEC_G_Q15
@@ -187,7 +196,7 @@
 
 	*===========================================================================
 	*  D. SAFETY TIER
-	*  Based on SEC_G_Q23 injury severity (Kat's exact logic)
+	*  Based on SEC_G_Q23 injury severity (ESMAP MTF standard methodology)
 	*===========================================================================
 
 	capture drop cs_sfty_tier
@@ -208,7 +217,7 @@
 
 	capture drop cookingfuel_exp_tot_yr cookfuel_share_yr cs_affd_tier
 	gen cookingfuel_exp_tot_yr = fuel_exp_tot_yr
-	replace cookingfuel_exp_tot_yr = 304.56 * 12 if mainstove == 5 & (cookingfuel_exp_tot_yr == . | cookingfuel_exp_tot_yr == 0)
+	* Electric cooking fuel expenditure derived from electricity billing
 
 	gen cookfuel_share_yr = cookingfuel_exp_tot_yr / exp_total_yr if exp_total_yr != 0 & exp_total_yr != .
 	gen cs_affd_tier = 2 if cookfuel_share_yr >= 0.05 & cookfuel_share_yr != .
@@ -220,7 +229,7 @@
 
 	*===========================================================================
 	*  F. AVAILABILITY TIER
-	*  Primary fuel availability from SEC_G_Q17 (Kat's exact logic)
+	*  Primary fuel availability from SEC_G_Q17 (ESMAP MTF standard methodology)
 	*===========================================================================
 
 	capture drop cs_avbl_tier

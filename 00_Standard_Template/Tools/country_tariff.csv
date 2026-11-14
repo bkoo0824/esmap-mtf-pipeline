@@ -1,0 +1,8 @@
+country,iso3,currency_code,utility_name,lifeline_block_kwh,tariff_per_kwh_local,effective_date,source_reference
+Guinea-Bissau,GNB,XOF,EAGB,30,128.0000,2024-01-01,EAGB Social Tariff / World Bank Energy Sector Diagnostic
+Namibia,NAM,NAD,Erongo RED,30,2.7072,2024-07-01,ECB Approved Tariff Schedule FY24/25
+Liberia,LBR,USD,LEC,30,0.2200,2024-01-01,LEC Tariff Schedule
+Nigeria,NGA,NGN,DisCos,30,68.0000,2024-01-01,NERC Multi-Year Tariff Order (MYTO)
+Rwanda,RWA,RWF,REG/EUCL,30,105.0000,2024-01-01,RURA Approved Electricity Tariffs
+Ethiopia,ETH,ETB,EEU,30,0.4900,2024-01-01,EEU Progressive Tariff Schedule
+Kenya,KEN,KES,KPLC,30,15.8000,2024-01-01,EPRA Lifeline Tariff Schedule
