@@ -1,118 +1,127 @@
-# 📘 비개발자 팀원을 위한 MTF 로컬 분석기 사용 및 협업 가이드
-**World Bank ESMAP Multi-Tier Framework (MTF) Local Interactive Analytics Suite**
+# 📘 ESMAP MTF Local Interactive Suite: Operational User Guide
+**World Bank ESMAP Multi-Tier Framework (MTF) Local Analytics Toolkit**
 
-본 가이드는 **Stata 라이선스가 없거나 파이썬/깃(Git)을 한 번도 사용해보지 않은 팀원**이 안전하게 로컬 PC에서 가구 설문 데이터를 탐색하고 정책 시뮬레이션을 수행하며, 향후 버그 패치와 업데이트를 원클릭으로 받을 수 있도록 돕는 단계별 종합 매뉴얼입니다.
-
----
-
-## 🔒 1. 데이터 보안 및 프라이버시 원칙
-- **100% 오프라인/로컬 실행 (Air-Gapped Local Execution):**
-  - 설문 데이터는 월드뱅크 대외비(Confidential) 마이크로데이터이므로, 구글 드라이브나 퍼블릭 클라우드에 업로드되지 않습니다.
-  - 모든 계산은 **여러분의 노트북 로컬 메모리(localhost)**에서만 안전하게 수행됩니다.
-- **코드와 데이터의 엄격한 2-트랙 분리:**
-  - **GitHub:** 오픈소스 분석 코드, 주피터 노트북, 배치 실행 파일만 공개/버전 관리됩니다 (데이터는 일체 업로드 금지).
-  - **데이터(.dta):** 승인된 팀원에게만 별도의 보안 암호화 링크(OneDrive)로 제공되며, 각자의 로컬 PC `Data/` 폴더에만 보관합니다.
+This guide provides a comprehensive step-by-step manual for **team members without a Stata license and without programming or Git experience**. It enables you to independently explore MTF household survey data on your local PC, run policy simulations, export publication-ready tables, and receive 1-click updates and automated remote support.
 
 ---
 
-## 📥 2. 최초 1회 다운로드 및 환경 준비 (약 3분 소요)
+## 🔒 1. Data Governance & Air-Gapped Privacy
 
-### [단계 1] 분석 도구 패키지 다운로드
-1. 웹 브라우저에서 공식 GitHub 저장소로 이동합니다:
+- **100% Offline / Local Execution (Air-Gapped):**
+  - Household survey microdata is strictly confidential World Bank data and is **never uploaded** to Google Drive, public clouds, or GitHub.
+  - All econometric calculations occur entirely within **your local PC memory (`localhost`)**.
+- **Strict Two-Track Governance:**
+  - **GitHub:** Hosts only open-source analysis code, Jupyter notebooks, and batch launchers (zero microdata).
+  - **Survey Data (`.dta`):** Shared only with authorized team members via secure World Bank OneDrive and stored strictly in your local `Data/` folder.
+
+---
+
+## 📥 2. Initial Setup (One-Time Only, ~3 Minutes)
+
+### [Step 1] Download the Analytics Toolkit
+1. Open your web browser and navigate to the official GitHub repository:  
    👉 **[https://github.com/bkoo0824/esmap-mtf-pipeline](https://github.com/bkoo0824/esmap-mtf-pipeline)**
-2. 우측 상단의 녹색 **`[Code]`** 버튼을 클릭한 뒤, **`[Download ZIP]`**을 누릅니다.
-3. 다운로드된 `esmap-mtf-pipeline-main.zip` 파일의 압축을 여러분의 PC(바탕화면 또는 문서 폴더)에 풉니다.
-   *(Git 사용자라면 터미널에서 `git clone https://github.com/bkoo0824/esmap-mtf-pipeline.git`을 실행하셔도 됩니다.)*
+2. Click the green **`[Code]`** button at the top right, then click **`[Download ZIP]`**.
+3. Extract `esmap-mtf-pipeline-main.zip` onto your local PC (e.g., your Desktop or Documents folder).  
+   *(Git users may alternatively run `git clone https://github.com/bkoo0824/esmap-mtf-pipeline.git`)*
 
-### [단계 2] 설문 데이터(.dta) 파일 배치
-1. Bryan Koo가 전달한 보안 OneDrive 링크에서 해당 국가의 마스터 데이터(`MTF_2024_HH_Guinea-Bissau_Master.dta` 등)를 다운로드합니다.
-2. 다운로드한 `.dta` 파일을 압축 푼 폴더의 `Data/` (또는 해당 국가 폴더 내 `Data/`) 폴더 안에 넣어줍니다.
+### [Step 2] Place the Survey Microdata (.dta)
+1. Download the compiled country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) from the secure OneDrive link provided by Bryan Koo.
+2. Place this single `.dta` file directly inside the **`interactive_suite/Data/`** folder.  
+   *(Note: You do NOT need raw survey section modules; only the master `.dta` file is needed.)*
 
-### [단계 3] 파이썬(Python) 1회 설치 (이미 설치되어 있다면 건너뛰기)
-1. [공식 파이썬 다운로드 페이지](https://www.python.org/downloads/)로 이동하여 **[Download Python]** 버튼을 클릭합니다.
-2. 다운로드된 설치 파일(`.exe`)을 실행합니다.
-3. ⚠️ **가장 중요한 주의사항 (별표 다섯 개!):**
-   - 설치 창 맨 아래에 있는 **`[v] Add python.exe to PATH`** 체크박스를 **반드시 체크**합니다!
-   - 체크 후 상단의 **[Install Now]**를 클릭하면 1분 만에 설치가 완료됩니다.
-
----
-
-## ⚡ 3. 1-클릭 실행 및 분석 사용법 (2가지 방법)
-
-프로그래밍이나 터미널 명령어를 전혀 몰라도 마우스 더블클릭만으로 실행하실 수 있습니다.
-
-### [방법 A] 1-Click 초고속 분석 엔진 (가장 추천! ⭐)
-브라우저를 열거나 코드를 볼 필요 없이, **Stata와 100% 일치하는 11개 시트 전체 지표(370+ 개 지표)를 계산하고 엑셀 파일(`MTF_Full_Indicators.xlsx`)을 즉시 받고 싶을 때**:
-- **Windows 사용자:** 폴더 안의 **`run_engine.bat`** 파일을 찾아 마우스로 **더블클릭**합니다.
-- **Mac / Linux 사용자:** `./run_engine.sh`를 실행하거나 더블클릭합니다.
-> **자동 실행 과정:**  
-> 1. `Data/` 폴더 안의 마스터 데이터를 자동 감지하여 수 초 만에 모든 서베이 가중치 지표를 계산합니다.  
-> 2. 콘솔 화면에 전국/도시/농촌 접근율 핵심 요약 대시보드를 출력합니다.  
-> 3. `Output/MTF_Full_Indicators.xlsx` (11개 전체 시트 엑셀 파일: 지표 카탈로그 포함)과 `Output/mtf_report_values.json` (370+ 개 토큰)을 저장하고, 결과물 폴더(`Output/`)를 자동으로 열어줍니다!
-> 4. 만약 실행 중 오류가 발생하면, 자동으로 진단 로그(`mtf_error_report.txt`)를 작성하고 Bryan Koo에게 전송할 이메일 작성 창을 띄워줍니다.
+### [Step 3] Install Python (Skip if Python 3.10+ is already installed)
+1. Go to the [Official Python Download Page](https://www.python.org/downloads/) and click **[Download Python]**.
+2. Run the downloaded installer.
+3. ⚠️ **Critical Checkpoint (Must Follow):**
+   - On the very first installer screen, you **MUST check the box**:  
+     **`[v] Add python.exe to PATH`**
+   - Click **`[Install Now]`** to complete installation in about 1 minute.
 
 ---
 
-### [방법 B] JupyterLab 대화형 노트북 분석기
-웹 브라우저에서 직접 데이터를 탐색하고 필터링하거나 정책 시뮬레이션을 돌려보고 싶을 때:
-- **Windows 사용자:** **`run_mtf_local.bat`** 파일을 **더블클릭**합니다.
-- **Mac / Linux 사용자:** `./run_mtf_local.sh`를 실행합니다.
-- 메뉴 번호가 나오면 **Enter** (기본값: `[1]`)를 누릅니다:
-  - `[1]`: JupyterLab 브라우저 실행
-  - `[2]`: 1-Click 초고속 분석 엔진 실행
-  - `[3]`: 1-Click 오류 진단 및 지원 요청 (Report to Bryan Koo)
-  - `[4]`: GitHub 최신 도구 및 패치 업데이트
+## ⚡ 3. 1-Click Launch & Execution (Two Simple Workflows)
 
-> ⚠️ **JupyterLab 브라우저 화면에서의 필수 주의사항:**  
-> - 브라우저 탭 상단에서 반드시 **`MTF_Interactive_Analyzer.ipynb`** (주황색 책 모양 아이콘) 탭을 선택하고 작업하세요!  
-> - 좌측 파일 목록의 **`mtf_engine.py`는 내부 계산 스크립트 텍스트 파일이므로 더블클릭해 열지 마세요** (열면 '셀'이 없어 상단 Run 버튼이 회색으로 비활성화됩니다).
+No terminal commands or programming knowledge are required. Simply double-click with your mouse.
 
-### [노트북 6대 모듈 안내]
-노트북에서 실행할 셀을 마우스로 클릭하고 **`Shift + Enter`** (또는 상단 `▶ Run` 버튼)를 누르며 실행합니다:
-1. **모듈 1 (교차분석 & 세분화):** 가구주 성별, 소득 5분위, 도시/농촌별 MTF 전력 접근율(Tier 1+)과 청정 취사 보급률(MECS) 표/그래프 생성.
-2. **모듈 2 (취약계층 타겟팅 필터):** 전력망 바로 밑 비연결 가구(Under-the-Grid Deficit) 및 취사 스태킹 가구 비율 도출.
-3. **모듈 3 (정책 시나리오 시뮬레이터):** 전기 요금 인상율(-30% ~ +50%)에 따른 소득 1분위 빈곤층의 전기 지불부담률 및 여력 변화 시각화.
-4. **모듈 4 (1-클릭 전체 지표 & 엑셀/JSON 출력):** 노트북 내에서 `mtf_engine`을 바로 호출하여 11개 시트, 370+ 개 지표를 한 번에 계산하고 `MTF_Full_Indicators.xlsx`와 `mtf_report_values.json`을 자동 저장.
-5. **모듈 5 (커스텀 교차분석 엑셀 저장):** 모듈 1~3의 사용자 맞춤형 분석 표를 `MTF_Interactive_Analysis_Output.xlsx`로 저장.
-6. **모듈 6 (1-클릭 시스템 진단 & 지원 요청):** 실행 중 문제가 있거나 질문이 있을 때 실행하면 즉시 `mtf_error_report.txt`를 생성하고 Outlook 메일 창을 자동 호출.
+### [Workflow A] 1-Click Fast Production Engine (Recommended! ⭐)
+If you want to calculate all 370+ MTF indicators (matching Stata 100% across 11 sheets) and instantly obtain `Output/MTF_Full_Indicators.xlsx`:
+- **Windows Users:** Double-click **`run_engine.bat`**.
+- **Mac / Linux Users:** Double-click or execute **`./run_engine.sh`**.
+
+> **What happens automatically:**  
+> 1. Automatically detects your master dataset in `Data/` and calculates all survey-weighted indicators in seconds.  
+> 2. Displays an executive summary dashboard (National, Urban, Rural) directly in the console window.  
+> 3. Saves `Output/MTF_Full_Indicators.xlsx` (11 comprehensive sheets including the `Indicator_Catalog`) and `Output/mtf_report_values.json` (370+ calibrated tokens).  
+> 4. Automatically opens the `Output/` folder in File Explorer!  
+> 5. If any error occurs, it automatically captures the diagnostic traceback into `mtf_error_report.txt` and opens your email composer pre-addressed to Bryan Koo.
 
 ---
 
-## 🔄 4. 지속적인 업데이트 및 최신 패치 받기 (1-클릭)
+### [Workflow B] JupyterLab Interactive Browser Notebook
+If you want to interactively explore data, apply custom demographic filters, or simulate electricity tariff shocks:
+- **Windows Users:** Double-click **`run_mtf_local.bat`**.
+- **Mac / Linux Users:** Run **`./run_mtf_local.sh`**.
+- A menu will prompt you to choose an option (press **Enter** for default `[1]`):
+  - `[1]`: Launch JupyterLab Interactive Notebook
+  - `[2]`: 1-Click Fast Production Engine (Excel & JSON)
+  - `[3]`: 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
+  - `[4]`: Update Tools & Apply Latest GitHub Patches
 
-파이프라인이나 주피터 노트북에 새로운 기능이 추가되거나 버그가 수정되었을 때, Git을 몰라도 클릭 한 번으로 최신 코드를 반영할 수 있습니다.
+> ⚠️ **Important UI Tip in JupyterLab:**  
+> - When your browser opens, look at the tabs: **Always work inside `MTF_Interactive_Analyzer.ipynb`** (orange notebook icon with interactive cells)!  
+> - Do NOT double-click `.py` files (such as `mtf_engine.py`) in the file sidebar — `.py` files are backend computation scripts without notebook cells, causing the `▶ Run` button to be greyed out.
 
-- **업데이트 방법:**
-  - 폴더 안의 **`update_mtf.bat`** (Windows) 또는 **`update_mtf.sh`** (Mac/Linux) 파일을 마우스로 **더블클릭**합니다.
-- **작동 원리 및 안전성:**
-  - 자동으로 GitHub에서 최신 분석 도구와 노트북만 안전하게 내려받아 갱신합니다.
-  - 여러분이 로컬에 넣어둔 **서베이 데이터(`Data/`)와 생성한 분석 결과물(`Output/`)은 절대 건드리지 않고 100% 안전하게 보존**됩니다.
-
----
-
-## 🩺 5. 에러 발생 시 원클릭 해결 시스템 (Frictionless Error Reporter)
-
-작업 도중 오류가 발생하거나 원하는 결과가 나오지 않을 때는 복잡한 질문이나 기술적 설명 없이 **마우스 클릭 한 번으로 해결**하실 수 있습니다:
-
-### [방법 1] 원클릭 전용 오류 보고 파일 실행 (가장 간편! ⭐)
-- **Windows:** **`report_error.bat`**을 더블클릭합니다.
-- **Mac / Linux:** `./report_error.sh`를 실행합니다.
-- **자동 진행:**
-  1. 시스템 환경(OS, 파이썬 버전, 필수 라이브러리) 및 데이터 폴더(`Data/`) 내 마스터 파일 정합성을 자동으로 진단하여 **`mtf_error_report.txt`**를 생성합니다.
-  2. 여러분 PC의 기본 이메일 프로그램(Outlook 등)이 자동으로 실행되며, 받는 사람(`bkoo@worldbankgroup.org`), 메일 제목, 요약 본문이 자동으로 채워집니다.
-  3. 폴더에 생성된 `mtf_error_report.txt` 파일을 메일에 첨부하신 후 **[전송]**만 누르시면 Bryan Koo에게 즉시 접수됩니다!
-
-### [방법 2] 엔진 실행 중 에러 시 자동 팝업
-- `run_engine.bat` 실행 중 예기치 못한 에러로 중단될 경우, 엔진이 스스로 오류 트레이스백과 환경을 캡처하여 즉시 `mtf_error_report.txt`를 작성하고 이메일 창을 띄워줍니다.
-
-### [방법 3] 주피터 노트북 모듈 6 실행
-- 노트북 환경에서 작업 중 에러가 발생하면 맨 아래 **`모듈 6: 1-Click System Diagnostics & Support Dispatcher`** 셀을 실행하세요. 위와 동일하게 이메일 창이 자동으로 열립니다.
+### [Overview of the 6 Analytical Modules]
+Click any cell in `MTF_Interactive_Analyzer.ipynb` and press **`Shift + Enter`** (or click the top **`▶ Run`** button) to execute:
+1. **Module 1 (Crosstabs & Disaggregation):** Access rates and Multi-Tier distributions across Urban/Rural, Gender of Household Head, and Consumption Quintiles (Q1–Q5).
+2. **Module 2 (Vulnerability & Deficit Targeting):** Profiles Under-the-Grid unconnected deficit households and clean cooking biomass-stacking dilution.
+3. **Module 3 (Policy Scenario Simulator):** Simulates electricity tariff adjustments (-30% to +50%) and measures lifeline basic bundle affordability for the poorest quintile.
+4. **Module 4 (1-Click Full MTF Indicators & Export):** Invokes `mtf_engine` directly inside the notebook to generate the full 11-sheet Excel and calibrated JSON files.
+5. **Module 5 (Ad-Hoc Custom Tables Export):** Exports custom cross-tabulation tables to `MTF_Interactive_Analysis_Output.xlsx`.
+6. **Module 6 (1-Click Diagnostics & Support Dispatcher):** Instantly audits your environment, creates `mtf_error_report.txt`, and opens an email draft to Bryan Koo.
 
 ---
 
-## 💡 6. 자주 묻는 질문 (FAQ)
+## 🔄 4. 1-Click Updates & Maintenance
 
-- **Q. 분석을 마치고 종료하려면 어떻게 하나요?**
-  - 브라우저 탭을 닫으시고, 처음에 열렸던 검은색 콘솔 창을 닫으시면 완전히 종료됩니다.
-- **Q. 인터넷이 안 되는 비행기나 현장 출장지에서도 작동하나요?**
-  - 네! 최초 1회 실행 시 라이브러리 설치가 완료되면, 이후에는 **인터넷 연결이 전혀 없는 완전한 오프라인 상태에서도 100% 정상 작동**합니다. (업데이트를 받을 때만 일시적으로 인터넷이 필요합니다.)
+When new features or bug fixes are published to GitHub, you can update without using Git:
+- **How to Update:**
+  - Double-click **`update_mtf.bat`** (Windows) or run **`./update_mtf.sh`** (Mac/Linux).
+- **Safety Guarantee:**
+  - The updater only refreshes tool scripts and notebooks.
+  - Your local **survey datasets (`Data/`) and generated outputs (`Output/`) are 100% safe and will NEVER be overwritten**.
+
+---
+
+## 🩺 5. 1-Click Frictionless Error Reporting System
+
+If you encounter any crash, missing variable warning, or unexpected behavior, you can report it in exactly **1 click**:
+
+### [Method 1] Dedicated 1-Click Error Reporter (Easiest! ⭐)
+- **Windows:** Double-click **`report_error.bat`**.
+- **Mac / Linux:** Run **`./report_error.sh`**.
+- **Automated Workflow:**
+  1. The script audits your system environment, Python version, required packages, and `Data/` folder integrity, writing **`mtf_error_report.txt`**.
+  2. Your default email client (Outlook, Mail) automatically opens pre-filled with:
+     - **To:** `bkoo@worldbankgroup.org` (Bryan Koo)
+     - **Subject:** `[ESMAP MTF Support] Diagnostic Report from <Host/User>`
+     - **Body:** Pre-populated diagnostic summary.
+  3. Simply attach the generated `mtf_error_report.txt` file and click **[Send]**!
+
+### [Method 2] Automated Crash Interceptor
+- If `run_engine.bat` stops due to an error, it will automatically catch the traceback, generate `mtf_error_report.txt`, and launch the email composer for you.
+
+### [Method 3] JupyterLab Module 6
+- If working inside the notebook, run **`Module 6: 1-Click System Diagnostics & Support Dispatcher`** to trigger the same automated diagnostic report and email draft.
+
+---
+
+## 💡 6. Frequently Asked Questions (FAQ)
+
+- **Q. How do I shut down the tools after finishing my work?**
+  - Simply close your web browser tab and close the black terminal/console window.
+- **Q. Can I use this completely offline on flights or field missions?**
+  - Yes! After the one-time initial library setup (~1 minute), the suite runs **100% offline on `localhost` without requiring any internet connection**. (Internet is only needed when clicking `update_mtf.bat` to pull updates.)
+- **Q. Is my survey data safe?**
+  - Yes. No survey microdata ever leaves your PC. Only technical diagnostic logs (`mtf_error_report.txt`) are shared when you request technical support.

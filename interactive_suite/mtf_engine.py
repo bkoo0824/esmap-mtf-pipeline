@@ -703,8 +703,8 @@ if __name__ == "__main__":
             print(f"✓ Saved error report bundle: {report_file.name}")
             print(f"[*] Opening email draft to Bryan Koo ({SUPPORT_EMAIL})...")
             launch_email_client(report_file, error_snippet=str(e))
-            print(f"\n📧 Bryan Koo ({SUPPORT_EMAIL})에게 전달할 메일 창이 열렸습니다.")
-            print(f"   폴더의 '{report_file.name}' 파일을 첨부하여 전송해 주세요!")
+            print(f"\n📧 An email draft addressed to Bryan Koo ({SUPPORT_EMAIL}) has opened.")
+            print(f"   Please attach '{report_file.name}' to the email and click Send!")
         except Exception as err_report:
             print(f"⚠️ Could not auto-dispatch error report: {err_report}")
         sys.exit(1)

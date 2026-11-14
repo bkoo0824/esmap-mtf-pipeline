@@ -180,13 +180,13 @@ def main():
 
     print("=" * 70)
     if opened:
-        print("📧 이메일 작성 창(Outlook/기본 메일)이 자동으로 열렸습니다!")
-        print(f"   1. 받는 사람: {SUPPORT_EMAIL}")
-        print(f"   2. 생성된 '{report_file.name}' 파일을 메일에 첨부해 주세요.")
-        print("   3. [전송]을 누르시면 Bryan Koo에게 즉시 전달됩니다.")
+        print("📧 An email composer (Outlook / Default Mail) has automatically opened!")
+        print(f"   1. To: {SUPPORT_EMAIL}")
+        print(f"   2. Please attach '{report_file.name}' to the email.")
+        print("   3. Click [Send] to submit the diagnostic report directly to Bryan Koo.")
     else:
-        print(f"📧 이메일 작성을 위해 '{report_file.name}' 파일을 첨부하여")
-        print(f"   {SUPPORT_EMAIL} (Bryan Koo)에게 메일 또는 Teams로 전달해 주세요!")
+        print(f"📧 Please attach '{report_file.name}' to an email and send it to:")
+        print(f"   {SUPPORT_EMAIL} (Bryan Koo) via Outlook or MS Teams.")
     print("=" * 70 + "\n")
 
 

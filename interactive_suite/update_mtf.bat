@@ -19,7 +19,7 @@ if exist ".venv\Scripts\python.exe" (
 
 echo.
 echo ===============================================================================
-echo  업데이트가 완료되었습니다. 아무 키나 누르시면 창이 닫힙니다.
+echo  Update complete! Press any key to close this window.
 echo ===============================================================================
 pause >nul
 exit /b 0
