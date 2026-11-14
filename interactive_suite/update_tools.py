@@ -78,7 +78,7 @@ def update():
             print("  🔒 Confidential Data/ files and custom outputs were fully preserved.")
     except Exception as e:
         print(f"\n[ERROR] Update failed: {e}")
-        print("Please check your internet connection or contact Bryan Koo (bkoo@worldbank.org).")
+        print("Please check your internet connection or contact Bryan Koo (bkoo@worldbankgroup.org).")
 
     print("=" * 65)
 

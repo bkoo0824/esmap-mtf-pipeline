@@ -4,7 +4,7 @@
 **World Bank Group | Energy Sector Management Assistance Program (ESMAP)**  
 *Global Survey & Access Analytics Team*  
 **Repository:** [https://github.com/bkoo0824/esmap-mtf-pipeline](https://github.com/bkoo0824/esmap-mtf-pipeline)  
-**Lead Contact:** Bryan Koo, Senior Energy Specialist ([bkoo@worldbank.org](mailto:bkoo@worldbank.org))
+**Lead Contact:** Bryan Koo, Senior Energy Specialist ([bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org))
 
 ---
 
@@ -93,7 +93,7 @@ When **`MTF_Interactive_Analyzer.ipynb`** opens in JupyterLab, run cells sequent
 ### Step 6: Ongoing Updates & Maintenance
 - **Updating the Tools:** When new analytical modules or patches are released on GitHub, double-click **`update_mtf.bat`** (Windows) or **`update_mtf.sh`** (Mac/Linux).  
   *Your local `Data/` folder and custom output files are 100% safe and will never be overwritten.*
-- **Technical Support:** Email your `mtf_diagnostic_report.txt` and a screenshot to **Bryan Koo** ([bkoo@worldbank.org](mailto:bkoo@worldbank.org)).
+- **Technical Support:** Email your `mtf_diagnostic_report.txt` and a screenshot to **Bryan Koo** ([bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org)).
 
 ---
 
@@ -209,4 +209,4 @@ Yes. After the one-time initial package setup (~30 seconds), the local environme
 No. The repository enforces a strict `.gitignore` policy that blocks all `.dta`, `.xlsx`, and raw survey directories. GitHub hosts open-source code only. Microdata remains securely stored on institutional World Bank drives and local air-gapped disks.
 
 **Q3: What should I do if an error occurs in the interactive analyzer?**  
-Scroll to **Module 5** at the bottom of `MTF_Interactive_Analyzer.ipynb` and run the cell. Attach the generated `mtf_diagnostic_report.txt` file to an email and send it to [bkoo@worldbank.org](mailto:bkoo@worldbank.org) for instant technical support.
+Scroll to **Module 5** at the bottom of `MTF_Interactive_Analyzer.ipynb` and run the cell. Attach the generated `mtf_diagnostic_report.txt` file to an email and send it to [bkoo@worldbankgroup.org](mailto:bkoo@worldbankgroup.org) for instant technical support.

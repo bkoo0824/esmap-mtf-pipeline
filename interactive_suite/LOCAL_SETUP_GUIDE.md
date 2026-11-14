@@ -80,7 +80,7 @@
 1. 노트북 맨 아래의 **`모듈 5: 1-Click System Diagnostics & Support Log`** 셀을 실행합니다.
 2. 폴더 안에 **`mtf_diagnostic_report.txt`** 파일이 자동으로 생성됩니다.
    - 이 파일에는 여러분의 파이썬 환경, 패키지 설치 상태, 데이터 파일 인식 여부 등이 안전하게 기록됩니다.
-3. 생성된 `mtf_diagnostic_report.txt` 파일과 오류 화면 캡처를 첨부하여 **Bryan Koo (bkoo@worldbank.org)**에게 이메일이나 메신저로 전달해 주시면 즉각 분석하여 패치(`update_mtf.bat`에 반영)해 드립니다.
+3. 생성된 `mtf_diagnostic_report.txt` 파일과 오류 화면 캡처를 첨부하여 **Bryan Koo (bkoo@worldbankgroup.org)**에게 이메일이나 메신저로 전달해 주시면 즉각 분석하여 패치(`update_mtf.bat`에 반영)해 드립니다.
 
 ---
 
