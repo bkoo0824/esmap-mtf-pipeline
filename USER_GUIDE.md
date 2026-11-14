@@ -62,17 +62,31 @@ The ESMAP MTF analytical architecture operates on a strict **Two-Track Confident
      **`[v] Add python.exe to PATH`**
    - Click **`[Install Now]`**.
 
-### Step 4: 1-Click Launch (Zero Terminal Commands)
-- **Windows Users:**  
-  Open the `interactive_suite/` folder and **double-click `run_mtf_local.bat`**.
-- **Mac / Linux / Chromebook (Linux Mode) Users:**  
-  Open the `interactive_suite/` folder and double-click or run `./run_mtf_local.sh`.
+### Step 4: 1-Click Launch (Zero Terminal Commands & Zero Coding)
 
+Choose the workflow that best fits your immediate need:
+
+#### Option A: 1-Click Production Engine (Fastest & Zero Coding - Recommended)
+If you want to calculate all 86+ MTF indicators and export both the formatted Excel workbook (`MTF_Full_Indicators.xlsx`) and the report token file (`mtf_report_values.json`) without opening a browser or writing code:
+- **Windows Users:** Double-click **`run_engine.bat`**.
+- **Mac / Linux Users:** Double-click or run **`./run_engine.sh`**.
 > **What happens automatically:**  
-> The launcher configures an isolated local virtual environment (`.venv`), installs all required analytical libraries (`pandas`, `matplotlib`, `jupyterlab`), and launches your default browser (Chrome/Edge) loading the interactive notebook on `localhost`.
+> The script auto-discovers your dataset in `Data/`, computes all survey-weighted indicators in 3 seconds, displays an executive summary table in the console, saves `Output/MTF_Full_Indicators.xlsx` and `Output/mtf_report_values.json`, and automatically opens the `Output/` folder!
+
+#### Option B: Interactive Browser Notebook (JupyterLab)
+If you want to interactively explore data, run customized crosstabs, or simulate tariff policies:
+- **Windows Users:** Double-click **`run_mtf_local.bat`**.
+- **Mac / Linux Users:** Double-click or run **`./run_mtf_local.sh`**.
+- An interactive menu appears: press **Enter** (default: `[1]`) to launch JupyterLab in your browser.
+
+> ⚠️ **Important UI Tip in JupyterLab:**  
+> When the browser opens, look at the tabs: **Always work inside `MTF_Interactive_Analyzer.ipynb`** (orange notebook icon with cells).  
+> *Do NOT open `.py` files (like `mtf_engine.py`) in JupyterLab — `.py` files are internal engine scripts without interactive cells, so the `Run` menu will appear disabled (greyed out).*
+
+---
 
 ### Step 5: Explore, Simulate & Export in Your Browser
-When **`MTF_Interactive_Analyzer.ipynb`** opens in JupyterLab, run cells sequentially using **`Shift + Enter`** or the top **`▶ Run`** button:
+When **`MTF_Interactive_Analyzer.ipynb`** is active, click any cell and press **`Shift + Enter`** (or click the top **`▶ Run`** button) to run:
 
 1. **Module 1: Disaggregations & Multi-Tier Metrics**
    - Survey-weighted MTF electricity access rates (Tier 1+ vs. Tier 0) and MECS clean cooking rates.
@@ -83,10 +97,14 @@ When **`MTF_Interactive_Analyzer.ipynb`** opens in JupyterLab, run cells sequent
 3. **Module 3: Policy Scenario & Tariff Shock Simulator**
    - Dynamically models the impact of electricity tariff adjustments (-30% to +50%) against national lifeline benchmarks (e.g., EAGB social tariff @ 128 XOF/kWh).
    - Evaluates basic electricity bundle affordability (365 kWh/year) for the poorest 20% (Quintile 1).
-4. **Module 4: One-Click Excel Export Suite**
-   - Exports all cross-tabulations and simulation matrices directly to a styled, formatted Excel workbook:  
-     📁 `interactive_suite/MTF_Interactive_Analysis_Output.xlsx`
-5. **Module 5: 1-Click Diagnostics & Remote Support**
+4. **Module 4: 1-Click Production Engine & Full Export (`mtf_engine`)**
+   - Runs the complete vectorized calculation engine right inside the notebook.
+   - Displays headline findings and automatically exports:
+     - 📁 `Output/MTF_Full_Indicators.xlsx` (5-sheet Excel matrix: Headline, Electricity Tiers, Cooking Tiers, WTP, All Indicators)
+     - 📁 `Output/mtf_report_values.json` (340+ calibrated scalar tokens for Word report injection)
+5. **Module 5: Ad-hoc Custom Tables Export**
+   - Exports custom cross-tabulations and simulation matrices directly to `MTF_Interactive_Analysis_Output.xlsx`.
+6. **Module 6: 1-Click Diagnostics & Remote Support**
    - If you encounter any unexpected error, execute this cell.
    - Generates an instant diagnostic log (`mtf_diagnostic_report.txt`) recording your environment, data file sizes, and variable integrity for one-click email support.
 

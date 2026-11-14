@@ -245,19 +245,126 @@ class MTFEngine:
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with open(out_p, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
-        print(f"✓ Saved {len(self.results)} Python-computed MTF indicators to: {out_p}")
+        print(f"✓ Saved {len(self.results)} Python-computed MTF indicators to JSON: {out_p}")
+
+    def export_excel(self, output_excel_path: str):
+        """Exports calibrated indicators into a multi-tab formatted Excel report."""
+        out_p = Path(output_excel_path)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+
+        headlines = [
+            {"Indicator": "Electricity Access (Tier 1+)", "National (%)": self.results.get("{{ELEC_ACC_NAT}}", "N/A"), "Urban (%)": self.results.get("{{ELEC_ACC_URB}}", "N/A"), "Rural (%)": self.results.get("{{ELEC_ACC_RUR}}", "N/A")},
+            {"Indicator": "High-Tier Electricity (Tier 4-5)", "National (%)": self.results.get("{{ELEC_T45_NAT}}", "N/A"), "Urban (%)": self.results.get("{{ELEC_T45_URB}}", "N/A"), "Rural (%)": self.results.get("{{ELEC_T45_RUR}}", "N/A")},
+            {"Indicator": "National Grid Access", "National (%)": self.results.get("{{GRID_ACC_NAT}}", "N/A"), "Urban (%)": self.results.get("{{GRID_ACC_URB}}", "N/A"), "Rural (%)": self.results.get("{{GRID_ACC_RUR}}", "N/A")},
+            {"Indicator": "Off-Grid Solar Access", "National (%)": self.results.get("{{SOLAR_ACC_NAT}}", "N/A"), "Urban (%)": self.results.get("{{SOLAR_ACC_URB}}", "N/A"), "Rural (%)": self.results.get("{{SOLAR_ACC_RUR}}", "N/A")},
+            {"Indicator": "Modern Clean Cooking (MECS Tier 4+)", "National (%)": self.results.get("{{COOK_MECS_NAT}}", "N/A"), "Urban (%)": self.results.get("{{COOK_MECS_URB}}", "N/A"), "Rural (%)": self.results.get("{{COOK_MECS_RUR}}", "N/A")},
+            {"Indicator": "Under-the-Grid Access Coverage", "National (%)": self.results.get("{{UNDER_THE_GRID_NAT}}", "N/A"), "Urban (%)": self.results.get("{{UNDER_THE_GRID_URB}}", "N/A"), "Rural (%)": self.results.get("{{UNDER_THE_GRID_RUR}}", "N/A")},
+            {"Indicator": "Grid Uptake Rate (under grid)", "National (%)": self.results.get("{{GRID_UPTAKE_NAT}}", "N/A"), "Urban (%)": self.results.get("{{GRID_UPTAKE_URB}}", "N/A"), "Rural (%)": self.results.get("{{GRID_UPTAKE_RUR}}", "N/A")},
+            {"Indicator": "Under-the-Grid Deficit Rate", "National (%)": self.results.get("{{DEFICIT_RATE_NAT}}", "N/A"), "Urban (%)": self.results.get("{{DEFICIT_RATE_URB}}", "N/A"), "Rural (%)": self.results.get("{{DEFICIT_RATE_RUR}}", "N/A")},
+        ]
+
+        elec_tiers = [
+            {"Tier": f"Tier {t}", "National (%)": self.results.get(f"{{{{ELEC_T{t}_NAT}}}}", "N/A"), "Urban (%)": self.results.get(f"{{{{ELEC_T{t}_URB}}}}", "N/A"), "Rural (%)": self.results.get(f"{{{{ELEC_T{t}_RUR}}}}", "N/A")}
+            for t in range(6)
+        ]
+
+        cook_tiers = [
+            {"Tier": f"Tier {t}", "National (%)": self.results.get(f"{{{{COOK_T{t}_NAT}}}}", "N/A"), "Urban (%)": self.results.get(f"{{{{COOK_T{t}_URB}}}}", "N/A"), "Rural (%)": self.results.get(f"{{{{COOK_T{t}_RUR}}}}", "N/A")}
+            for t in range(6)
+        ]
+
+        wtp_rows = [
+            {"Financing Scenario": "Upfront Cash Payment (100%)", "Willingness to Pay (%)": self.results.get("{{WTP_GRID_UPFRONT}}", "N/A")},
+            {"Financing Scenario": "3-Month Installments", "Willingness to Pay (%)": self.results.get("{{WTP_GRID_3M}}", "N/A")},
+            {"Financing Scenario": "6-Month Installments", "Willingness to Pay (%)": self.results.get("{{WTP_GRID_6M}}", "N/A")},
+            {"Financing Scenario": "12-Month Installments", "Willingness to Pay (%)": self.results.get("{{WTP_GRID_12M}}", "N/A")},
+        ]
+
+        all_rows = [{"Token": k, "Calibrated Value": v} for k, v in self.results.items()]
+
+        with pd.ExcelWriter(out_p, engine="openpyxl") as writer:
+            pd.DataFrame(headlines).to_excel(writer, sheet_name="Headline_Access", index=False)
+            pd.DataFrame(elec_tiers).to_excel(writer, sheet_name="Electricity_Tiers", index=False)
+            pd.DataFrame(cook_tiers).to_excel(writer, sheet_name="Cooking_Tiers", index=False)
+            pd.DataFrame(wtp_rows).to_excel(writer, sheet_name="WTP_Demand", index=False)
+            pd.DataFrame(all_rows).to_excel(writer, sheet_name="All_86_Indicators", index=False)
+
+        print(f"✓ Saved full MTF analytical matrix to Excel: {out_p}")
+
+    def print_dashboard(self):
+        """Prints a clean, formatted ASCII headline dashboard."""
+        print("\n" + "=" * 74)
+        print("    WORLD BANK ESMAP MULTI-TIER FRAMEWORK (MTF) HEADLINE RESULTS")
+        print("=" * 74)
+        print(f" Dataset: {self.data_path.name}")
+        print(f" Sample:  {len(self.df):,} households across {len(self.df.columns):,} survey variables")
+        print("-" * 74)
+        print(" 📊 HEADLINE ELECTRIFICATION ACCESS:")
+        print(f"   • Tier 1+ Access:    National: {self.results.get('{{ELEC_ACC_NAT}}', 'N/A')}%  |  Urban: {self.results.get('{{ELEC_ACC_URB}}', 'N/A')}%  |  Rural: {self.results.get('{{ELEC_ACC_RUR}}', 'N/A')}%")
+        print(f"   • High-Tier (4-5):   National: {self.results.get('{{ELEC_T45_NAT}}', 'N/A')}%  |  Urban: {self.results.get('{{ELEC_T45_URB}}', 'N/A')}%  |  Rural: {self.results.get('{{ELEC_T45_RUR}}', 'N/A')}%")
+        print(f"   • National Grid:     National: {self.results.get('{{GRID_ACC_NAT}}', 'N/A')}%  |  Urban: {self.results.get('{{GRID_ACC_URB}}', 'N/A')}%  |  Rural: {self.results.get('{{GRID_ACC_RUR}}', 'N/A')}%")
+        print(f"   • Off-Grid Solar:    National: {self.results.get('{{SOLAR_ACC_NAT}}', 'N/A')}%  |  Urban: {self.results.get('{{SOLAR_ACC_URB}}', 'N/A')}%  |  Rural: {self.results.get('{{SOLAR_ACC_RUR}}', 'N/A')}%")
+        print("-" * 74)
+        print(" 🍳 HEADLINE CLEAN COOKING ACCESS (MECS):")
+        print(f"   • Tier 4+ Access:    National: {self.results.get('{{COOK_MECS_NAT}}', 'N/A')}%  |  Urban: {self.results.get('{{COOK_MECS_URB}}', 'N/A')}%  |  Rural: {self.results.get('{{COOK_MECS_RUR}}', 'N/A')}%")
+        if "{{UNDER_THE_GRID_NAT}}" in self.results:
+            print("-" * 74)
+            print(" 🌐 UNDER-THE-GRID ACCESS & DEFICIT DYNAMICS:")
+            print(f"   • Under-Grid Pass:   National: {self.results.get('{{UNDER_THE_GRID_NAT}}', 'N/A')}%")
+            print(f"   • Grid Uptake Rate:  National: {self.results.get('{{GRID_UPTAKE_NAT}}', 'N/A')}%  (Unconnected Deficit: {self.results.get('{{DEFICIT_RATE_NAT}}', 'N/A')}%)")
+        print("=" * 74 + "\n")
+
+
+def find_default_dataset() -> Optional[Path]:
+    """Auto-detects the compiled MTF Master dataset across standard project folders."""
+    candidates = [
+        Path("Data/MTF_2024_HH_Guinea-Bissau_Master.dta"),
+        Path("Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
+        Path("./MTF_2024_HH_Guinea-Bissau_Master.dta"),
+        Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+
+    for search_dir in [Path("Data"), Path("Data/wip_hh"), Path(".")]:
+        if search_dir.exists():
+            for dta_f in search_dir.glob("*.dta"):
+                if "master" in dta_f.name.lower():
+                    return dta_f
+
+    for search_dir in [Path("Data"), Path(".")]:
+        if search_dir.exists():
+            dtas = list(search_dir.glob("*.dta"))
+            if dtas:
+                return dtas[0]
+
+    return None
 
 
 def main():
     parser = argparse.ArgumentParser(description="MTF Python Open-Source Analytical Calculation Engine.")
-    parser.add_argument("--data-path", required=True, help="Path to master .dta or .csv dataset.")
+    parser.add_argument("--data-path", help="Path to master .dta or .csv dataset. (Auto-detected if omitted)")
     parser.add_argument("--tools-dir", help="Path to Tools/ directory containing calibration assets.")
-    parser.add_argument("--output", required=True, help="Path to output JSON file.")
+    parser.add_argument("--output", default="Output/mtf_report_values.json", help="Path to output JSON file.")
+    parser.add_argument("--output-excel", default="Output/MTF_Full_Indicators.xlsx", help="Path to output Excel file.")
     args = parser.parse_args()
 
-    engine = MTFEngine(args.data_path, args.tools_dir)
+    data_file = args.data_path
+    if not data_file:
+        found = find_default_dataset()
+        if found:
+            data_file = str(found)
+        else:
+            print("❌ [ERROR] Could not automatically locate MTF Master dataset.")
+            print("   Please place MTF_2024_HH_*_Master.dta inside the 'Data/' folder or specify --data-path.")
+            sys.exit(1)
+
+    engine = MTFEngine(data_file, args.tools_dir)
     engine.compute_all()
+    engine.print_dashboard()
     engine.export_json(args.output)
+    engine.export_excel(args.output_excel)
 
 
 if __name__ == "__main__":
