@@ -582,7 +582,11 @@ class MTFMasterBuilder:
         df["exp_pc_yr"] = df["exp_total_yr"] / df["hhsize"].clip(lower=1)
 
         # Generate Population-Weighted Quintiles matching Stata xtile
-        df["hh_exp_quintile"] = self._compute_weighted_quintiles(df["exp_total_yr"], df["pop_wt"])
+        # Primary: Per capita annual expenditure with population weights (World Bank / LSMS standard)
+        df["hh_exp_quintile"] = self._compute_weighted_quintiles(df["exp_pc_yr"], df["pop_wt"])
+
+        # Audit reference: Household-level total expenditure with household weights
+        df["hh_exp_quintile_hhlevel"] = self._compute_weighted_quintiles(df["exp_total_yr"], df["hh_wt"])
         return df
 
     @staticmethod
@@ -747,12 +751,33 @@ class MTFMasterBuilder:
                 owns["has_fridge"] = aid.isin([10, 17]).astype(int)
                 owns["has_fan"] = (aid == 9).astype(int)
                 owns["has_tv"] = aid.isin([30, 31, 32]).astype(int)
+                owns["has_charger"] = aid.isin([28, 29]).astype(int)
+                owns["has_radio"] = aid.isin([6, 7]).astype(int)
+                owns["has_iron"] = (aid == 13).astype(int)
+                owns["has_micro"] = (aid == 11).astype(int)
+                owns["has_wash"] = (aid == 18).astype(int)
+                owns["has_ac"] = (aid == 22).astype(int)
+                owns["has_geyser"] = aid.isin([24, 25]).astype(int)
+                owns["has_torch"] = (aid == 5).astype(int)
+
+                for a in range(1, 43):
+                    owns[f"app_own_{a}"] = (aid == a).astype(int)
 
                 app_agg = owns.groupby("interview__id").max().reset_index()
-                cols_app = ["interview__id", "is_verylow", "is_low", "is_med", "is_high", "is_veryhigh", "has_lights", "has_fridge", "has_fan", "has_tv"]
+                app_vars = [
+                    "is_verylow", "is_low", "is_med", "is_high", "is_veryhigh",
+                    "has_lights", "has_fridge", "has_fan", "has_tv",
+                    "has_charger", "has_radio", "has_iron", "has_micro", "has_wash", "has_ac", "has_geyser", "has_torch"
+                ] + [f"app_own_{a}" for a in range(1, 43)]
+                cols_app = ["interview__id"] + [c for c in app_vars if c in owns.columns]
                 df = df.merge(app_agg[cols_app], on="interview__id", how="left")
 
-        for c in ["is_verylow", "is_low", "is_med", "is_high", "is_veryhigh", "has_lights", "has_fridge", "has_fan", "has_tv"]:
+        app_fill_vars = [
+            "is_verylow", "is_low", "is_med", "is_high", "is_veryhigh",
+            "has_lights", "has_fridge", "has_fan", "has_tv",
+            "has_charger", "has_radio", "has_iron", "has_micro", "has_wash", "has_ac", "has_geyser", "has_torch"
+        ] + [f"app_own_{a}" for a in range(1, 43)]
+        for c in app_fill_vars:
             if c in df.columns:
                 df[c] = df[c].fillna(0).astype(int)
 
@@ -1310,6 +1335,18 @@ class MTFMasterBuilder:
         df["wtp_grid_waived"] = np.where(d_valid, ((df["wtp_grid_12m"] == 1) | (q_d7 == 1)).astype(float), np.nan)
         df["wtp_grid_never"] = np.where((df["grid_hh"] == 0) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
+        # Grid WTP by Randomized Price Point
+        df = df.copy()
+        rand_pct = df.get("random_percentage", pd.Series(np.nan, index=df.index))
+        for pct_val, p_code in [(0.14, "14"), (0.29, "29"), (0.43, "43"), (0.57, "57"), (0.71, "71"), (1.00, "100")]:
+            mask_p = d_valid & (np.isclose(rand_pct, pct_val, atol=0.01))
+            df[f"wtp_grid_p{p_code}_upfront"] = np.where(mask_p, (q_d3 == 1).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_3m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_6m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1)).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_12m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1)).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_waived"] = np.where(mask_p, ((df[f"wtp_grid_p{p_code}_12m"] == 1) | (q_d7 == 1)).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_never"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
+
         # WTP Solar
         q_e2 = df.get("SEC_E_Q02", np.nan)
         q_e3 = df.get("SEC_E_Q03", np.nan)
@@ -1321,6 +1358,22 @@ class MTFMasterBuilder:
         df["wtp_solar_12m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
         df["wtp_solar_24m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
         df["wtp_solar_never"] = np.where(q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
+
+        # Solar WTP by System Tier and Subsidy Level
+        sys_col = df.get("solar_system", pd.Series(np.nan, index=df.index))
+        is_t1 = sys_col.isin([1, 1.0, "Tier 1", "1"])
+        is_t2 = sys_col.isin([2, 2.0, "Tier 2", "2"])
+        is_pooled = pd.Series(True, index=df.index)
+        rand_pct_solar = df.get("random_percentage_3", pd.Series(np.nan, index=df.index))
+
+        for sys_code, sys_mask in [("t1", is_t1), ("t2", is_t2), ("pooled", is_pooled)]:
+            for pct_val, p_code in [(0.33, "33"), (0.66, "66"), (1.00, "100")]:
+                mask_sp = sys_mask & (np.isclose(rand_pct_solar, pct_val, atol=0.02)) & e_valid
+                df[f"wtp_solar_{sys_code}_p{p_code}_upfront"] = np.where(mask_sp, (q_e2 == 1).astype(float), np.nan)
+                df[f"wtp_solar_{sys_code}_p{p_code}_6m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1)).astype(float), np.nan)
+                df[f"wtp_solar_{sys_code}_p{p_code}_12m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
+                df[f"wtp_solar_{sys_code}_p{p_code}_24m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
+                df[f"wtp_solar_{sys_code}_p{p_code}_never"] = np.where(mask_sp & q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
 
         return df
 

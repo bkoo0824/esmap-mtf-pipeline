@@ -138,11 +138,10 @@
 	forval t = 0/5 {
 		putexcel A`=`t'+2' = "Tier `t'"
 	}
-	putexcel A8  = "MECS Access (Tier 1+)"
-	putexcel A9  = "MECS Modern (Tier 4–5)"
-	putexcel A10 = "MECS Transitional (Tier 2–3)"
-	putexcel A11 = "Three-stone / Open Fire"
-	putexcel A12 = "Clean Fuel Stove (LPG/Elec)"
+	putexcel A8  = "MECS Modern (Tier 4–5)"
+	putexcel A9  = "MECS Transitional (Tier 2–3)"
+	putexcel A10 = "Three-stone / Open Fire"
+	putexcel A11 = "Clean Fuel Stove (LPG/Elec)"
 
 	forval t = 0/5 {
 		capture drop cs_t`t'
@@ -166,12 +165,12 @@
 			putexcel `col'`=`t'+2' = `val'
 			scalar json_COOK_T`t'_`loc' = `val'
 		}
-		putexcel `col'8  = (e(b)[1,7] * 100)
-		putexcel `col'9  = (e(b)[1,8] * 100)
-		putexcel `col'10 = (e(b)[1,9] * 100)
-		putexcel `col'11 = (e(b)[1,10] * 100)
-		putexcel `col'12 = (e(b)[1,11] * 100)
+		putexcel `col'8  = (e(b)[1,8] * 100)
+		putexcel `col'9  = (e(b)[1,9] * 100)
+		putexcel `col'10 = (e(b)[1,10] * 100)
+		putexcel `col'11 = (e(b)[1,11] * 100)
 
+		scalar json_MECS_TIER1_ACC_`loc' = e(b)[1,7] * 100
 		scalar json_MECS_ACC_`loc'    = e(b)[1,8] * 100
 		scalar json_MECS_MOD_`loc'    = e(b)[1,8] * 100
 		scalar json_TRANS_COOK_`loc'  = e(b)[1,9] * 100
@@ -441,6 +440,13 @@
 		under_the_grid under_grid_unconnected grid_uptake ///
 		wtp_grid_upfront wtp_grid_3m wtp_grid_6m wtp_grid_12m wtp_grid_waived wtp_grid_never refuse_wiring_cost
 
+	foreach p in 14 29 43 57 71 100 {
+		foreach t in upfront 3m 6m 12m waived never {
+			capture confirm variable wtp_grid_p`p'_`t'
+			if !_rc local grid_vars "`grid_vars' wtp_grid_p`p'_`t'"
+		}
+	}
+
 	foreach var of local grid_vars {
 		putexcel A`row' = "`var'"
 		foreach loc in NAT URB RUR {
@@ -501,6 +507,15 @@
 		wtp_cook_upfront wtp_cook_3m wtp_cook_6m wtp_cook_12m wtp_cook_never refuse_cook_cost ///
 		grid_backup_candle grid_backup_torch grid_backup_solar grid_backup_none
 
+	foreach s in t1 t2 pooled {
+		foreach p in 33 66 100 {
+			foreach t in upfront 6m 12m 24m never {
+				capture confirm variable wtp_solar_`s'_p`p'_`t'
+				if !_rc local solar_vars "`solar_vars' wtp_solar_`s'_p`p'_`t'"
+			}
+		}
+	}
+
 	* Also export MTF Affordability threshold compliance (PCT_AFFORDABLE_*)
 	capture drop is_afford_elec
 	gen byte is_afford_elec = (elc_affrd_tier >= 3) if elc_affrd_tier < .
@@ -547,7 +562,12 @@
 	local app_vars ///
 		is_verylow is_low is_med is_high is_veryhigh ///
 		has_lights has_charger has_radio has_tv has_fridge has_iron ///
-		has_fan has_micro has_wash has_ac has_geyser
+		has_fan has_micro has_wash has_ac has_geyser has_torch
+
+	forval a = 1/42 {
+		capture confirm variable app_own_`a'
+		if !_rc local app_vars "`app_vars' app_own_`a'"
+	}
 
 	foreach var of local app_vars {
 		putexcel A`row' = "`var'"

@@ -500,11 +500,18 @@
 	lab var exp_total_m  "Monthly Total Household Expenditure (N$)"
 	lab var exp_total_yr "Annual Total Household Expenditure (N$)"
 
-	** Population-weighted expenditure quintiles:
-	xtile hh_exp_quintile = exp_total_yr [pw=pop_wt], nq(5)
+	gen exp_pc_yr = exp_total_yr / max(1, hhsize)
+	lab var exp_pc_yr "Annual Per Capita Household Expenditure"
+
+	* Audit reference: Household-level total expenditure with household weights
+	xtile hh_exp_quintile_hhlevel = exp_total_yr [pw=hh_wt], nq(5)
+	lab var hh_exp_quintile_hhlevel "Expenditure Quintile (HH-level total expenditure)"
+
+	* Primary: Per capita annual expenditure with population weights (World Bank / LSMS standard)
+	xtile hh_exp_quintile = exp_pc_yr [pw=pop_wt], nq(5)
 	lab define hh_exp_quintile 1 "Q1 (Poorest)" 2 "Q2" 3 "Q3" 4 "Q4" 5 "Q5 (Richest)", replace
 	lab val hh_exp_quintile hh_exp_quintile
-	lab var hh_exp_quintile "Expenditure Quintile (Population-weighted Q1-Q5)"
+	lab var hh_exp_quintile "Expenditure Quintile (Per capita expenditure, pop-weighted Q1-Q5)"
 
 	save "$wip_hh/$master_dta", replace
 
@@ -867,6 +874,10 @@
 		capture clonevar appliances__id = appliance__id
 		keep if SEC_F_Q02a > 0 & SEC_F_Q02a < .
 		
+		forvalues a = 1/42 {
+			gen byte app_own_`a' = (appliances__id == `a')
+		}
+
 		gen byte is_verylow = inlist(appliances__id, 1, 2, 3, 4, 5, 6, 7, 28, 29)
 		gen byte is_low     = inlist(appliances__id, 8, 9, 26, 30, 31, 32, 33)
 		gen byte is_med     = inlist(appliances__id, 10, 15, 16, 17, 20, 21, 27, 35, 36)
@@ -888,7 +899,7 @@
 
 		collapse (max) is_verylow is_low is_med is_high is_veryhigh ///
 			has_lights has_charger has_radio has_tv has_fridge has_iron ///
-			has_fan has_micro has_wash has_ac has_geyser has_torch, by(interview__id)
+			has_fan has_micro has_wash has_ac has_geyser has_torch app_own_*, by(interview__id)
 
 		lab var is_verylow  "Owns Very Low-Load Appliances (Tier 1)"
 		lab var is_low      "Owns Low-Load Appliances (Tier 2)"
@@ -908,7 +919,7 @@
 	merge 1:1 interview__id using "$wip_hh/appliances_agg.dta", nogen
 	recode is_verylow is_low is_med is_high is_veryhigh ///
 		has_lights has_charger has_radio has_tv has_fridge has_iron ///
-		has_fan has_micro has_wash has_ac has_geyser has_torch (. = 0)
+		has_fan has_micro has_wash has_ac has_geyser has_torch app_own_* (. = 0)
 
 	* Declare survey design on master
 	svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)

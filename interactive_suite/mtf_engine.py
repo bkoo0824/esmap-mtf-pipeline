@@ -167,8 +167,12 @@ class MTFEngine:
                 self.set_tok(f"COOK_T{t}_URB", urb)
                 self.set_tok(f"COOK_T{t}_RUR", rur)
 
+        # Preserve background token for backward compatibility
+        self.set_tok("MECS_TIER1_ACC_NAT", svy_pct(mecs_acc, w))
+        self.set_tok("MECS_TIER1_ACC_URB", svy_pct(mecs_acc, w, u))
+        self.set_tok("MECS_TIER1_ACC_RUR", svy_pct(mecs_acc, w, r))
+
         for name, var, tok in [
-            ("MECS Access (Tier 1+)", mecs_acc, "MECS_TIER1_ACC"),
             ("MECS Modern (Tier 4–5)", mecs_mod, "MECS_MOD"),
             ("MECS Transitional (Tier 2–3)", mecs_trans, "TRANS_COOK"),
             ("Three-stone / Open Fire", threestone, "THREESTONE"),
@@ -355,6 +359,21 @@ class MTFEngine:
                 self.set_tok(f"{v.upper()}_NAT", nat)
                 self.set_tok(f"{v.upper()}_URB", urb)
                 self.set_tok(f"{v.upper()}_RUR", rur)
+
+        # Grid WTP by Randomized Price Point
+        for p in ["14", "29", "43", "57", "71", "100"]:
+            for t in ["upfront", "3m", "6m", "12m", "waived", "never"]:
+                v = f"wtp_grid_p{p}_{t}"
+                if v in df.columns:
+                    series = df[v].astype(float)
+                    nat = svy_pct(series, w)
+                    urb = svy_pct(series, w, u)
+                    rur = svy_pct(series, w, r)
+                    s6_rows.append({"Metric": v, "National (%)": nat, "Urban (%)": urb, "Rural (%)": rur})
+                    self.set_tok(f"{v.upper()}_NAT", nat)
+                    self.set_tok(f"{v.upper()}_URB", urb)
+                    self.set_tok(f"{v.upper()}_RUR", rur)
+
         self.sheets["Grid_Barriers_WTP"] = pd.DataFrame(s6_rows)
 
         # =====================================================================
@@ -376,18 +395,48 @@ class MTFEngine:
                 self.set_tok(f"{v.upper()}_NAT", nat)
                 self.set_tok(f"{v.upper()}_URB", urb)
                 self.set_tok(f"{v.upper()}_RUR", rur)
+
+        # Solar WTP by System Tier and Subsidy Level
+        for s in ["t1", "t2", "pooled"]:
+            for p in ["33", "66", "100"]:
+                for t in ["upfront", "6m", "12m", "24m", "never"]:
+                    v = f"wtp_solar_{s}_p{p}_{t}"
+                    if v in df.columns:
+                        series = df[v].astype(float)
+                        nat = svy_pct(series, w)
+                        urb = svy_pct(series, w, u)
+                        rur = svy_pct(series, w, r)
+                        s7_rows.append({"Metric": v, "National (%)": nat, "Urban (%)": urb, "Rural (%)": rur})
+                        self.set_tok(f"{v.upper()}_NAT", nat)
+                        self.set_tok(f"{v.upper()}_URB", urb)
+                        self.set_tok(f"{v.upper()}_RUR", rur)
+
         self.sheets["Solar_WTP_Issues"] = pd.DataFrame(s7_rows)
 
         # =====================================================================
         # SHEET 8: Appliances_Use
         # =====================================================================
+        # Section 1: Broad Load Level Tiers
         s8_vars = [
-            "is_verylow", "is_low", "is_med", "is_high", "is_veryhigh",
-            "has_lights", "has_charger", "has_radio", "has_tv", "has_fridge", "has_iron",
-            "has_fan", "has_micro", "has_wash", "has_ac", "has_geyser"
+            ("is_verylow", "is_verylow (Very Low Load Tier 1)"),
+            ("is_low", "is_low (Low Load Tier 2)"),
+            ("is_med", "is_med (Medium Load Tier 3)"),
+            ("is_high", "is_high (High Load Tier 4)"),
+            ("is_veryhigh", "is_veryhigh (Very High Load Tier 5)"),
+            ("has_lights", "has_lights (All Lighting)"),
+            ("has_charger", "has_charger (Phone Chargers)"),
+            ("has_radio", "has_radio (Radio / Sound Systems)"),
+            ("has_tv", "has_tv (Television)"),
+            ("has_fridge", "has_fridge (Refrigerators & Freezers)"),
+            ("has_iron", "has_iron (Electric Iron)"),
+            ("has_fan", "has_fan (Electric Fan)"),
+            ("has_micro", "has_micro (Microwave Oven)"),
+            ("has_wash", "has_wash (Washing Machine)"),
+            ("has_ac", "has_ac (Air Conditioner)"),
+            ("has_geyser", "has_geyser (Water Heaters)")
         ]
         s8_rows = []
-        for v in s8_vars:
+        for v, label in s8_vars:
             if v in df.columns:
                 series = df[v].astype(float)
                 nat = svy_pct(series, w)
@@ -396,7 +445,7 @@ class MTFEngine:
                 grid_pct = svy_pct(series, w, grid_hh)
                 solar_pct = svy_pct(series, w, solar_hh)
                 s8_rows.append({
-                    "Appliance / Load Tier": v,
+                    "Appliance / Load Tier": label,
                     "National (%)": nat, "Urban (%)": urb, "Rural (%)": rur,
                     "Grid HH (%)": grid_pct, "Off-grid Solar (%)": solar_pct
                 })
@@ -405,6 +454,72 @@ class MTFEngine:
                 self.set_tok(f"{v.upper()}_RUR", rur)
                 self.set_tok(f"{v.upper()}_GRID", grid_pct)
                 self.set_tok(f"{v.upper()}_SOLAR", solar_pct)
+
+        # Section 2: Individual Appliance Ownership (All 42 individual appliances)
+        appliance_names = {
+            1: "Incandescent Light Bulb",
+            2: "Fluorescent Tube",
+            3: "Compact Fluorescent Light (CFL) Bulb",
+            4: "LED Light Bulb",
+            5: "Torch / Flashlight / Lantern (dry-cell)",
+            6: "Radio / CD / Sound System (dry-cell)",
+            7: "Radio / CD / Sound System (non dry-cell)",
+            8: "VCD / DVD Player",
+            9: "Fan",
+            10: "Refrigerator",
+            11: "Microwave Oven",
+            12: "Non-Electric Iron (charcoal)",
+            13: "Electric Iron",
+            14: "Hair Dryer",
+            15: "Electric Food Processor / Blender",
+            16: "Rice Cooker",
+            17: "Freezer",
+            18: "Washing Machine",
+            19: "Non-Electric Sewing Machine",
+            20: "Electric Sewing Machine",
+            21: "Indoor Air Cooler",
+            22: "Air Conditioner (AC)",
+            23: "Electric Space Heater",
+            24: "Electric Water Heater (non solar)",
+            25: "Solar-based Water Heater",
+            26: "Computer / Laptop",
+            27: "Electric Hot Water Pot / Kettle",
+            28: "Smartphone Charger",
+            29: "Typical Mobile Phone Charger",
+            30: "Black & White TV",
+            31: "Typical Color TV",
+            32: "Flat Screen Color TV",
+            33: "Internet Modem / Router",
+            34: "Electric Mill",
+            35: "Electric Water Pump (non solar)",
+            36: "Solar-based Water Pump",
+            37: "Solar Fan",
+            38: "Solar Refrigerator",
+            39: "Solar Speaker / Sound System",
+            40: "Solar Light Bulb",
+            41: "Solar Inverter",
+            42: "Solar TV"
+        }
+        for aid, aname in appliance_names.items():
+            v = f"app_own_{aid}"
+            if v in df.columns:
+                series = df[v].astype(float)
+                nat = svy_pct(series, w)
+                urb = svy_pct(series, w, u)
+                rur = svy_pct(series, w, r)
+                grid_pct = svy_pct(series, w, grid_hh)
+                solar_pct = svy_pct(series, w, solar_hh)
+                s8_rows.append({
+                    "Appliance / Load Tier": f"{v}: {aname}",
+                    "National (%)": nat, "Urban (%)": urb, "Rural (%)": rur,
+                    "Grid HH (%)": grid_pct, "Off-grid Solar (%)": solar_pct
+                })
+                self.set_tok(f"APP_OWN_{aid}_NAT", nat)
+                self.set_tok(f"APP_OWN_{aid}_URB", urb)
+                self.set_tok(f"APP_OWN_{aid}_RUR", rur)
+                self.set_tok(f"APP_OWN_{aid}_GRID", grid_pct)
+                self.set_tok(f"APP_OWN_{aid}_SOLAR", solar_pct)
+
         self.sheets["Appliances_Use"] = pd.DataFrame(s8_rows)
 
         # =====================================================================

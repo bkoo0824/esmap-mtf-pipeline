@@ -243,15 +243,17 @@
 
 	capture confirm variable random_percentage
 	if !_rc {
-		* Vectorized WTP loops across price benchmarks and payment horizons (Comment C23)
-		local p_list "100 57 29 14"
+		* Vectorized WTP loops across all 6 randomized price benchmarks and payment horizons
+		local p_list "100 71 57 43 29 14"
 		foreach p of local p_list {
 			local p_cond "random_percentage >= 0.95 & random_percentage <= 1.05"
-			if "`p'" == "57" local p_cond "random_percentage >= 0.50 & random_percentage <= 0.65"
-			if "`p'" == "29" local p_cond "random_percentage >= 0.25 & random_percentage <= 0.35"
-			if "`p'" == "14" local p_cond "random_percentage >= 0.10 & random_percentage <= 0.20"
+			if "`p'" == "71" local p_cond "random_percentage >= 0.68 & random_percentage <= 0.75"
+			if "`p'" == "57" local p_cond "random_percentage >= 0.54 & random_percentage <= 0.60"
+			if "`p'" == "43" local p_cond "random_percentage >= 0.40 & random_percentage <= 0.46"
+			if "`p'" == "29" local p_cond "random_percentage >= 0.26 & random_percentage <= 0.32"
+			if "`p'" == "14" local p_cond "random_percentage >= 0.12 & random_percentage <= 0.16"
 			
-			foreach t in upfront 3m 6m 12m waived {
+			foreach t in upfront 3m 6m 12m waived never {
 				capture drop wtp_grid_p`p'_`t'
 				gen byte wtp_grid_p`p'_`t' = wtp_grid_`t' if `p_cond' & grid_hh == 0
 			}
@@ -315,6 +317,32 @@
 	lab var wtp_solar_never   "Will NEVER purchase solar device"
 	lab var refuse_solar_cost "Cannot afford solar device payment"
 	lab var srf_aware         "Aware of government Solar Revolving Fund (SRF)"
+
+	*===========================================================================
+	*  ENHANCEMENT 7b: DISAGGREGATED WTP BY SYSTEM TIER & SUBSIDY LEVEL (SOLAR)
+	*===========================================================================
+	capture confirm variable random_percentage_3
+	if !_rc {
+		capture confirm variable solar_system
+		if !_rc {
+			foreach s in t1 t2 pooled {
+				local s_cond "1 == 1"
+				if "`s'" == "t1" local s_cond "solar_system == 1 | solar_system == 1.0"
+				if "`s'" == "t2" local s_cond "solar_system == 2 | solar_system == 2.0"
+
+				foreach p in 33 66 100 {
+					local p_cond "random_percentage_3 >= 0.95 & random_percentage_3 <= 1.05"
+					if "`p'" == "66" local p_cond "random_percentage_3 >= 0.60 & random_percentage_3 <= 0.72"
+					if "`p'" == "33" local p_cond "random_percentage_3 >= 0.30 & random_percentage_3 <= 0.36"
+
+					foreach t in upfront 6m 12m 24m never {
+						capture drop wtp_solar_`s'_p`p'_`t'
+						gen byte wtp_solar_`s'_p`p'_`t' = wtp_solar_`t' if `s_cond' & `p_cond'
+					}
+				}
+			}
+		}
+	}
 
 
 	*===========================================================================
