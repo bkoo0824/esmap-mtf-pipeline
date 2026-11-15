@@ -36,10 +36,19 @@
 	set more off
 
 	* Declare survey design (strata = Region × Locality, PSU = EA)
-	svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+	capture confirm variable psu_id
+	if !_rc {
+		svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
+	}
+	else {
+		capture confirm variable SEC_A_Q07
+		if !_rc svyset SEC_A_Q07 [pw=hh_wt], strata(strata_id) singleunit(centered)
+		else svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+	}
 
 	* Output path
-	local xls "$out_sl/MTF_Namibia_Summary.xlsx"
+	local fn_excel = cond("$country" != "", "MTF_${country}_Summary.xlsx", "MTF_Summary.xlsx")
+	local xls "$out_sl/`fn_excel'"
 	local json_out "$out_sl/mtf_report_values.json"
 
 	*===========================================================================

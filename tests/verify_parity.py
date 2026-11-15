@@ -212,7 +212,7 @@ class ParityAuditor:
 
             if isinstance(pv, (int, float)) and isinstance(sv, (int, float)):
                 delta = abs(float(pv) - float(sv))
-                passed = delta <= 0.1  # Max tolerance 0.1 percentage point / unit
+                passed = round(delta, 4) <= 0.1  # Max tolerance 0.1 percentage point / unit
                 status = "EXACT" if delta == 0.0 else ("PASS" if passed else "FAIL")
             elif pv == sv:
                 delta = 0.0

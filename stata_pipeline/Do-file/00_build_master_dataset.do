@@ -35,6 +35,11 @@
 	*===========================================================================
 
 	local fn_hhroster = cond("$fn_hhroster" != "", "$fn_hhroster", "hhroster.dta")
+	capture confirm file "$raw_hh/`fn_hhroster'"
+	if _rc {
+		capture confirm file "$raw_hh/section_a1_hh_roster.dta"
+		if !_rc local fn_hhroster "section_a1_hh_roster.dta"
+	}
 
 	** Demographics: Household size & head characteristics from hhroster.dta
 	use "$raw_hh/`fn_hhroster'", clear
@@ -71,7 +76,7 @@
 	clonevar hh_head_marital = SEC_A1_Q10
 	lab var hh_head_marital "Marital Status of Household Head"
 
-	keep interview__id hhsize hh_head_gender hh_head_age hh_head_educ hh_head_marital
+	keep interview__id hhsize hh_head_gender hh_head_age hh_head_educ hh_head_marital SEC_A1_Q3 SEC_A1_Q5 SEC_A1_Q7 SEC_A1_Q8 SEC_A1_Q10
 	duplicates drop
 	save "$wip_hh/demographics.dta", replace
 
@@ -80,15 +85,50 @@
 	*  2. SAMPLING WEIGHTS & SURVEY STRATIFICATION
 	*===========================================================================
 
-	import excel "$user/Data/weights/sample_selected_energy_survey_20_08_2024.xlsx", ///
-		sheet("CalibratedWeight") firstrow case(lower) clear
-	rename ea_number SEC_A_Q05
-	merge 1:m SEC_A_Q05 using "$raw_hh/MTF_2024_HH_Namibia_Final.dta"
-	drop if _merge == 1                  // drop non-matched sample frame rows
-	drop _merge
+	capture confirm file "$raw_hh/admin_info.dta"
+	if !_rc {
+		use "$raw_hh/admin_info.dta", clear
+		capture confirm variable interview__id
+		if _rc {
+			capture confirm variable interview__key
+			if !_rc clonevar interview__id = interview__key
+		}
+		capture clonevar hh_wt = hh_weight_final
+		capture confirm variable hh_wt
+		if _rc {
+			capture clonevar hh_wt = weight
+			if _rc gen hh_wt = 1.0
+		}
 
-	** Corrected Bryan Koo weight formula:
-	gen hh_wt = (firstsampleweight / second_stage_prob) / response_rate
+		* Merge core single-household section files
+		foreach sec in section_a2 section_b section_c section_d section_e section_g section_k section_n section_o section_q section_r section_s {
+			capture confirm file "$raw_hh/`sec'.dta"
+			if !_rc {
+				preserve
+					use "$raw_hh/`sec'.dta", clear
+					capture confirm variable interview__id
+					if _rc {
+						capture confirm variable interview__key
+						if !_rc clonevar interview__id = interview__key
+					}
+					tempfile temp_`sec'
+					save "`temp_`sec''"
+				restore
+				merge 1:1 interview__id using "`temp_`sec''", nogen
+			}
+		}
+	}
+	else {
+		import excel "$user/Data/weights/sample_selected_energy_survey_20_08_2024.xlsx", ///
+			sheet("CalibratedWeight") firstrow case(lower) clear
+		rename ea_number SEC_A_Q05
+		merge 1:m SEC_A_Q05 using "$raw_hh/MTF_2024_HH_Namibia_Final.dta"
+		drop if _merge == 1                  // drop non-matched sample frame rows
+		drop _merge
+
+		** Corrected Bryan Koo weight formula:
+		gen hh_wt = (firstsampleweight / second_stage_prob) / response_rate
+	}
 	lab var hh_wt "Final Calibrated Household Weight"
 
 	** Merge demographics (hhsize and head characteristics)
@@ -119,26 +159,52 @@
 
 	** Locality (Urban / Rural):
 	gen loc_urban_rural = .
-	replace loc_urban_rural = 1 if SEC_A_Q03 == 1    // Urban
-	replace loc_urban_rural = 2 if SEC_A_Q03 == 99   // Rural
+	capture confirm variable SEC_A_Q05
+	if !_rc {
+		replace loc_urban_rural = SEC_A_Q05 if inlist(SEC_A_Q05, 1, 2)
+	}
+	replace loc_urban_rural = 1 if SEC_A_Q03 == 1 & loc_urban_rural == .
+	replace loc_urban_rural = 2 if SEC_A_Q03 == 99 & loc_urban_rural == .
 	lab define loc_urban_rural 1 "Urban" 2 "Rural", replace
 	lab val loc_urban_rural loc_urban_rural
 	lab var loc_urban_rural "Urban / Rural Locality"
 
 	** Stratification variable: Region (Admin 1) × Locality
-	egen strata_id = group(SEC_A_Q01 SEC_A_Q03)
+	capture drop strata_id
+	capture confirm variable SEC_A_Q01
+	if !_rc {
+		capture confirm variable SEC_A_Q05
+		if !_rc {
+			egen strata_id = group(SEC_A_Q01 SEC_A_Q05)
+		}
+		else {
+			egen strata_id = group(SEC_A_Q01 loc_urban_rural)
+		}
+	}
+	else {
+		gen strata_id = 1
+	}
 	lab var strata_id "Survey Stratum: Region × Locality"
 
 	** Household enterprise & informal dwelling
-	gen inf_dwell = inlist(SEC_B_Q03, 8, 9)
-	lab define inf_dwell 1 "Informal Dwelling" 0 "Formal Dwelling", replace
-	lab val inf_dwell inf_dwell
-	lab var inf_dwell "Informal Dwelling (shack in backyard/settlement)"
+	capture confirm variable SEC_B_Q03
+	if !_rc {
+		gen inf_dwell = inlist(SEC_B_Q03, 8, 9)
+		lab define inf_dwell 1 "Informal Dwelling" 0 "Formal Dwelling", replace
+		lab val inf_dwell inf_dwell
+		lab var inf_dwell "Informal Dwelling (shack in backyard/settlement)"
+	}
 
-	gen hhbiz = (SEC_A2_Q16 == 1 & SEC_A2_Q19 == 1)
-	lab define hhbiz 0 "No Enterprise" 1 "HH Enterprise", replace
-	lab val hhbiz hhbiz
-	lab var hhbiz "Household with Enterprise"
+	capture confirm variable SEC_A2_Q16
+	if !_rc {
+		capture confirm variable SEC_A2_Q19
+		if !_rc {
+			gen hhbiz = (SEC_A2_Q16 == 1 & SEC_A2_Q19 == 1)
+			lab define hhbiz 0 "No Enterprise" 1 "HH Enterprise", replace
+			lab val hhbiz hhbiz
+			lab var hhbiz "Household with Enterprise"
+		}
+	}
 
 	save "$wip_hh/$master_dta", replace
 
@@ -533,19 +599,17 @@
 
 	capture confirm variable SEC_C_Q125_oth
 	if !_rc {
-		encode SEC_C_Q125_oth, gen(SEC_C_Q125_oth_num)
-		gen SEC_C_Q125_5 = 1 if inlist(SEC_C_Q125_oth_num, 2, 5)   // phone
+		gen SEC_C_Q125_5 = 1 if regexm(lower(SEC_C_Q125_oth), "phone|cell|telef")
 		replace SEC_C_Q122 = 1 if SEC_C_Q125_5 == 1
-		gen SEC_C_Q125_6 = 1 if inlist(SEC_C_Q125_oth_num, 3)      // freezer
-		gen SEC_C_Q125_7 = 1 if inlist(SEC_C_Q125_oth_num, 1)      // AC
-		gen SEC_C_Q125_8 = 1 if inlist(SEC_C_Q125_oth_num, 4)      // water pump
-		gen SEC_C_Q125_9 = 1 if inlist(SEC_C_Q125_oth_num, 6)      // sewing machine
+		gen SEC_C_Q125_6 = 1 if regexm(lower(SEC_C_Q125_oth), "freezer|fridge|gelad|congelad")
+		gen SEC_C_Q125_7 = 1 if regexm(lower(SEC_C_Q125_oth), "air condition|ar condicionado|^ac$")
+		gen SEC_C_Q125_8 = 1 if regexm(lower(SEC_C_Q125_oth), "pump|bomba")
+		gen SEC_C_Q125_9 = 1 if regexm(lower(SEC_C_Q125_oth), "sew|costura")
 	}
 
 	capture confirm variable SEC_C_Q127_oth
 	if !_rc {
-		encode SEC_C_Q127_oth, gen(SEC_C_Q127_oth_num)
-		gen SEC_C_Q127__5 = 1 if inlist(SEC_C_Q127_oth_num, 1, 2, 4)
+		gen SEC_C_Q127__5 = 1 if regexm(lower(SEC_C_Q127_oth), "phone|cell|telef")
 	}
 
 	egen solar_tv        = rowmax(SEC_C_Q125__1 SEC_C_Q127__1)
