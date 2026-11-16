@@ -1357,7 +1357,7 @@ class MTFMasterBuilder:
         df["wtp_solar_6m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1)).astype(float), np.nan)
         df["wtp_solar_12m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
         df["wtp_solar_24m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
-        df["wtp_solar_never"] = np.where(q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
+        df["wtp_solar_never"] = np.where(q_e5.notna(), ((q_e5 == 0) | (q_e5 == 2)).astype(float), np.nan)
 
         # Solar WTP by System Tier and Subsidy Level
         sys_col = df.get("solar_system", pd.Series(np.nan, index=df.index))
@@ -1373,7 +1373,7 @@ class MTFMasterBuilder:
                 df[f"wtp_solar_{sys_code}_p{p_code}_6m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1)).astype(float), np.nan)
                 df[f"wtp_solar_{sys_code}_p{p_code}_12m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
                 df[f"wtp_solar_{sys_code}_p{p_code}_24m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
-                df[f"wtp_solar_{sys_code}_p{p_code}_never"] = np.where(mask_sp & q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
+                df[f"wtp_solar_{sys_code}_p{p_code}_never"] = np.where(mask_sp & q_e5.notna(), ((q_e5 == 0) | (q_e5 == 2)).astype(float), np.nan)
 
         return df
 

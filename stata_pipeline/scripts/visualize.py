@@ -451,7 +451,7 @@ def chart_gender_fueltime():
     save_fig(fig, "05_gender_fuel_collection_time.png")
 
 
-# ─── CHART 6: GRID CONNECTION BARRIERS & WILLINGNESS TO PAY ───────────────────
+# ─── CHART 6: GRID CONNECTION BARRIERS ───────────────────────────────────────
 def chart_grid_barriers_wtp():
     jdata = load_json()
     def g(key, default=0.0):
@@ -459,49 +459,35 @@ def chart_grid_barriers_wtp():
         try: return float(v)
         except: return default
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
+    fig, ax = plt.subplots(figsize=(9, 4.8))
 
-    # Panel A: Main Barriers to Connection
-    barriers = ["Connection Cost\nToo High", "Grid Too Far /\nUnavailable", "Monthly Tariff\nExpensive", "Service\nUnreliable"]
-    urban_b  = [g("BARRIER_COST_URB"), g("BARRIER_DIST_URB"), g("BARRIER_TARIFF_URB"), g("BARRIER_UNREL_URB")]
-    rural_b  = [g("BARRIER_COST_RUR"), g("BARRIER_DIST_RUR"), g("BARRIER_TARIFF_RUR"), g("BARRIER_UNREL_RUR")]
+    # Main Barriers to Connection
+    barriers = ["High Upfront\nConnection Cost", "Grid Network Too Far\n/ Unavailable", "Monthly Electricity\nTariff Expensive", "Grid Service\nUnreliable"]
+    nat_b    = [g("BARRIER_COST_NAT"), g("BARRIER_DIST_NAT"), g("BARRIER_TARIFF_NAT"), g("BARRIER_UNREL_NAT")]
+    urb_b    = [g("BARRIER_COST_URB"), g("BARRIER_DIST_URB"), g("BARRIER_TARIFF_URB"), g("BARRIER_UNREL_URB")]
+    rur_b    = [g("BARRIER_COST_RUR"), g("BARRIER_DIST_RUR"), g("BARRIER_TARIFF_RUR"), g("BARRIER_UNREL_RUR")]
 
     x = np.arange(len(barriers))
-    w = 0.35
-    b1 = ax1.bar(x - w/2, urban_b, width=w, label="Urban", color=WB_TEAL)
-    b2 = ax1.bar(x + w/2, rural_b, width=w, label="Rural", color=WB_AMBER)
+    w = 0.25
+    b1 = ax.bar(x - w, nat_b, width=w, label="National", color=WB_NAVY)
+    b2 = ax.bar(x,     urb_b, width=w, label="Urban",    color=WB_TEAL)
+    b3 = ax.bar(x + w, rur_b, width=w, label="Rural",    color=WB_AMBER)
 
-    for bar in b1:
-        h = bar.get_height()
-        if h > 1: ax1.text(bar.get_x() + bar.get_width()/2, h + 1, f"{h:.1f}%", ha="center", va="bottom", fontsize=8)
-    for bar in b2:
-        h = bar.get_height()
-        if h > 1: ax1.text(bar.get_x() + bar.get_width()/2, h + 1, f"{h:.1f}%", ha="center", va="bottom", fontsize=8)
+    for bars in [b1, b2, b3]:
+        for bar in bars:
+            h = bar.get_height()
+            if h > 0.5:
+                ax.text(bar.get_x() + bar.get_width()/2, h + 1, f"{h:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
 
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(barriers, fontsize=9)
-    ax1.set_ylabel("% of Unconnected Households", fontsize=10)
-    ax1.set_title("A. Barriers to Gaining Grid Connection", fontsize=11, fontweight="bold", color=WB_NAVY)
-    ax1.legend(framealpha=0.7)
-    ax1.set_ylim(0, max(max(urban_b), max(rural_b)) * 1.25)
-    ax1.spines[["top", "right"]].set_visible(False)
-    ax1.grid(axis="y", alpha=0.3, linestyle="--")
-
-    # Panel B: Willingness to Pay by Installment Plan
-    modalities = ["Upfront", "3-Month\nPlan", "6-Month\nPlan", "12-Month\nPlan", "If Fee\nWaived"]
-    wtp_vals   = [g("WTP_GRID_UPFRONT_NAT"), g("WTP_GRID_3M_NAT"), g("WTP_GRID_6M_NAT"), g("WTP_GRID_12M_NAT"), g("WTP_GRID_WAIVED_NAT")]
-    colors_wtp = [WB_NAVY, "#1A5276", "#2980B9", WB_TEAL, WB_GREEN]
-
-    bars = ax2.bar(modalities, wtp_vals, color=colors_wtp, width=0.45)
-    for bar in bars:
-        h = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2, h + 1.5, f"{h:.1f}%", ha="center", va="bottom", fontsize=9, fontweight="bold")
-
-    ax2.set_ylabel("% Willing to Connect", fontsize=10)
-    ax2.set_title("B. WTP for Grid Connection by Payment Modality", fontsize=11, fontweight="bold", color=WB_NAVY)
-    ax2.set_ylim(0, 110)
-    ax2.spines[["top", "right"]].set_visible(False)
-    ax2.grid(axis="y", alpha=0.3, linestyle="--")
+    ax.set_xticks(x)
+    ax.set_xticklabels(barriers, fontsize=9.5, fontweight="bold")
+    ax.set_ylabel("% of Unconnected Households", fontsize=10, fontweight="bold")
+    ax.set_title("Stated Barriers to Gaining an Electricity Grid Connection", fontsize=12, fontweight="bold", color=WB_NAVY, pad=12)
+    ax.legend(framealpha=0.85, loc="upper right")
+    max_val = max(nat_b + urb_b + rur_b)
+    ax.set_ylim(0, max_val * 1.25 if max_val > 0 else 100)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
 
     plt.tight_layout()
     save_fig(fig, "06_grid_barriers_wtp.png")

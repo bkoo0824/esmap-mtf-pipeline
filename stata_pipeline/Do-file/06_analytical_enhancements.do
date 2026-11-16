@@ -302,7 +302,7 @@
 	gen byte wtp_solar_6m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1) if SEC_E_Q02 < .
 	gen byte wtp_solar_12m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1) if SEC_E_Q02 < .
 	gen byte wtp_solar_24m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1 | SEC_E_Q05 == 1) if SEC_E_Q02 < .
-	gen byte wtp_solar_never   = (SEC_E_Q05 == 2) if SEC_E_Q05 < .
+	gen byte wtp_solar_never   = (SEC_E_Q05 == 0 | SEC_E_Q05 == 2) if SEC_E_Q05 < .
 	gen byte refuse_solar_cost = (SEC_E_Q06 == 1) if SEC_E_Q06 < .
 	gen byte srf_aware = .
 	capture confirm variable SEC_E_Q07

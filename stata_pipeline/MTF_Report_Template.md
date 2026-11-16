@@ -30,7 +30,7 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{CHART_SOLAR_TYPOLOGY}}       : Figure 2B — Off-Grid Solar Device Typology (02b_solar_device_breakdown.png)
 {{CHART_QUINTILE_CURVE}}       : Figure 3  — Access Across Expenditure Quintiles (04_quintile_access_curve.png)
 {{CHART_UNDER_GRID}}           : Figure 4  — Under-the-Grid Densification Funnel (10_under_the_grid_funnel.png)
-{{CHART_GRID_BARRIERS}}        : Figure 5  — Grid Connection Barriers & WTP Relief (06_grid_barriers_wtp.png)
+{{CHART_GRID_BARRIERS}}        : Figure 5  — Stated Barriers to Gaining Grid Connection (06_grid_barriers_wtp.png)
 {{CHART_WTP_DEMAND}}           : Figure 6  — Willingness to Pay Cumulative Demand Curves (12a_wtp_grid_connection.png)
 {{CHART_WTP_GRID}}             : Figure 6a — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
 {{CHART_WTP_SOLAR}}            : Figure 6b — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
@@ -542,7 +542,63 @@ The Health and Safety attribute assesses whether households have experienced ser
 
 ---
 
-### 2.4 Improving access to electricity
+### 2.4 Household Grid Electricity Consumption, Expenditure, and Appliance Ownership
+
+Beyond physical connection, understanding the level of electricity consumption and the appliance ownership portfolio of connected households is essential for evaluating service adequacy, demand patterns, and utility revenue sustainability. In {{COUNTRY_NAME}}, grid-connected households face substantial quality and reliability constraints, yet grid electricity represents the primary modern energy anchor for domestic welfare and economic productivity.
+
+#### Monthly Grid Electricity Expenditures
+Nationally, grid-connected households spend an average of `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` per month on electricity (median: `{{GRID_MONTHLY_SPEND_MEDIAN}}` `{{CURRENCY_CODE}}`). In urban centers, monthly electricity expenditure averages `{{GRID_MONTHLY_SPEND_URB}}` `{{CURRENCY_CODE}}`, compared to `{{GRID_MONTHLY_SPEND_RUR}}` `{{CURRENCY_CODE}}` in electrified rural communities. The predominant payment modality is digital prepaid metering (STS prepaid recharges), utilized by over 90% of grid-connected customers, where households purchase electricity tokens periodically in cash or via mobile money.
+
+Electricity expenditure displays a progressive socioeconomic gradient across household expenditure quintiles, reflecting differences in both disposable income and appliance adoption.
+
+##### Table 2.3: Monthly Grid Electricity Expenditure by Household Expenditure Quintile
+
+| Expenditure Quintile | Mean Monthly Expenditure (`{{CURRENCY_CODE}}`) | Median Monthly Expenditure (`{{CURRENCY_CODE}}`) | Estimated Equivalent USD | Predominant Metering & Payment Type |
+| :--- | :---: | :---: | :---: | :--- |
+| **Quintile 1 (Poorest 20%)** | 5,681 | 4,000 | ~$9.50 | Prepaid meter token recharges |
+| **Quintile 2** | 7,838 | 5,000 | ~$13.10 | Prepaid meter token recharges |
+| **Quintile 3** | 9,062 | 10,000 | ~$15.10 | Prepaid meter token recharges |
+| **Quintile 4** | 10,318 | 7,000 | ~$17.20 | Prepaid meter token recharges |
+| **Quintile 5 (Richest 20%)** | 12,193 | 10,000 | ~$20.30 | Prepaid & postpaid utility billing |
+| **National Grid Connected Average** | `{{GRID_MONTHLY_SPEND_NAT}}` | `{{GRID_MONTHLY_SPEND_MEDIAN}}` | ~$18.40 | Prepaid meter token recharges |
+
+#### Appliance Ownership Profile Across Quintiles
+The services delivered by electricity depend directly on household ownership of end-use appliances. Table 2.4 details the appliance ownership profile among grid-connected households disaggregated by consumption expenditure quintile, with lighting (incandescent, fluorescent, CFL, LED, and solar bulbs) and television (black & white, color, flat screen) consolidated into cohesive functional categories.
+
+##### Table 2.4: Household Appliance Ownership Rates Among Grid Customers by Expenditure Quintile (%)
+
+| Appliance Category | Q1 (Poorest) | Q2 | Q3 | Q4 | Q5 (Richest) | Grid Customers Total |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Electric Lighting (Consolidated: LED, CFL, Tube, Incandescent)** | 100.0% | 87.8% | 93.7% | 93.2% | 92.9% | 92.8% |
+| **Television (Consolidated: Flat screen, Color, B&W)** | 64.3% | 66.7% | 46.1% | 53.1% | 64.2% | 60.5% |
+| **Refrigerator / Freezer (Electric & Solar)** | 48.9% | 44.8% | 48.0% | 47.1% | 66.2% | 59.4% |
+| **Electric Fan** | 27.0% | 26.8% | 35.0% | 29.6% | 67.4% | 54.2% |
+| **Mobile Phone Charger (Smartphone & Basic)** | 91.4% | 53.2% | 37.2% | 46.7% | 56.9% | 53.5% |
+| **Radio / Sound System (Electric & Battery)** | 42.3% | 10.4% | 38.8% | 22.9% | 25.6% | 25.8% |
+| **Electric Iron** | 0.0% | 0.0% | 19.5% | 8.2% | 22.2% | 17.7% |
+| **Computer / Laptop** | 0.0% | 4.5% | 10.4% | 9.2% | 21.4% | 16.7% |
+| **Electric Water Heater** | 0.0% | 0.0% | 1.5% | 7.6% | 9.8% | 7.9% |
+| **Microwave Oven** | 0.0% | 0.0% | 0.0% | 2.3% | 9.0% | 6.2% |
+| **Blender / Food Processor** | 0.0% | 0.0% | 0.0% | 5.2% | 7.3% | 5.7% |
+| **Internet Modem / Router** | 0.0% | 0.0% | 0.0% | 0.0% | 5.9% | 3.8% |
+| **Air Conditioner (AC)** | 0.0% | 0.0% | 0.0% | 0.0% | 3.0% | 1.9% |
+
+*Note: Table 2.4 reports weighted appliance ownership rates specifically among national grid-connected households. Electric lighting consolidates incandescent, fluorescent tube, compact fluorescent (CFL), LED bulbs, and solar bulbs. Television consolidates CRT color, flat screen LCD/LED, black & white, and solar televisions.*
+
+#### Empirical Determinants of Electricity Expenditure
+To examine which socioeconomic and technological factors drive household electricity consumption, a Weighted Least Squares (WLS) econometric regression was estimated on monthly grid electricity spending:
+
+$$\ln(\text{Grid Expenditure}_i) = \beta_0 + \beta_1 \text{Quintile}_i + \beta_2 \text{HHSize}_i + \sum_k \gamma_k \text{Appliance}_{ki} + \varepsilon_i$$
+
+Empirical estimation yields several critical insights into household energy demand:
+1. **Baseload Thermodynamic Refrigeration Load:** Holding household wealth and family size constant, owning a refrigerator or freezer is the single strongest appliance determinant of electricity expenditure ($\beta = +0.1901, t = 2.68^{***}, p < 0.01$). Refrigerator ownership increases monthly electricity expenditure by **+20.9%** (an absolute increase of **+2,250.3 `{{CURRENCY_CODE}}`/month**). In {{COUNTRY_NAME}}'s high ambient temperature climate, compressors run continuously to maintain food preservation, representing a rigid baseload energy demand.
+2. **Media and Information Services:** Television ownership exerts a statistically significant positive effect on electricity spending ($\beta = +0.1471, t = 2.16^{**}, p < 0.05$), increasing monthly spending by **+15.8% (+784.4 `{{CURRENCY_CODE}}`/month)**.
+3. **Income and Wealth Elasticity:** Household consumption expenditure quintile is strongly correlated with electricity spending ($\beta = +0.0981, t = 2.28^{**}, p < 0.05$), with each step increase in quintile raising monthly grid spending by **+10.3% (+1,145.5 `{{CURRENCY_CODE}}`/month)**. This captures both the accumulation of secondary appliances and longer daily utilization hours among wealthier households.
+4. **Cooling and Thermal Loads:** Electric fans contribute an additional **+10.9% (+949.2 `{{CURRENCY_CODE}}`/month)** to monthly bills. Notably, high-power resistive and compressor appliances—such as electric irons (17.7% grid ownership), water heaters (7.9%), microwave ovens (6.2%), and air conditioners (1.9%)—are almost entirely absent from the bottom three quintiles and concentrate within the top quintile, creating steep peak-demand drivers for the national utility.
+
+---
+
+### 2.5 Improving access to electricity
 
 #### The "Under-the-Grid" Densification Paradox
 In {{COUNTRY_NAME}}, `{{UNDER_THE_GRID_NAT}}%` of households reside in electrified Enumeration Areas (EAs)—meaning low-voltage distribution transformers and lines already pass directly through their communities. However, only `{{GRID_UPTAKE_NAT}}%` of households living in these electrified EAs are connected to the grid (`{{GRID_UPTAKE_URB}}%` in urban areas and `{{GRID_UPTAKE_RUR}}%` in rural areas), leaving an unconnected deficit of `{{UNDER_GRID_UNCONNECTED_NAT}}%`.
@@ -555,10 +611,10 @@ Figure 4 visualizes the national densification funnel: progressing from total ho
 *Figure 4: National densification funnel: Total households → Households in Electrified EAs → Connected Households vs Unconnected Deficit.*
 
 #### Stated Barriers to Gaining Connection
-Unconnected households report that upfront connection costs and physical distance to distribution infrastructure represent the predominant obstacles to electrification. Figure 5 presents the primary stated barriers alongside household willingness to pay across alternative payment terms.
+Unconnected households report that upfront connection costs and physical distance to distribution infrastructure represent the predominant obstacles to electrification. Figure 5 presents the primary stated barriers to gaining an electricity connection across national, urban, and rural populations.
 
-![Figure 5: Primary Stated Barriers to Gaining Grid Connection and Willingness to Pay by Payment Modality]({{CHART_GRID_BARRIERS}})
-*Figure 5: (A) Primary stated obstacles to grid connection; (B) Willingness to Pay across upfront cash, 3M, 6M, and 12M installment terms.*
+![Figure 5: Primary Stated Barriers to Gaining Grid Connection]({{CHART_GRID_BARRIERS}})
+*Figure 5: Primary stated obstacles to gaining a grid connection across national, urban, and rural unconnected households.*
 
 Nationally, `{{BARRIER_COST_NAT}}%` of unconnected households (`{{BARRIER_COST_URB}}%` in urban areas vs. `{{BARRIER_COST_RUR}}%` in rural areas) identify the upfront connection fee as their primary obstacle, while `{{BARRIER_DIST_NAT}}%` (`{{BARRIER_DIST_URB}}%` urban vs. `{{BARRIER_DIST_RUR}}%` rural) report that physical distance from existing network lines is prohibitive. Because connection charges typically scale with the distance and infrastructure extensions required to hook up a dwelling, these two factors represent interrelated manifestations of the high initial capital hurdle. In contrast, high monthly electricity tariffs are cited by `{{BARRIER_TARIFF_NAT}}%` of unconnected households, indicating that recurrent payment affordability—while secondary to the upfront connection hurdle—remains an active concern. Even after overcoming upfront connection barriers, households face ongoing monthly electricity expenditures averaging `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` nationwide (`{{GRID_MONTHLY_SPEND_URB}}` `{{CURRENCY_CODE}}` in urban areas vs. `{{GRID_MONTHLY_SPEND_RUR}}` `{{CURRENCY_CODE}}` in rural areas; median ~8,000 `{{CURRENCY_CODE}}`). Beyond financial costs, institutional and tenure constraints also impede access: `{{BARRIER_LANDLORD_NAT}}%` of unconnected urban households report that landlords refuse to finance or authorize connection installations, while bureaucratic delays (`{{BARRIER_ADMIN_NAT}}%`) and service unreliability (`{{BARRIER_UNREL_NAT}}%`) affect remaining households.
 
@@ -578,7 +634,7 @@ Figure 6 plots the comparative cumulative willingness-to-pay demand curves acros
 #### Off-Grid Solar Market Dynamics & Island Electrification
 For households residing in remote settlements located beyond the physical reach of the national distribution network, decentralized off-grid solar solutions represent the primary electrification pathway. Empirical device ownership reveals a diverse off-grid market: while single solar lanterns represent 43.2% of primary devices among solar adopters, multi-light Solar Lighting Systems (SLS) account for 47.6% (reaching 51.7% in rural areas), and larger Solar Home Systems (SHS) represent 9.2%. Expanding service depth to support domestic entertainment, refrigeration, and productive appliances requires stimulating adoption of higher-capacity certified Solar Home Systems (SHS).
 
-Willingness-to-pay bidding demonstrates that household adoption is highly sensitive to both price subsidies and financing terms. Under the 100% full commercial price benchmark, stated willingness to acquire an SHS stands at `{{WTP_SOLAR_P100_UPFRONT}}%` upfront, expanding to `{{WTP_SOLAR_P100_6M}}%` over 6 months, `{{WTP_SOLAR_P100_12M}}%` over 12 months, and `{{WTP_SOLAR_P100_24M}}%` under a 24-month financing horizon. When capital subsidies are introduced, demand expands substantially: at a 66% reference price, adoption reaches `{{WTP_SOLAR_P66_UPFRONT}}%` upfront and `{{WTP_SOLAR_P66_24M}}%` over 24 months, while at a 33% concessional price, stated willingness increases to `{{WTP_SOLAR_P33_UPFRONT}}%` upfront and `{{WTP_SOLAR_P33_24M}}%` over 24 months. Across all price scenarios, `{{WTP_SOLAR_NEVER_NAT}}%` of households indicate they would decline acquiring an SHS even under extended installment terms; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs as the decisive factor. Furthermore, targeted consumer education and awareness campaigns are essential to inform dispersed rural communities about certified off-grid equipment standards and available Pay-As-You-Go financing mechanisms.
+Household demand for off-grid Solar Home Systems is highly sensitive to both upfront equipment pricing and installment credit flexibility, as visualized in the cumulative willingness-to-pay demand curves in Figure 6. While upfront cash purchases are constrained by household liquidity, offering installment credit horizons of 6 to 24 months dramatically expands adoption across all subsidy levels (33%, 66%, and 100% price benchmarks). Even under a 24-month financing facility, approximately `{{WTP_SOLAR_NEVER_NAT}}%` of households decline the offer; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs and inability to meet monthly installment commitments as the decisive obstacle, while others report having sufficient alternative energy solutions. Consequently, bridging the final off-grid access gap requires coupling PAYGo mobile-money installments with targeted capital end-user subsidies and consumer awareness campaigns regarding certified equipment performance standards.
 
 During power interruptions, grid-connected households rely on substitute lighting coping mechanisms, primarily disposable dry-cell battery torches (`{{GRID_BACKUP_TORCH_NAT}}%`), while `{{GRID_BACKUP_NONE_NAT}}%` have no alternative backup source. Special geographic planning is essential for isolated insular territories—most notably the Bijagós archipelago—where submarine cable grid interconnection is technically and economically unviable. Electrification in these communities remains below 1%, necessitating maritime logistics corridors, localized spare-parts depots, and climate-resilient solar-plus-storage mini-grids engineered to withstand saline maritime operating conditions.
 
@@ -662,7 +718,7 @@ The transition toward modern cooking services is governed by economic barriers a
 * **High Upfront Capital Outlay:** For clean fuels such as LPG, the initial cost of a double-burner stove, pressurized gas cylinder, regulator, and hose represents a prohibitive barrier for low-income households.
 * **Lump-Sum Refill Liquidity Constraints:** Even when appliances are acquired, the lump-sum cash outlay required to refill a standard 6 kg or 12 kg LPG cylinder prevents cash-constrained households from refilling continuously, prompting reversion to daily purchases of small bags of charcoal or gathered firewood.
 
-The Willingness to Pay module demonstrates that structured installment financing and price concessions substantially unlock clean cooking adoption. Under the 100% full commercial price scenario, stated willingness to acquire a clean cookstove is `{{WTP_COOK_P100_UPFRONT}}%` upfront, expanding to `{{WTP_COOK_P100_6M}}%` over 6 months, `{{WTP_COOK_P100_12M}}%` over 12 months, and `{{WTP_COOK_P100_24M}}%` over 24 months. Introducing price subsidies accelerates uptake: at a 66% reference price, stated adoption expands from `{{WTP_COOK_P66_UPFRONT}}%` upfront to `{{WTP_COOK_P66_24M}}%` over 24 months, and at a 33% concessional price, adoption surges from `{{WTP_COOK_P33_UPFRONT}}%` upfront to `{{WTP_COOK_P33_24M}}%` over 24 months. Conversely, `{{WTP_COOK_NEVER_NAT}}%` of households indicate they would decline acquiring a modern cookstove even under flexible financing; among households declining, `{{REFUSE_COOK_COST_NAT}}%` identify equipment costs as the primary deterrent.
+As illustrated in the contingent valuation demand curves in Figure 6, household willingness to acquire an improved or clean cookstove is severely constrained under upfront lump-sum pricing, but expands significantly when paired with installment financing and capital subsidies. Spreading equipment costs across 6- to 24-month payment schedules unlocks substantial latent demand across all pricing tiers. However, even with 24-month financing, `{{WTP_COOK_NEVER_NAT}}%` of households decline adopting improved stoves; among households declining, `{{REFUSE_COOK_COST_NAT}}%` cite equipment acquisition costs as the primary impediment, while others report satisfaction with three-stone fires or unreliability of modern fuel supply chains. Overcoming this inertia requires combining results-based financing (RBF) for clean cooking distributors with consumer awareness programs demonstrating the long-term fuel expenditure savings and health benefits of efficient stoves.
 
 #### Strategic e-Cooking Transition Pathway
 Survey microdata confirm that electric cooking currently represents an aspirational rather than prevalent practice: fewer than 0.2% of households (<7 sample households nationally) cook with electricity (`{{STOVE_ELEC_N}}%`). Even among grid-connected households, electric stove uptake stands at only `{{ELEC_STOVE_GRID_NAT}}%` nationwide (`{{ELEC_STOVE_GRID_URB}}%` in urban areas vs. `{{ELEC_STOVE_GRID_RUR}}%` in rural areas). Consequently, national clean cooking strategy must follow a realistic dual-track trajectory:
@@ -830,8 +886,8 @@ The following publication-grade charts summarize the complete empirical diagnost
 * **Figure 4:** The Under-the-Grid Uptake Funnel and National Densification Deficit
   ![Figure 4: The Under-the-Grid Uptake Funnel and National Densification Deficit]({{CHART_UNDER_GRID}})
 
-* **Figure 5:** Primary Stated Barriers to Gaining Grid Connection and Willingness to Pay by Payment Modality
-  ![Figure 5: Primary Stated Barriers to Gaining Grid Connection and Willingness to Pay by Payment Modality]({{CHART_GRID_BARRIERS}})
+* **Figure 5:** Primary Stated Barriers to Gaining Grid Connection
+  ![Figure 5: Primary Stated Barriers to Gaining Grid Connection]({{CHART_GRID_BARRIERS}})
 
 * **Figure 6:** Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking
   ![Figure 6: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
