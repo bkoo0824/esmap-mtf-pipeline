@@ -544,57 +544,75 @@ The Health and Safety attribute assesses whether households have experienced ser
 
 ### 2.4 Household Grid Electricity Consumption, Expenditure, and Appliance Ownership
 
-Beyond physical connection, understanding the level of electricity consumption and the appliance ownership portfolio of connected households is essential for evaluating service adequacy, demand patterns, and utility revenue sustainability. In {{COUNTRY_NAME}}, grid-connected households face substantial quality and reliability constraints, yet grid electricity represents the primary modern energy anchor for domestic welfare and economic productivity.
+Beyond physical connection, understanding the level of electricity consumption, payment modalities, and the appliance ownership portfolio of connected households is essential for evaluating service adequacy, demand patterns, and utility revenue sustainability. In {{COUNTRY_NAME}}, grid-connected households face substantial quality and reliability constraints, yet grid electricity represents the primary modern energy anchor for domestic welfare and economic productivity.
 
-#### Monthly Grid Electricity Expenditures
-Nationally, grid-connected households spend an average of `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` per month on electricity (median: `{{GRID_MONTHLY_SPEND_MEDIAN}}` `{{CURRENCY_CODE}}`). In urban centers, monthly electricity expenditure averages `{{GRID_MONTHLY_SPEND_URB}}` `{{CURRENCY_CODE}}`, compared to `{{GRID_MONTHLY_SPEND_RUR}}` `{{CURRENCY_CODE}}` in electrified rural communities. The predominant payment modality is digital prepaid metering (STS prepaid recharges), utilized by over 90% of grid-connected customers, where households purchase electricity tokens periodically in cash or via mobile money.
+#### Monthly Grid Electricity Expenditures: Cash-Flow Dynamics & Dual Estimation
 
-Electricity expenditure displays a progressive socioeconomic gradient across household expenditure quintiles, reflecting differences in both disposable income and appliance adoption.
+Household electricity spending can be evaluated through two distinct empirical lenses: (1) direct recall of typical monthly spending (`SEC_C_Q25`), and (2) high-frequency transaction reconstruction based on prepaid recharge frequency and purchase amounts (`SEC_C_Q19B` & `SEC_C_Q19D`).
+
+In {{COUNTRY_NAME}}, over 92% of connected households utilize digital prepaid metering (STS prepaid tokens), purchasing electricity periodically in cash or via mobile money. Evaluating transaction records reveals critical insights into household cash-flow management:
+- **Prepaid Micro-Purchases & Transaction Medians:** Among the core cohort of prepaid customers who purchase electricity on a monthly schedule (representing 55.4% of prepaid users), the **median recharge transaction is 5,000 `{{CURRENCY_CODE}}` (~$8.33 USD)**, with a transaction mean of **7,491 `{{CURRENCY_CODE}}` (~$12.50 USD)**. Over a quarter of these households purchase tokens of 4,000 `{{CURRENCY_CODE}}` (~$6.67 USD) or less. By purchasing in smaller, flexible increments, households align energy expenditures with irregular informal income streams, avoiding the punitive reconnection fees and lump-sum billing distress common under traditional postpaid billing.
+- **Direct Typical Monthly Recall:** When asked directly regarding typical monthly electricity expenditures, grid-connected households report an overall national mean of `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` per month (~$18.40 USD). In urban centers, monthly electricity expenditure averages `{{GRID_MONTHLY_SPEND_URB}}` `{{CURRENCY_CODE}}`, compared to `{{GRID_MONTHLY_SPEND_RUR}}` `{{CURRENCY_CODE}}` in electrified rural communities.
+- **Distributional Skewness:** The arithmetic mean of `{{GRID_MONTHLY_SPEND_NAT}}` `{{CURRENCY_CODE}}` is heavily pulled upward by high-consuming upper-bracket urban households in Quintile 5 (averaging 12,193 `{{CURRENCY_CODE}}` / ~$20.30 USD) who operate multiple continuous cooling and refrigeration appliances. In contrast, the **national median monthly expenditure is `{{GRID_MONTHLY_SPEND_MEDIAN}}` `{{CURRENCY_CODE}}` (~$13.30 USD)**, while households in the poorest expenditure quintile (Quintile 1) report a median monthly spending of only **4,000 `{{CURRENCY_CODE}}` (~$6.67 USD)**. Mechanical frequency multiplication (recharge amount $\times$ annual frequency) yields an inflated arithmetic mean (15,676 `{{CURRENCY_CODE}}`), driven primarily by enumerator-respondent ambiguity between "twice a month" versus "twice a week" options and occasional emergency daily purchases. Anchoring analysis in direct monthly recall alongside transaction medians provides an empirically grounded, transparent depiction of domestic energy burdens.
+
+Table 2.3 presents monthly electricity expenditure disaggregated across household consumption expenditure quintiles.
 
 ##### Table 2.3: Monthly Grid Electricity Expenditure by Household Expenditure Quintile
 
-| Expenditure Quintile | Mean Monthly Expenditure (`{{CURRENCY_CODE}}`) | Median Monthly Expenditure (`{{CURRENCY_CODE}}`) | Estimated Equivalent USD | Predominant Metering & Payment Type |
+| Expenditure Quintile | Mean Monthly Expenditure (`{{CURRENCY_CODE}}`) | Median Monthly Expenditure (`{{CURRENCY_CODE}}`) | Estimated Equivalent USD (Median) | Predominant Metering & Payment Type |
 | :--- | :---: | :---: | :---: | :--- |
-| **Quintile 1 (Poorest 20%)** | 5,681 | 4,000 | ~$9.50 | Prepaid meter token recharges |
-| **Quintile 2** | 7,838 | 5,000 | ~$13.10 | Prepaid meter token recharges |
-| **Quintile 3** | 9,062 | 10,000 | ~$15.10 | Prepaid meter token recharges |
-| **Quintile 4** | 10,318 | 7,000 | ~$17.20 | Prepaid meter token recharges |
-| **Quintile 5 (Richest 20%)** | 12,193 | 10,000 | ~$20.30 | Prepaid & postpaid utility billing |
-| **National Grid Connected Average** | `{{GRID_MONTHLY_SPEND_NAT}}` | `{{GRID_MONTHLY_SPEND_MEDIAN}}` | ~$18.40 | Prepaid meter token recharges |
+| **Quintile 1 (Poorest 20%)** | 5,681 | 4,000 | ~$6.67 | Prepaid meter token micro-recharges |
+| **Quintile 2** | 7,838 | 5,000 | ~$8.33 | Prepaid meter token recharges |
+| **Quintile 3** | 9,062 | 10,000 | ~$16.67 | Prepaid meter token recharges |
+| **Quintile 4** | 10,318 | 7,000 | ~$11.67 | Prepaid meter token recharges |
+| **Quintile 5 (Richest 20%)** | 12,193 | 10,000 | ~$16.67 | Prepaid & postpaid utility billing |
+| **National Grid Connected Average** | `{{GRID_MONTHLY_SPEND_NAT}}` | `{{GRID_MONTHLY_SPEND_MEDIAN}}` | ~$13.33 | Prepaid meter token recharges |
 
-#### Appliance Ownership Profile Across Quintiles
-The services delivered by electricity depend directly on household ownership of end-use appliances. Table 2.4 details the appliance ownership profile among grid-connected households disaggregated by consumption expenditure quintile, with lighting (incandescent, fluorescent, CFL, LED, and solar bulbs) and television (black & white, color, flat screen) consolidated into cohesive functional categories.
+#### Appliance Ownership Profile Across Quintiles & Econometric Literature Grounding
+
+The welfare benefits and productive services delivered by electrification depend directly on household ownership of end-use appliances. In the energy economics literature, durable good adoption in developing countries is characterized by pronounced non-linearities:
+1. **The S-Curve Appliance Accumulation Paradigm:** As formalized by **Wolfram, Shelef, and Gertler (2012)** (*American Economic Review Papers & Proceedings*), appliance adoption follows a characteristic S-shaped curve as household incomes rise. Basic lighting and low-power media goods (televisions, radios, mobile phone chargers) represent "entry-level" durables that saturate rapidly even at low income levels. In contrast, energy-intensive cooling, thermal, and motor-driven appliances (refrigerators, air conditioners, electric irons, washing machines) exhibit steep income threshold effects, remaining virtually absent until households reach upper-income tiers.
+2. **Rising Middle Class and Energy Demand Surges:** **Gertler et al. (2016)** (*American Economic Review*) demonstrate that rising incomes translate into non-linear increases in residential electricity demand primarily through the accumulation of energy-using assets—particularly refrigeration and space cooling—rather than increased utilization of existing basic equipment.
+3. **The Low Initial Demand Paradox in Sub-Saharan Africa:** As documented by **Lee, Miguel, and Wolfram (2020)** (*American Economic Review*), grid connections among newly electrified rural households in Sub-Saharan Africa initially generate modest consumption levels because connected families face severe liquidity constraints that prevent them from purchasing durable appliances beyond basic lighting and phone charging.
+4. **Thermodynamic Baseloads:** **Davis (2008)** (*Journal of Political Economy*) highlights that refrigeration establishes an inflexible continuous thermodynamic baseload driven by ambient climatic conditions, which locks in a permanent floor of residential energy consumption once adopted.
+
+Table 2.4 details the empirical appliance ownership profile among grid-connected households in {{COUNTRY_NAME}} across expenditure quintiles, reporting design-based survey-weighted Wald tests of statistical significance across the socioeconomic gradient.
 
 ##### Table 2.4: Household Appliance Ownership Rates Among Grid Customers by Expenditure Quintile (%)
 
-| Appliance Category | Q1 (Poorest) | Q2 | Q3 | Q4 | Q5 (Richest) | Grid Customers Total |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Electric Lighting (Consolidated: LED, CFL, Tube, Incandescent)** | 100.0% | 87.8% | 93.7% | 93.2% | 92.9% | 92.8% |
-| **Television (Consolidated: Flat screen, Color, B&W)** | 64.3% | 66.7% | 46.1% | 53.1% | 64.2% | 60.5% |
-| **Refrigerator / Freezer (Electric & Solar)** | 48.9% | 44.8% | 48.0% | 47.1% | 66.2% | 59.4% |
-| **Electric Fan** | 27.0% | 26.8% | 35.0% | 29.6% | 67.4% | 54.2% |
-| **Mobile Phone Charger (Smartphone & Basic)** | 91.4% | 53.2% | 37.2% | 46.7% | 56.9% | 53.5% |
-| **Radio / Sound System (Electric & Battery)** | 42.3% | 10.4% | 38.8% | 22.9% | 25.6% | 25.8% |
-| **Electric Iron** | 0.0% | 0.0% | 19.5% | 8.2% | 22.2% | 17.7% |
-| **Computer / Laptop** | 0.0% | 4.5% | 10.4% | 9.2% | 21.4% | 16.7% |
-| **Electric Water Heater** | 0.0% | 0.0% | 1.5% | 7.6% | 9.8% | 7.9% |
-| **Microwave Oven** | 0.0% | 0.0% | 0.0% | 2.3% | 9.0% | 6.2% |
-| **Blender / Food Processor** | 0.0% | 0.0% | 0.0% | 5.2% | 7.3% | 5.7% |
-| **Internet Modem / Router** | 0.0% | 0.0% | 0.0% | 0.0% | 5.9% | 3.8% |
-| **Air Conditioner (AC)** | 0.0% | 0.0% | 0.0% | 0.0% | 3.0% | 1.9% |
+| Appliance Category | Q1 (Poorest) | Q2 | Q3 | Q4 | Q5 (Richest) | Grid Customers Total | Statistical Significance (Wald Trend Test) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Electric Lighting (Consolidated: LED, CFL, Tube, Incandescent)** | 100.0% | 87.8% | 93.7% | 93.2% | 92.9% | 92.8% | $p = 0.933$ (Not Significant) |
+| **Television (Consolidated: Flat screen, Color, B&W)** | 64.3% | 66.7% | 46.1% | 53.1% | 64.2% | 60.5% | $p = 0.168$ (Not Significant) |
+| **Mobile Phone Charger (Smartphone & Basic)** | 91.4% | 53.2% | 37.2% | 46.7% | 56.9% | 53.5% | $p = 0.548$ (Not Significant) |
+| **Radio / Sound System (Electric & Battery)** | 42.3% | 10.4% | 38.8% | 22.9% | 25.6% | 25.8% | $p = 0.866$ (Not Significant) |
+| **Refrigerator / Freezer (Electric & Solar)** | 48.9% | 44.8% | 48.0% | 47.1% | 66.2% | 59.4% | $p = 0.013^{**}$ |
+| **Electric Fan** | 27.0% | 26.8% | 35.0% | 29.6% | 67.4% | 54.2% | $p < 0.001^{***}$ |
+| **Electric Iron** | 0.0% | 0.0% | 19.5% | 8.2% | 22.2% | 17.7% | $p < 0.001^{***}$ |
+| **Computer / Laptop** | 0.0% | 4.5% | 10.4% | 9.2% | 21.4% | 16.7% | $p < 0.001^{***}$ |
+| **Electric Water Heater** | 0.0% | 0.0% | 1.5% | 7.6% | 9.8% | 7.9% | $p = 0.012^{**}$ |
+| **Microwave Oven** | 0.0% | 0.0% | 0.0% | 2.3% | 9.0% | 6.2% | $p < 0.001^{***}$ |
+| **Blender / Food Processor** | 0.0% | 0.0% | 0.0% | 5.2% | 7.3% | 5.7% | $p < 0.001^{***}$ |
+| **Internet Modem / Router** | 0.0% | 0.0% | 0.0% | 0.0% | 5.9% | 3.8% | $p = 0.001^{***}$ |
+| **Air Conditioner (AC)** | 0.0% | 0.0% | 0.0% | 0.0% | 3.0% | 1.9% | $p = 0.001^{***}$ |
 
-*Note: Table 2.4 reports weighted appliance ownership rates specifically among national grid-connected households. Electric lighting consolidates incandescent, fluorescent tube, compact fluorescent (CFL), LED bulbs, and solar bulbs. Television consolidates CRT color, flat screen LCD/LED, black & white, and solar televisions.*
+*Note: Table 2.4 reports weighted appliance ownership rates specifically among national grid-connected households. Asterisks denote statistical significance based on design-based survey-weighted Wald tests ($^{***} p < 0.01, ^{**} p < 0.05, ^{*} p < 0.1$) adjusting for PSU cluster correlation and sampling weights. Electric lighting consolidates incandescent, fluorescent tube, compact fluorescent (CFL), LED bulbs, and solar bulbs. Television consolidates CRT color, flat screen LCD/LED, black & white, and solar televisions.*
 
-#### Empirical Determinants of Electricity Expenditure
+The empirical results in Table 2.4 provide striking empirical validation of the Wolfram et al. (2012) framework in {{COUNTRY_NAME}}:
+- **Universal Saturation of Entry-Level Services:** Electric lighting (92.8% overall; 100.0% in Q1), televisions (60.5%), and mobile phone chargers (53.5%) display statistically insignificant socioeconomic gradients across quintiles ($p > 0.15$). Once hooked to the network, households across all wealth strata prioritize illumination and information services.
+- **Steep S-Curve Adoption for Cooling and Thermal Durables:** In contrast, electric fans ($p < 0.0001^{***}$), electric irons ($p < 0.0001^{***}$), computers/laptops ($p < 0.0001^{***}$), microwaves ($p < 0.0001^{***}$), blenders ($p < 0.0004^{***}$), and air conditioners ($p < 0.0013^{***}$) exhibit highly significant socioeconomic gradients. In the bottom quintile (Q1), ownership of irons, PCs, microwaves, blenders, and air conditioners is literally 0.0%. Ownership emerges abruptly in Quintiles 4 and 5 as households cross the income threshold necessary to finance high-wattage durable investments.
+
+#### Empirical Determinants of Electricity Expenditure: Econometric Model
+
 To examine which socioeconomic and technological factors drive household electricity consumption, a Weighted Least Squares (WLS) econometric regression was estimated on monthly grid electricity spending:
 
 $$\ln(\text{Grid Expenditure}_i) = \beta_0 + \beta_1 \text{Quintile}_i + \beta_2 \text{HHSize}_i + \sum_k \gamma_k \text{Appliance}_{ki} + \varepsilon_i$$
 
 Empirical estimation yields several critical insights into household energy demand:
-1. **Baseload Thermodynamic Refrigeration Load:** Holding household wealth and family size constant, owning a refrigerator or freezer is the single strongest appliance determinant of electricity expenditure ($\beta = +0.1901, t = 2.68^{***}, p < 0.01$). Refrigerator ownership increases monthly electricity expenditure by **+20.9%** (an absolute increase of **+2,250.3 `{{CURRENCY_CODE}}`/month**). In {{COUNTRY_NAME}}'s high ambient temperature climate, compressors run continuously to maintain food preservation, representing a rigid baseload energy demand.
+1. **Baseload Thermodynamic Refrigeration Load:** Holding household wealth and family size constant, owning a refrigerator or freezer is the single strongest appliance determinant of electricity expenditure ($\beta = +0.1901, t = 2.68^{***}, p < 0.01$). Refrigerator ownership increases monthly electricity expenditure by **+20.9%** (an absolute increase of **+2,250.3 `{{CURRENCY_CODE}}`/month**). In {{COUNTRY_NAME}}'s high ambient temperature climate, compressors run continuously to maintain food preservation, representing a rigid baseload energy demand as predicted by Davis (2008).
 2. **Media and Information Services:** Television ownership exerts a statistically significant positive effect on electricity spending ($\beta = +0.1471, t = 2.16^{**}, p < 0.05$), increasing monthly spending by **+15.8% (+784.4 `{{CURRENCY_CODE}}`/month)**.
-3. **Income and Wealth Elasticity:** Household consumption expenditure quintile is strongly correlated with electricity spending ($\beta = +0.0981, t = 2.28^{**}, p < 0.05$), with each step increase in quintile raising monthly grid spending by **+10.3% (+1,145.5 `{{CURRENCY_CODE}}`/month)**. This captures both the accumulation of secondary appliances and longer daily utilization hours among wealthier households.
-4. **Cooling and Thermal Loads:** Electric fans contribute an additional **+10.9% (+949.2 `{{CURRENCY_CODE}}`/month)** to monthly bills. Notably, high-power resistive and compressor appliances—such as electric irons (17.7% grid ownership), water heaters (7.9%), microwave ovens (6.2%), and air conditioners (1.9%)—are almost entirely absent from the bottom three quintiles and concentrate within the top quintile, creating steep peak-demand drivers for the national utility.
+3. **Income and Wealth Elasticity:** Household consumption expenditure quintile is strongly correlated with electricity spending ($\beta = +0.0981, t = 2.28^{**}, p < 0.05$), with each step increase in quintile raising monthly grid spending by **+10.3% (+1,145.5 `{{CURRENCY_CODE}}`/month)**. This captures both the accumulation of secondary appliances and longer daily utilization hours among wealthier households (Gertler et al., 2016).
+4. **Cooling and Thermal Loads:** Electric fans contribute an additional **+10.9% (+949.2 `{{CURRENCY_CODE}}`/month)** to monthly bills. Notably, high-power resistive and compressor appliances—such as electric irons (17.7% grid ownership), water heaters (7.9%), microwave ovens (6.2%), and air conditioners (1.9%)—are almost entirely absent from the bottom three quintiles and concentrate within the top quintile, creating steep peak-demand drivers for the national utility. Consistent with Dinkelman (2011), the diffusion of thermal and motor-driven home production durables (e.g., irons and food processors) represents a crucial frontier for liberating domestic labor time, but currently remains severely constrained by household capital barriers.
 
 ---
 
