@@ -31,15 +31,14 @@ All placeholders are replaced dynamically during calibration and report injectio
 {{CHART_QUINTILE_CURVE}}       : Figure 3  — Access Across Expenditure Quintiles (04_quintile_access_curve.png)
 {{CHART_UNDER_GRID}}           : Figure 4  — Under-the-Grid Densification Funnel (10_under_the_grid_funnel.png)
 {{CHART_GRID_BARRIERS}}        : Figure 5  — Stated Barriers to Gaining Grid Connection (06_grid_barriers_wtp.png)
-{{CHART_WTP_DEMAND}}           : Figure 6  — Willingness to Pay Cumulative Demand Curves (12a_wtp_grid_connection.png)
-{{CHART_WTP_GRID}}             : Figure 6a — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
-{{CHART_WTP_SOLAR}}            : Figure 6b — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
-{{CHART_WTP_COOKSTOVE}}        : Figure 6c — Clean Cookstove WTP Cumulative Demand Curve (12c_wtp_cookstove.png)
-{{CHART_STOVE_FUELS}}          : Figure 7  — Primary Cookstove Typology & Fuel Mix (07_stove_technology_fuels.png)
-{{CHART_COOKING_TIERS}}        : Figure 8  — MECS Cooking Tier Distribution (02_cooking_tier_distribution.png)
-{{CHART_STOVE_STACKING}}       : Figure 9  — Clean Cooking Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
-{{CHART_GENDER_ACCESS}}        : Figure 10 — Gender Demographics, Credit & Access Parity (08_gender_demographics_access.png)
-{{CHART_GENDER_FUEL}}          : Figure 11 — Gender Time-Use Burden for Fuel Collection (05_gender_fuel_collection_time.png)
+{{CHART_WTP_GRID}}             : Figure 6  — Grid Connection WTP Cumulative Demand Curve (12a_wtp_grid_connection.png)
+{{CHART_WTP_SOLAR}}            : Figure 7  — Off-Grid Solar WTP Cumulative Demand Curve (12b_wtp_solar_device.png)
+{{CHART_STOVE_FUELS}}          : Figure 8  — Primary Cookstove Typology & Fuel Mix (07_stove_technology_fuels.png)
+{{CHART_COOKING_TIERS}}        : Figure 9  — MECS Cooking Tier Distribution (02_cooking_tier_distribution.png)
+{{CHART_STOVE_STACKING}}       : Figure 10 — Clean Cooking Stacking & Exposure Dilution (14_stove_stacking_matrix.png)
+{{CHART_WTP_COOKSTOVE}}        : Figure 11 — Clean Cookstove WTP Cumulative Demand Curve (12c_wtp_cookstove.png)
+{{CHART_GENDER_ACCESS}}        : Figure 12 — Gender Demographics, Credit & Access Parity (08_gender_demographics_access.png)
+{{CHART_GENDER_FUEL}}          : Figure 13 — Gender Time-Use Burden for Fuel Collection (05_gender_fuel_collection_time.png)
 
 --------------------------------------------------------------------------------
 3. EXECUTIVE SUMMARY & TABLE 1.1 DASHBOARD PLACEHOLDERS
@@ -472,7 +471,7 @@ Table 2.1 presents the detailed distribution of households across electricity ac
 | Electricity Access Tier | Nationwide (%) | Urban (%) | Rural (%) | Typical Appliance Service & Capabilities |
 | :--- | :---: | :---: | :---: | :--- |
 | **Tier 0** (No Access / Sub-Tier 1) | `{{ELEC_T0_N}}` | `{{ELEC_T0_U}}` | `{{ELEC_T0_R}}` | Dry-cell batteries, candles, flashlights, paraffin |
-| **Tier 1** (Task Lighting & Phone Charging) | `{{ELEC_T1_N}}` | `{{ELEC_T1_U}}` | `{{ELEC_T1_R}}` | Solar lanterns, basic SLS (3-49W, >=4h) |
+| **Tier 1** (Task Lighting & Phone Charging) | `{{ELEC_T1_N}}` | `{{ELEC_T1_U}}` | `{{ELEC_T1_R}}` | Basic Solar Lighting Systems (SLS, 3-49W, >=4h) |
 | **Tier 2** (General Lighting, TV, Fan) | `{{ELEC_T2_N}}` | `{{ELEC_T2_U}}` | `{{ELEC_T2_R}}` | Multi-light SHS (50-199W, >=4h) |
 | **Tier 3** (Medium Load & Refrigeration) | `{{ELEC_T3_N}}` | `{{ELEC_T3_U}}` | `{{ELEC_T3_R}}` | Refrigerator, freezer, water pump, grid (>=8h) |
 | **Tier 4** (High Load & Productive Use) | `{{ELEC_T4_N}}` | `{{ELEC_T4_U}}` | `{{ELEC_T4_R}}` | Washing machine, electric iron, grid (>=16h) |
@@ -489,14 +488,16 @@ This unequal access across income groups creates an **energy poverty penalty**. 
 
 ##### Table 2.2: Energy Poverty Penalty — Monthly Coping Mechanism Lighting Expenditures Across Quintiles & Access Status
 
-| Household Segment / Expenditure Quintile | Monthly Coping Fuel Spending (`{{CURRENCY_CODE}}`) | Share of Monthly Household Budget (%) | Primary Substitute Fuel Utilized |
-| :--- | :---: | :---: | :--- |
-| **Lowest Quintile (Q1) — Unelectrified** | `{{COPING_SPEND_Q1_UNEL}}` | `{{COPING_PCT_Q1_UNEL}}%` | Disposable dry-cell batteries & candles |
-| **Lowest Quintile (Q1) — Connected** | `{{COPING_SPEND_Q1_CONN}}` | `{{COPING_PCT_Q1_CONN}}%` | Metered electricity & backup candles |
-| **Middle Quintile (Q3) — Unelectrified** | `{{COPING_SPEND_Q3_UNEL}}` | `{{COPING_PCT_Q3_UNEL}}%` | Batteries, candles & kerosene |
-| **Middle Quintile (Q3) — Connected** | `{{COPING_SPEND_Q3_CONN}}` | `{{COPING_PCT_Q3_CONN}}%` | Metered grid electricity |
-| **Highest Quintile (Q5) — Connected** | `{{COPING_SPEND_Q5_CONN}}` | `{{COPING_PCT_Q5_CONN}}%` | Metered grid & rechargeable backup |
-| **National Average (All Unelectrified)** | `{{COPING_SPEND_NAT_UNEL}}` | `{{COPING_PCT_NAT_UNEL}}%` | Inferior lighting substitutes |
+| Household Segment / Expenditure Quintile | Monthly Coping Fuel Spending (`{{CURRENCY_CODE}}`) | Share of Monthly Household Budget (%) |
+| :--- | :---: | :---: |
+| **Lowest Quintile (Q1) — Unelectrified** | `{{COPING_SPEND_Q1_UNEL}}` | `{{COPING_PCT_Q1_UNEL}}%` |
+| **Lowest Quintile (Q1) — Grid Connected** | `{{COPING_SPEND_Q1_CONN}}` | `{{COPING_PCT_Q1_CONN}}%` |
+| **Middle Quintile (Q3) — Unelectrified** | `{{COPING_SPEND_Q3_UNEL}}` | `{{COPING_PCT_Q3_UNEL}}%` |
+| **Middle Quintile (Q3) — Grid Connected** | `{{COPING_SPEND_Q3_CONN}}` | `{{COPING_PCT_Q3_CONN}}%` |
+| **Highest Quintile (Q5) — Unelectrified** | `{{COPING_SPEND_Q5_UNEL}}` | `{{COPING_PCT_Q5_UNEL}}%` |
+| **Highest Quintile (Q5) — Grid Connected** | `{{COPING_SPEND_Q5_CONN}}` | `{{COPING_PCT_Q5_CONN}}%` |
+| **National Average (All Unelectrified)** | `{{COPING_SPEND_NAT_UNEL}}` | `{{COPING_PCT_NAT_UNEL}}%` |
+| **National Average (All Grid Connected)** | `{{COPING_SPEND_NAT_CONN}}` | `{{COPING_PCT_NAT_CONN}}%` |
 
 *Note: Table 2.2 empirically illustrates the energy poverty penalty. Coping expenditures capture monthly purchases of non-electric lighting and power substitutes (dry-cell batteries, candles, kerosene, and fee-based mobile phone charging) expressed as a percentage of total household consumption expenditure.*
 
@@ -559,14 +560,14 @@ Table 2.3 presents monthly electricity expenditure disaggregated across househol
 
 ##### Table 2.3: Monthly Grid Electricity Expenditure by Household Expenditure Quintile
 
-| Expenditure Quintile | Mean Monthly Expenditure (`{{CURRENCY_CODE}}`) | Median Monthly Expenditure (`{{CURRENCY_CODE}}`) | Estimated Equivalent USD (Median) | Predominant Metering & Payment Type |
-| :--- | :---: | :---: | :---: | :--- |
-| **Quintile 1 (Poorest 20%)** | 5,681 | 4,000 | ~$6.67 | Prepaid meter token micro-recharges |
-| **Quintile 2** | 7,838 | 5,000 | ~$8.33 | Prepaid meter token recharges |
-| **Quintile 3** | 9,062 | 10,000 | ~$16.67 | Prepaid meter token recharges |
-| **Quintile 4** | 10,318 | 7,000 | ~$11.67 | Prepaid meter token recharges |
-| **Quintile 5 (Richest 20%)** | 12,193 | 10,000 | ~$16.67 | Prepaid & postpaid utility billing |
-| **National Grid Connected Average** | `{{GRID_MONTHLY_SPEND_NAT}}` | `{{GRID_MONTHLY_SPEND_MEDIAN}}` | ~$13.33 | Prepaid meter token recharges |
+| Expenditure Quintile | Mean Monthly Expenditure (`{{CURRENCY_CODE}}`) | Median Monthly Expenditure (`{{CURRENCY_CODE}}`) | Estimated Equivalent USD (Median) |
+| :--- | :---: | :---: | :---: |
+| **Quintile 1 (Poorest 20%)** | 5,681 | 4,000 | ~$6.67 |
+| **Quintile 2** | 7,838 | 5,000 | ~$8.33 |
+| **Quintile 3** | 9,062 | 10,000 | ~$16.67 |
+| **Quintile 4** | 10,318 | 7,000 | ~$11.67 |
+| **Quintile 5 (Richest 20%)** | 12,193 | 10,000 | ~$16.67 |
+| **National Grid Connected Average** | `{{GRID_MONTHLY_SPEND_NAT}}` | `{{GRID_MONTHLY_SPEND_MEDIAN}}` | ~$13.33 |
 
 #### Appliance Ownership Profile Across Quintiles & Econometric Literature Grounding
 
@@ -644,15 +645,18 @@ The MTF contingent valuation bidding experiment in {{COUNTRY_NAME}} rigorously r
 * **Installment Financing Expansion:** Stated willingness expands to `{{WTP_GRID_3M_NAT}}%` over 3 months, `{{WTP_GRID_6M_NAT}}%` over 6 months, and surges to `{{WTP_GRID_12M_NAT}}%` under a **12-month installment plan**.
 * **Fee Waivers and Internal Wiring Barriers:** When the connection fee is completely waived, `{{WTP_GRID_WAIVED_NAT}}%` indicate willingness to connect. Among households declining connection even under fee waivers (`{{WTP_GRID_NON_CONNECT}}%`), `{{REFUSE_WIRING_COST_NAT}}%` cite internal household wiring costs as the primary reason.
 
-Figure 6 plots the comparative cumulative willingness-to-pay demand curves across payment modalities.
+Figure 6 plots the comparative cumulative willingness-to-pay demand curves for national grid connection across installment financing terms and capital fee subsidy tiers.
 
-![Figure 6: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
-*Figure 6: Comparative cumulative willingness-to-pay demand curves across payment modalities.*
+![Figure 6: Willingness to Pay Cumulative Demand Curves for National Grid Connection]({{CHART_WTP_GRID}})
+*Figure 6: Comparative cumulative willingness-to-pay demand curves for grid connection across payment modalities and installment financing horizons.*
 
 #### Off-Grid Solar Market Dynamics & Island Electrification
 For households residing in remote settlements located beyond the physical reach of the national distribution network, decentralized off-grid solar solutions represent the primary electrification pathway. Empirical device ownership reveals a diverse off-grid market: while single solar lanterns represent 43.2% of primary devices among solar adopters, multi-light Solar Lighting Systems (SLS) account for 47.6% (reaching 51.7% in rural areas), and larger Solar Home Systems (SHS) represent 9.2%. Expanding service depth to support domestic entertainment, refrigeration, and productive appliances requires stimulating adoption of higher-capacity certified Solar Home Systems (SHS).
 
-Household demand for off-grid Solar Home Systems is highly sensitive to both upfront equipment pricing and installment credit flexibility, as visualized in the cumulative willingness-to-pay demand curves in Figure 6. While upfront cash purchases are constrained by household liquidity, offering installment credit horizons of 6 to 24 months dramatically expands adoption across all subsidy levels (33%, 66%, and 100% price benchmarks). Even under a 24-month financing facility, approximately `{{WTP_SOLAR_NEVER_NAT}}%` of households decline the offer; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs and inability to meet monthly installment commitments as the decisive obstacle, while others report having sufficient alternative energy solutions. Consequently, bridging the final off-grid access gap requires coupling PAYGo mobile-money installments with targeted capital end-user subsidies and consumer awareness campaigns regarding certified equipment performance standards.
+Household demand for off-grid Solar Home Systems is highly sensitive to both upfront equipment pricing and installment credit flexibility, as visualized in the cumulative willingness-to-pay demand curves in Figure 7. While upfront cash purchases are constrained by household liquidity, offering installment credit horizons of 6 to 24 months dramatically expands adoption across all subsidy levels (33%, 66%, and 100% price benchmarks). Even under a 24-month financing facility, approximately `{{WTP_SOLAR_NEVER_NAT}}%` of households decline the offer; among households declining, `{{REFUSE_SOLAR_COST_NAT}}%` cite equipment purchase costs and inability to meet monthly installment commitments as the decisive obstacle, while others report having sufficient alternative energy solutions. Consequently, bridging the final off-grid access gap requires coupling PAYGo mobile-money installments with targeted capital end-user subsidies and consumer awareness campaigns regarding certified equipment performance standards.
+
+![Figure 7: Willingness to Pay Cumulative Demand Curves for Off-Grid Solar Devices]({{CHART_WTP_SOLAR}})
+*Figure 7: Comparative cumulative willingness-to-pay demand curves for off-grid solar kits across upfront price subsidies and installment financing terms.*
 
 During power interruptions, grid-connected households rely on substitute lighting coping mechanisms, primarily disposable dry-cell battery torches (`{{GRID_BACKUP_TORCH_NAT}}%`), while `{{GRID_BACKUP_NONE_NAT}}%` have no alternative backup source. Special geographic planning is essential for isolated insular territories—most notably the Bijagós archipelago—where submarine cable grid interconnection is technically and economically unviable. Electrification in these communities remains below 1%, necessitating maritime logistics corridors, localized spare-parts depots, and climate-resilient solar-plus-storage mini-grids engineered to withstand saline maritime operating conditions.
 
@@ -668,10 +672,10 @@ Cooking energy in {{COUNTRY_NAME}} is characterized by an overwhelming reliance 
 
 Nationwide, `{{STOVE_3STONE_N}}%` of households cook primarily over a **three-stone open fire** (`{{STOVE_3STONE_U}}%` in urban areas and `{{STOVE_3STONE_R}}%` in rural areas). Traditional metal and artisanal charcoal stoves serve `{{STOVE_TRAD_N}}%` of households nationally (`{{STOVE_TRAD_U}}%` urban vs. `{{STOVE_TRAD_R}}%` rural). **Improved Cookstoves (ICS)** represent only `{{STOVE_ICS_N}}%` nationwide (`{{STOVE_ICS_U}}%` in urban areas and `{{STOVE_ICS_R}}%` in rural areas), indicating that the commercial market for high-efficiency biomass stoves remains nascent. Modern clean fuel stoves (LPG and electric) are used by only `{{CLEAN_STOVE_NAT}}%` of households (`{{CLEAN_STOVE_URB}}%` urban vs. `{{CLEAN_STOVE_RUR}}%` rural), with electric cooking accounting for `{{STOVE_ELEC_N}}%` nationwide.
 
-Figure 7 illustrates the distribution of primary cookstove technologies and fuels across national, urban, and rural populations.
+Figure 8 illustrates the distribution of primary cookstove technologies and fuels across national, urban, and rural populations.
 
-![Figure 7: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
-*Figure 7: Primary cookstove technologies (three-stone, traditional, ICS, clean) and primary fuels (wood, charcoal, LPG, electricity) across National, Urban, and Rural populations in {{COUNTRY_NAME}}.*
+![Figure 8: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
+*Figure 8: Primary cookstove technologies (three-stone, traditional, ICS, clean) and primary fuels (wood, charcoal, LPG, electricity) across National, Urban, and Rural populations in {{COUNTRY_NAME}}.*
 
 Table 3.1 details the distribution of primary cookstoves across localities alongside primary fuel types and ISO emission tiers.
 
@@ -696,12 +700,12 @@ In the MTF assessment of access to clean cooking solutions, households are evalu
 * **Tiers 2 and 3 (Improved / In Transition):** Households reaching aggregate Tier 2 or 3 have improved cooking services, primarily through high-efficiency Improved Cookstoves (ICS).
 * **Tiers 0 and 1 (No Access / High Exposure):** Households in aggregate Tier 0 or 1 have no access to clean cooking and remain exposed to severe indoor air pollution, burning raw biomass in unvented cooking environments.
 
-Figure 8 displays the distribution of households across MECS cooking tiers nationwide, in urban areas, and in rural areas.
+Figure 9 displays the distribution of households across MECS cooking tiers nationwide, in urban areas, and in rural areas.
 
-![Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
-*Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) tier distribution across National, Urban, and Rural populations.*
+![Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
+*Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) tier distribution across National, Urban, and Rural populations.*
 
-As shown in Figure 8, the vast majority of households (`{{COOK_T01_NAT}}%` nationwide; `{{COOK_T01_URB}}%` urban and `{{COOK_T01_RUR}}%` rural) remain in **Tier 0 or Tier 1 (No Access)**. Full modern energy cooking services (Tiers 4–5) reach only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas and `{{CLEAN_STOVE_RUR}}%` in rural areas).
+As shown in Figure 9, the vast majority of households (`{{COOK_T01_NAT}}%` nationwide; `{{COOK_T01_URB}}%` urban and `{{COOK_T01_RUR}}%` rural) remain in **Tier 0 or Tier 1 (No Access)**. Full modern energy cooking services (Tiers 4–5) reach only `{{CLEAN_STOVE_NAT}}%` of households nationwide (`{{CLEAN_STOVE_URB}}%` in urban areas and `{{CLEAN_STOVE_RUR}}%` in rural areas).
 
 #### Cookstove Time-Use Analysis by Technology
 Household survey data reveal that cooking technology directly determines domestic time expenditure:
@@ -723,10 +727,10 @@ Under standard MTF methodology, the Exposure attribute is evaluated based on the
 
 **Epidemiological Evidence and WHO IAQ Guidelines:** Epidemiological studies (Burnett et al. 2014; Smith and Peel 2010) and World Health Organization (WHO 2014) Indoor Air Quality Guidelines emphasize the severe non-linearity of the dose-response relationship between fine particulate matter (PM2.5) exposure and cardiopulmonary health outcomes. Because the health damage curve is supra-linear at elevated exposure levels, retaining even occasional secondary use of an open fire (1–2 cooking sessions per week) dilutes more than 80% of the potential respiratory and cardiovascular benefits of clean cooking adoption. Meaningful health protection requires achieving near-complete displacement of traditional biomass combustion.
 
-Figure 9 displays cookstove stacking patterns and the exposure dilution effect among clean cookstove owners.
+Figure 10 displays cookstove stacking patterns and the exposure dilution effect among clean cookstove owners.
 
-![Figure 9: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
-*Figure 9: Stove stacking patterns and the exposure dilution effect among clean cookstove owners in {{COUNTRY_NAME}}.*
+![Figure 10: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
+*Figure 10: Stove stacking patterns and the exposure dilution effect among clean cookstove owners in {{COUNTRY_NAME}}.*
 
 ---
 
@@ -736,7 +740,10 @@ The transition toward modern cooking services is governed by economic barriers a
 * **High Upfront Capital Outlay:** For clean fuels such as LPG, the initial cost of a double-burner stove, pressurized gas cylinder, regulator, and hose represents a prohibitive barrier for low-income households.
 * **Lump-Sum Refill Liquidity Constraints:** Even when appliances are acquired, the lump-sum cash outlay required to refill a standard 6 kg or 12 kg LPG cylinder prevents cash-constrained households from refilling continuously, prompting reversion to daily purchases of small bags of charcoal or gathered firewood.
 
-As illustrated in the contingent valuation demand curves in Figure 6, household willingness to acquire an improved or clean cookstove is severely constrained under upfront lump-sum pricing, but expands significantly when paired with installment financing and capital subsidies. Spreading equipment costs across 6- to 24-month payment schedules unlocks substantial latent demand across all pricing tiers. However, even with 24-month financing, `{{WTP_COOK_NEVER_NAT}}%` of households decline adopting improved stoves; among households declining, `{{REFUSE_COOK_COST_NAT}}%` cite equipment acquisition costs as the primary impediment, while others report satisfaction with three-stone fires or unreliability of modern fuel supply chains. Overcoming this inertia requires combining results-based financing (RBF) for clean cooking distributors with consumer awareness programs demonstrating the long-term fuel expenditure savings and health benefits of efficient stoves.
+As illustrated in the contingent valuation demand curves in Figure 11, household willingness to acquire an improved or clean cookstove is severely constrained under upfront lump-sum pricing, but expands significantly when paired with installment financing and capital subsidies. Spreading equipment costs across 6- to 24-month payment schedules unlocks substantial latent demand across all pricing tiers. However, even with 24-month financing, `{{WTP_COOK_NEVER_NAT}}%` of households decline adopting improved stoves; among households declining, `{{REFUSE_COOK_COST_NAT}}%` cite equipment acquisition costs as the primary impediment, while others report satisfaction with three-stone fires or unreliability of modern fuel supply chains. Overcoming this inertia requires combining results-based financing (RBF) for clean cooking distributors with consumer awareness programs demonstrating the long-term fuel expenditure savings and health benefits of efficient stoves.
+
+![Figure 11: Willingness to Pay Cumulative Demand Curves for Clean Cookstoves]({{CHART_WTP_COOKSTOVE}})
+*Figure 11: Comparative cumulative willingness-to-pay demand curves for improved and clean cookstoves across payment modalities and subsidy benchmarks.*
 
 #### Strategic e-Cooking Transition Pathway
 Survey microdata confirm that electric cooking currently represents an aspirational rather than prevalent practice: fewer than 0.2% of households (<7 sample households nationally) cook with electricity (`{{STOVE_ELEC_N}}%`). Even among grid-connected households, electric stove uptake stands at only `{{ELEC_STOVE_GRID_NAT}}%` nationwide (`{{ELEC_STOVE_GRID_URB}}%` in urban areas vs. `{{ELEC_STOVE_GRID_RUR}}%` in rural areas). Consequently, national clean cooking strategy must follow a realistic dual-track trajectory:
@@ -755,10 +762,10 @@ In {{COUNTRY_NAME}}, `{{MHH_SHARE}}%` of households are headed by men (MHH) and 
 
 Female household heads average `{{HEAD_AGE_FHH}}` years of age, compared to `{{HEAD_AGE_MHH}}` years for male household heads. Regarding marital status, `{{HEAD_MARITAL_WIDOW_FHH}}%` of female heads and `{{HEAD_MARITAL_WIDOW_MHH}}%` of male heads are widowed, while `{{HEAD_MARITAL_MARRIED_FHH}}%` of female heads and `{{HEAD_MARITAL_MARRIED_MHH}}%` of male heads are married or cohabiting. Educational attainment distributions indicate that `{{HEAD_EDUC_NONE_FHH}}%` of female heads and `{{HEAD_EDUC_NONE_MHH}}%` of male heads report no formal schooling; primary education completion is `{{HEAD_EDUC_PRIM_FHH}}%` for female heads and `{{HEAD_EDUC_PRIM_MHH}}%` for male heads; secondary completion is `{{HEAD_EDUC_SEC_FHH}}%` for female heads and `{{HEAD_EDUC_SEC_MHH}}%` for male heads; and higher education completion stands at `{{HEAD_EDUC_HIGH_FHH}}%` for female heads and `{{HEAD_EDUC_HIGH_MHH}}%` for male heads. Access to loans or credit from formal financial institutions is reported by `{{CREDIT_ACCESS_FHH}}%` of female heads, compared to `{{CREDIT_ACCESS_MHH}}%` of male heads.
 
-Figure 10 displays comparative demographic profiles, educational attainment, credit access, and electricity access parity across female- and male-headed households.
+Figure 12 displays comparative demographic profiles, educational attainment, credit access, and electricity access parity across female- and male-headed households.
 
-![Figure 10: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
-*Figure 10: Demographic characteristics, educational attainment, credit access, and electricity access parity by gender of household head in {{COUNTRY_NAME}}.*
+![Figure 12: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
+*Figure 12: Demographic characteristics, educational attainment, credit access, and electricity access parity by gender of household head in {{COUNTRY_NAME}}.*
 
 Table 4.1 presents the complete demographic and socioeconomic profile across household headship.
 
@@ -800,10 +807,10 @@ In addition to cooking, adult women bear the primary responsibility for fuelwood
 
 The substantial time spent collecting and preparing firewood bundles over long distances deprives rural women of opportunities for agricultural commercialization, micro-enterprise operations, child care, and schooling. Transitioning to modern energy cooking services and high-efficiency cookstoves directly frees female labor from domestic chores, serving as a powerful catalyst for female wage employment, enterprise formation, and human capital accumulation.
 
-Figure 11 illustrates the intra-household time-use burden for meal preparation and firewood collection across adult women and men.
+Figure 13 illustrates the intra-household time-use burden for meal preparation and firewood collection across adult women and men.
 
-![Figure 11: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
-*Figure 11: Intra-household time-use burden for fuelwood collection and cooking across demographic groups in {{COUNTRY_NAME}}.*
+![Figure 13: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
+*Figure 13: Intra-household time-use burden for fuelwood collection and cooking across demographic groups in {{COUNTRY_NAME}}.*
 
 ---
 
@@ -907,23 +914,29 @@ The following publication-grade charts summarize the complete empirical diagnost
 * **Figure 5:** Primary Stated Barriers to Gaining Grid Connection
   ![Figure 5: Primary Stated Barriers to Gaining Grid Connection]({{CHART_GRID_BARRIERS}})
 
-* **Figure 6:** Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking
-  ![Figure 6: Willingness to Pay Cumulative Demand Curves for Grid, Off-Grid Solar, and Clean Cooking]({{CHART_WTP_DEMAND}})
+* **Figure 6:** Willingness to Pay Cumulative Demand Curves for National Grid Connection
+  ![Figure 6: Willingness to Pay Cumulative Demand Curves for National Grid Connection]({{CHART_WTP_GRID}})
 
-* **Figure 7:** Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations
-  ![Figure 7: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
+* **Figure 7:** Willingness to Pay Cumulative Demand Curves for Off-Grid Solar Devices
+  ![Figure 7: Willingness to Pay Cumulative Demand Curves for Off-Grid Solar Devices]({{CHART_WTP_SOLAR}})
 
-* **Figure 8:** Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution
-  ![Figure 8: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
+* **Figure 8:** Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations
+  ![Figure 8: Primary Cookstove Typology and Primary Fuel Distribution Across National, Urban, and Rural Populations]({{CHART_STOVE_FUELS}})
 
-* **Figure 9:** Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners
-  ![Figure 9: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
+* **Figure 9:** Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution
+  ![Figure 9: Multi-Tier Framework Modern Energy Cooking Services (MECS) Tier Distribution]({{CHART_COOKING_TIERS}})
 
-* **Figure 10:** Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head
-  ![Figure 10: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
+* **Figure 10:** Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners
+  ![Figure 10: Stove Stacking Patterns and the Exposure Dilution Effect Among Clean Cookstove Owners]({{CHART_STOVE_STACKING}})
 
-* **Figure 11:** Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups
-  ![Figure 11: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
+* **Figure 11:** Willingness to Pay Cumulative Demand Curves for Clean Cookstoves
+  ![Figure 11: Willingness to Pay Cumulative Demand Curves for Clean Cookstoves]({{CHART_WTP_COOKSTOVE}})
+
+* **Figure 12:** Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head
+  ![Figure 12: Demographic Characteristics, Educational Attainment, and Energy Access Parity by Gender of Household Head]({{CHART_GENDER_ACCESS}})
+
+* **Figure 13:** Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups
+  ![Figure 13: Intra-Household Time-Use Burden for Fuelwood Collection and Cooking Across Demographic Groups]({{CHART_GENDER_FUEL}})
 
 ---
 

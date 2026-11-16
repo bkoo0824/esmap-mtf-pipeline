@@ -341,8 +341,8 @@ def chart_solar_typology():
                  fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
     ax.set_xticks(x)
     ax.set_xticklabels(categories, fontsize=10, fontweight="bold")
-    ax.set_ylim(0, max(max(lantern_shares), max(sls_shares)) + 12)
-    ax.legend(loc="upper right", fontsize=9, framealpha=0.85)
+    ax.set_ylim(0, max(max(lantern_shares), max(sls_shares)) + 24)
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.9, frameon=True)
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", alpha=0.3, linestyle="--")
 
@@ -947,8 +947,16 @@ def chart_solar_wtp():
 
     for i in range(len(x)):
         ax.annotate(f"{p33[i]:.1f}%", (x[i], p33[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#1E8449", fontsize=9)
-        ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
-        ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
+        if abs(p66[i] - p100[i]) < 3.0:
+            if p66[i] >= p100[i]:
+                ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+                ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
+            else:
+                ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+                ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
+        else:
+            ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+            ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
@@ -1006,13 +1014,21 @@ def chart_cookstove_wtp():
     
     # Plot 3 price tier curves
     ax.plot(x, p33, marker="^", linewidth=2.8, markersize=8, color="#27AE60", label="33% Price (67% Subsidy)")
-    ax.plot(x, p66, marker="s", linewidth=2.8, markersize=8, color=WB_TEAL, label="66% Price (34% Subsidy)")
-    ax.plot(x, p100, marker="o", linewidth=2.8, markersize=8, color=WB_CORAL, label="100% Full Price")
+    ax.plot(x, p66, marker="s", linewidth=2.8, markersize=8, color=WB_AMBER, label="66% Price (34% Subsidy)")
+    ax.plot(x, p100, marker="o", linewidth=2.8, markersize=8, color=WB_NAVY, label="100% Full Price")
 
     for i in range(len(x)):
         ax.annotate(f"{p33[i]:.1f}%", (x[i], p33[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#1E8449", fontsize=9)
-        ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#117A65", fontsize=9)
-        ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color="#900C3F", fontsize=9)
+        if abs(p66[i] - p100[i]) < 3.0:
+            if p66[i] >= p100[i]:
+                ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+                ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
+            else:
+                ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+                ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 9), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
+        else:
+            ax.annotate(f"{p66[i]:.1f}%", (x[i], p66[i]), textcoords="offset points", xytext=(0, -14), ha="center", fontweight="bold", color="#B9770E", fontsize=9)
+            ax.annotate(f"{p100[i]:.1f}%", (x[i], p100[i]), textcoords="offset points", xytext=(0, 8), ha="center", fontweight="bold", color=WB_NAVY, fontsize=9)
 
     ax.set_xticks(x)
     ax.set_xticklabels(x_labels, fontsize=10, fontweight="bold")
