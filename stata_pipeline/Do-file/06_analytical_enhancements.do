@@ -302,7 +302,7 @@
 	gen byte wtp_solar_6m      = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1) if SEC_E_Q02 < .
 	gen byte wtp_solar_12m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1) if SEC_E_Q02 < .
 	gen byte wtp_solar_24m     = (SEC_E_Q02 == 1 | SEC_E_Q03 == 1 | SEC_E_Q04 == 1 | SEC_E_Q05 == 1) if SEC_E_Q02 < .
-	gen byte wtp_solar_never   = (SEC_E_Q05 == 0 | SEC_E_Q05 == 2) if SEC_E_Q05 < .
+	gen byte wtp_solar_never   = (wtp_solar_24m == 0) if SEC_E_Q02 < .
 	gen byte refuse_solar_cost = (SEC_E_Q06 == 1) if SEC_E_Q06 < .
 	gen byte srf_aware = .
 	capture confirm variable SEC_E_Q07
@@ -627,8 +627,85 @@
 	lab var hr_elec_hh   "Weekly cooking hours on electric cookstove"
 
 
+	*===========================================================================
+	*  ENHANCEMENT 15: APPLIANCE WALD TESTS & EXPENDITURE ECONOMETRICS (TABLE 2.4)
+	*  Tests appliance adoption gradient across quintiles (Wolfram et al. 2012)
+	*  and estimates log-linear WLS expenditure determinants (Davis 2008)
+	*===========================================================================
+
+	preserve
+		local fn_app = cond("$fn_appliance" != "", "$fn_appliance", "section_f_appliance_roster.dta")
+		capture confirm file "$raw_hh/`fn_app'"
+		if !_rc {
+			use "$raw_hh/`fn_app'", clear
+			capture confirm variable interview__id
+			if _rc {
+				capture confirm variable interview__key
+				if !_rc clonevar interview__id = interview__key
+			}
+			capture confirm variable SEC_F_Q01
+			if !_rc keep if SEC_F_Q01 == 1
+
+			* Consolidated indicator flags
+			gen byte app_lighting = inlist(appliances__id, 1, 2, 3, 4, 40)
+			gen byte app_tv       = inlist(appliances__id, 30, 31, 32, 42)
+			gen byte app_fridge   = inlist(appliances__id, 10, 17, 38)
+			gen byte app_fan      = (appliances__id == 9)
+			gen byte app_phone    = inlist(appliances__id, 28, 29)
+			gen byte app_radio    = inlist(appliances__id, 6, 7)
+			gen byte app_iron     = (appliances__id == 13)
+			gen byte app_pc       = (appliances__id == 26)
+			gen byte app_ac       = (appliances__id == 22)
+			gen byte app_micro    = (appliances__id == 11)
+			gen byte app_blender  = (appliances__id == 15)
+			gen byte app_waterht  = (appliances__id == 24)
+
+			collapse (max) app_lighting app_tv app_fridge app_fan app_phone app_radio ///
+			               app_iron app_pc app_ac app_micro app_blender app_waterht, by(interview__id)
+			save "$wip_hh/grid_appliance_roster_hh.dta", replace
+		}
+	restore
+	capture merge 1:1 interview__id using "$wip_hh/grid_appliance_roster_hh.dta", nogen
+	foreach v of varlist app_lighting app_tv app_fridge app_fan app_phone app_radio ///
+	                     app_iron app_pc app_ac app_micro app_blender app_waterht {
+		capture replace `v' = 0 if `v' == .
+	}
+	lab var app_lighting "Grid HH: Owns electric lighting (incand/CFL/LED/tube)"
+	lab var app_tv       "Grid HH: Owns color/B&W/flat-screen television"
+	lab var app_fridge   "Grid HH: Owns refrigerator or freezer (Davis 2008)"
+	lab var app_fan      "Grid HH: Owns electric fan"
+	lab var app_phone    "Grid HH: Owns mobile phone charger"
+	lab var app_iron     "Grid HH: Owns electric iron"
+	lab var app_pc       "Grid HH: Owns computer or laptop"
+	lab var app_ac       "Grid HH: Owns air conditioner"
+	lab var app_micro    "Grid HH: Owns microwave oven"
+	lab var app_blender  "Grid HH: Owns food blender/processor"
+
+	* Run Survey-Weighted Wald Tests & WLS Expenditure Model (reported to Stata log)
+	capture {
+		di "================================================================="
+		di " TABLE 2.4 DESIGN-BASED WALD TESTS (APPLIANCES BY QUINTILE)"
+		di "================================================================="
+		foreach app of varlist app_lighting app_tv app_phone app_fan app_iron app_pc app_micro app_blender app_ac {
+			quietly svy, subpop(if grid_hh == 1): regress `app' hh_exp_quintile
+			test hh_exp_quintile
+			di "  Wald Trend Test: `app' p-value = " %7.4f r(p)
+		}
+		
+		di "================================================================="
+		di " WLS EXPENDITURE DETERMINANTS: ln(Grid Spend) ~ Appliances + Quintile"
+		di "================================================================="
+		capture confirm variable grid_exp_m
+		if !_rc {
+			gen double ln_grid_exp = ln(grid_exp_m) if grid_hh == 1 & grid_exp_m > 0
+			svy, subpop(if grid_hh == 1 & ln_grid_exp < .): regress ln_grid_exp hh_exp_quintile hhsize app_fridge app_tv app_fan
+			capture drop ln_grid_exp
+		}
+	}
+
+
 	*---------------------------------------------------------------------------
 	* Save
 	*---------------------------------------------------------------------------
 	save "$wip_hh/$master_dta", replace
-	di " 06_analytical_enhancements.do complete (Enhancements 1-14)"
+	di " 06_analytical_enhancements.do complete (Enhancements 1-15)"

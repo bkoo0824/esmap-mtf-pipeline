@@ -499,6 +499,12 @@
 		}
 		local row = `row' + 1
 	}
+
+	* Calculate median grid monthly expenditure
+	capture {
+		_pctile grid_monthly_spend if grid_hh == 1 [pweight=hh_weight_final], p(50)
+		scalar json_GRID_MONTHLY_SPEND_MEDIAN = r(r1)
+	}
 	putexcel save
 
 
@@ -799,6 +805,13 @@
 		scalar json_COPING_PCT_Q3_CONN   = e(b)[1,2]
 	}
 
+	* Q5 Unelectrified
+	capture {
+		svy, subpop(if hh_exp_quintile == 5 & elec_access == 0): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_Q5_UNEL = e(b)[1,1]
+		scalar json_COPING_PCT_Q5_UNEL   = e(b)[1,2]
+	}
+
 	* Q5 Connected
 	capture {
 		svy, subpop(if hh_exp_quintile == 5 & elec_access == 1): mean coping_spend coping_pct
@@ -811,6 +824,13 @@
 		svy, subpop(if elec_access == 0): mean coping_spend coping_pct
 		scalar json_COPING_SPEND_NAT_UNEL = e(b)[1,1]
 		scalar json_COPING_PCT_NAT_UNEL   = e(b)[1,2]
+	}
+
+	* National Connected Average
+	capture {
+		svy, subpop(if elec_access == 1): mean coping_spend coping_pct
+		scalar json_COPING_SPEND_NAT_CONN = e(b)[1,1]
+		scalar json_COPING_PCT_NAT_CONN   = e(b)[1,2]
 	}
 
 	* Outages by Interval (<3, 3-14, >14 per week)
@@ -971,7 +991,7 @@
 		UNDER_GRID_UNCONNECTED_NAT UNDER_GRID_UNCONNECTED_URB UNDER_GRID_UNCONNECTED_RUR ///
 		GRID_UPTAKE_NAT GRID_UPTAKE_URB GRID_UPTAKE_RUR ///
 		GRID_YEARS_NAT GRID_YEARS_URB GRID_YEARS_RUR ///
-		GRID_WAIT_DAYS_NAT GRID_MONTHLY_SPEND_NAT GRID_MONTHLY_SPEND_URB GRID_MONTHLY_SPEND_RUR ///
+		GRID_WAIT_DAYS_NAT GRID_MONTHLY_SPEND_NAT GRID_MONTHLY_SPEND_MEDIAN GRID_MONTHLY_SPEND_URB GRID_MONTHLY_SPEND_RUR ///
 		WTP_GRID_UPFRONT_NAT WTP_GRID_UPFRONT_URB WTP_GRID_UPFRONT_RUR ///
 		WTP_GRID_3M_NAT WTP_GRID_6M_NAT WTP_GRID_12M_NAT WTP_GRID_WAIVED_NAT WTP_GRID_NON_CONNECT WTP_GRID_NEVER_NAT ///
 		REFUSE_WIRING_COST_NAT ///
@@ -1002,8 +1022,10 @@
 		COPING_SPEND_Q1_CONN COPING_PCT_Q1_CONN ///
 		COPING_SPEND_Q3_UNEL COPING_PCT_Q3_UNEL ///
 		COPING_SPEND_Q3_CONN COPING_PCT_Q3_CONN ///
+		COPING_SPEND_Q5_UNEL COPING_PCT_Q5_UNEL ///
 		COPING_SPEND_Q5_CONN COPING_PCT_Q5_CONN ///
 		COPING_SPEND_NAT_UNEL COPING_PCT_NAT_UNEL ///
+		COPING_SPEND_NAT_CONN COPING_PCT_NAT_CONN ///
 		WTP_COOK_UPFRONT_NAT WTP_COOK_UPFRONT_URB WTP_COOK_UPFRONT_RUR ///
 		WTP_COOK_3M_NAT WTP_COOK_3M_URB WTP_COOK_3M_RUR ///
 		WTP_COOK_6M_NAT WTP_COOK_6M_URB WTP_COOK_6M_RUR ///
