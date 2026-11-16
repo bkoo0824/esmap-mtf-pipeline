@@ -71,6 +71,23 @@ if [ "$CHOICE" = "4" ]; then
     exit 0
 fi
 
+if [ "$CHOICE" = "5" ]; then
+    echo ""
+    echo "[*] Force-rebuilding Master Dataset from raw survey modules and calibration workbook..."
+    if ! python3 mtf_engine.py --rebuild; then
+        python3 report_error.py --error "Engine crashed during master rebuild"
+    else
+        if [ -d "Output" ]; then
+            if command -v xdg-open &> /dev/null; then
+                xdg-open "Output" > /dev/null 2>&1 &
+            elif command -v open &> /dev/null; then
+                open "Output" > /dev/null 2>&1 &
+            fi
+        fi
+    fi
+    exit 0
+fi
+
 # Default: Launch Jupyter
 echo "[*] Launching local browser interface (localhost)..."
 if [ -f "MTF_Interactive_Analyzer.ipynb" ]; then

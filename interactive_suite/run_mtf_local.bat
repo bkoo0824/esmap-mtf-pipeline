@@ -105,6 +105,21 @@ if "%CHOICE%"=="4" (
     exit /b 0
 )
 
+if "%CHOICE%"=="5" (
+    echo.
+    echo [*] Force-rebuilding Master Dataset from raw survey modules and calibration workbook...
+    python mtf_engine.py --rebuild
+    if %errorlevel% neq 0 (
+        python report_error.py --error "Engine crashed during master rebuild"
+    ) else (
+        if exist "Output" start "" "Output"
+    )
+    echo.
+    echo Press any key to close this window...
+    pause >nul
+    exit /b 0
+)
+
 REM Default: Launch Local JupyterLab with the Interactive Analyzer Notebook
 echo ===============================================================================
 echo  [*] Launching MTF Interactive Analyzer in web browser (localhost)...

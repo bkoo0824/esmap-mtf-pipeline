@@ -83,6 +83,7 @@ If you want to interactively explore data, run customized crosstabs, or simulate
   - `[2]`: 1-Click Production Engine
   - `[3]`: 1-Click Error Diagnostics & Support Dispatcher
   - `[4]`: GitHub Tool Updates & Latest Patches
+  - `[5]`: Rebuild Master Dataset from Calibration Workbook (`--rebuild`)
 
 > ⚠️ **Important UI Tip in JupyterLab:**  
 > When the browser opens, look at the tabs: **Always work inside `MTF_Interactive_Analyzer.ipynb`** (orange notebook icon with cells).  
@@ -183,7 +184,13 @@ global usd_rate     605.0
    - **Sheet 2 (`Cookstove_Typology`)**: Clean Cooking Specialist reviews questionnaire codes, ISO 19867 emission tiers (0–5), and stove groups.
    - **Sheet 3 (`Other_Specify_Recodes`)**: Survey Statistician reviews open-text CAPI verbatim responses and selects approved codes from dropdowns.
    - **Sheet 4 (`Value_Codebook`)**: Reference catalog of pre-scanned microdata options.
-3. Both Python (`mtf_builder.py`, `mtf_engine.py`) and Stata (`mtf_calibrator.py`) automatically detect and ingest this single workbook. If unclassified responses exceed 5% of the sample, an automatic audit alert is raised.
+3. **How Calibration is Ingested into Master Dataset & Analysis (Dual-Engine Execution):**
+   - **In Python (`mtf_builder.py` & `mtf_engine.py`):**
+     - `mtf_builder.py` directly ingests `mtf_calibration_<country>.xlsx` to recode raw strings (`Other_Specify_Recodes`) and map ISO 19867 emission tiers (`Cookstove_Typology`) during master dataset assembly.
+     - **Automatic Smart-Rebuild:** Whenever `run_engine.bat` (or `mtf_engine.py`) executes, it automatically checks whether `mtf_calibration_<country>.xlsx` has been modified more recently than `Data/MTF_Master.dta`. If an updated workbook is detected (or if option `[5]` / `--rebuild` is selected), the engine automatically calls `mtf_builder.py` to re-compile the Master Dataset with your updated calibrations before computing indicators!
+   - **In Stata (`00_country_harmonization.do`):**
+     - After `00_build_master_dataset.do` merges the raw modules, Stage `[0b/7]` (`00_country_harmonization.do`) reads the calibration workbook and applies all approved recodes and missing value guardrails to `$master_dta` before downstream indicator do-files run.
+   - **Data Quality Guardrail:** In both engines, if unclassified "Other" responses exceed 5% of valid responses, an automatic audit alert is raised.
 
 ### Step 5: Execute the Master Pipeline in Stata
 Execute the master do-file in Stata SE/MP:

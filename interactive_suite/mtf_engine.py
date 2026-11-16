@@ -770,48 +770,87 @@ class MTFEngine:
         print("=" * 74 + "\n")
 
 
-def find_default_dataset() -> Optional[Path]:
-    """Auto-detects the compiled MTF Master dataset across standard project folders."""
+def find_latest_calibration_file() -> Optional[Path]:
+    """Finds the most recently modified calibration workbook if present across standard directories."""
+    search_dirs = [Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".")]
+    candidates = []
+    for s_dir in search_dirs:
+        if s_dir.exists():
+            candidates.extend(list(s_dir.glob("mtf_calibration*.xlsx")))
+            candidates.extend(list(s_dir.glob("other_specify_calibration*.xlsx")))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda f: f.stat().st_mtime)
+
+
+def find_default_dataset(force_rebuild: bool = False) -> Optional[Path]:
+    """Auto-detects the compiled MTF Master dataset across standard project folders,
+    with smart auto-rebuild if calibration workbook has been updated or force_rebuild is set."""
+    raw_dirs = [Path("Data"), Path("Data/raw"), Path("Data/wip_hh"), Path(".")]
+    raw_dir = next((r for r in raw_dirs if r.exists() and (r / "admin_info.dta").exists()), None)
+    latest_calib = find_latest_calibration_file()
+
     candidates = [
         Path("Data/MTF_2024_HH_Guinea-Bissau_Master.dta"),
         Path("Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
         Path("./MTF_2024_HH_Guinea-Bissau_Master.dta"),
         Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
     ]
+    existing_master = None
     for c in candidates:
         if c.exists():
-            return c
+            existing_master = c
+            break
 
-    for search_dir in [Path("Data"), Path("Data/wip_hh"), Path(".")]:
-        if search_dir.exists():
-            for dta_f in search_dir.glob("*.dta"):
-                if "master" in dta_f.name.lower():
-                    return dta_f
+    if not existing_master:
+        for search_dir in [Path("Data"), Path("Data/wip_hh"), Path(".")]:
+            if search_dir.exists():
+                for dta_f in search_dir.glob("*.dta"):
+                    if "master" in dta_f.name.lower():
+                        existing_master = dta_f
+                        break
+                if existing_master:
+                    break
 
-    for search_dir in [Path("Data"), Path(".")]:
-        if search_dir.exists():
-            dtas = list(search_dir.glob("*.dta"))
-            if dtas:
-                # Avoid returning a raw module as if it were a master dataset
-                if not (search_dir / "admin_info.dta").exists():
-                    return dtas[0]
+    if not existing_master:
+        for search_dir in [Path("Data"), Path(".")]:
+            if search_dir.exists():
+                dtas = list(search_dir.glob("*.dta"))
+                if dtas:
+                    # Avoid returning a raw module as if it were a master dataset
+                    if not (search_dir / "admin_info.dta").exists():
+                        existing_master = dtas[0]
+                        break
 
-    # If no pre-compiled master dataset found, check if raw Survey Solutions files exist
-    raw_dirs = [Path("Data"), Path("Data/raw"), Path("Data/wip_hh"), Path(".")]
-    for r_dir in raw_dirs:
-        if r_dir.exists() and (r_dir / "admin_info.dta").exists():
-            print(f"[*] No pre-compiled master dataset found, but raw Survey Solutions files detected in '{r_dir}'.")
+    # Smart-rebuild condition:
+    # If raw modules exist:
+    #   1. No master dataset exists yet
+    #   2. Latest calibration workbook is newer than existing master dataset
+    #   3. force_rebuild flag is explicitly passed
+    if raw_dir:
+        should_rebuild = force_rebuild
+        if not existing_master:
+            should_rebuild = True
+            print(f"[*] No pre-compiled master dataset found, but raw Survey Solutions files detected in '{raw_dir}'.")
             print("    Initiating automated MTFMasterBuilder compilation...")
+        elif latest_calib and latest_calib.stat().st_mtime > existing_master.stat().st_mtime:
+            should_rebuild = True
+            print(f"[*] Updated calibration detected: '{latest_calib.name}' was modified after '{existing_master.name}'.")
+            print("    Initiating Automatic Smart-Rebuild to integrate new calibrations into Master Dataset...")
+        elif force_rebuild:
+            print(f"[*] Force-rebuild requested: Re-compiling Master Dataset from '{raw_dir}'...")
+
+        if should_rebuild:
             try:
                 from mtf_builder import MTFMasterBuilder
             except ImportError:
                 from interactive_suite.mtf_builder import MTFMasterBuilder
-            builder = MTFMasterBuilder(raw_dir=r_dir)
+            builder = MTFMasterBuilder(raw_dir=raw_dir)
             builder.build_all()
             target_out = Path("Data") / builder.config.get("master_dta", "MTF_Master.dta")
             return builder.export_master(target_out)
 
-    return None
+    return existing_master
 
 
 def main():
@@ -820,11 +859,12 @@ def main():
     parser.add_argument("--tools-dir", help="Path to Tools/ directory containing calibration assets.")
     parser.add_argument("--output", default="Output/mtf_report_values.json", help="Path to output JSON file.")
     parser.add_argument("--output-excel", default="Output/MTF_Full_Indicators.xlsx", help="Path to output Excel file.")
+    parser.add_argument("--rebuild", action="store_true", help="Force rebuild of master dataset from raw modules and calibration workbook.")
     args = parser.parse_args()
 
     data_file = args.data_path
     if not data_file:
-        found = find_default_dataset()
+        found = find_default_dataset(force_rebuild=args.rebuild)
         if found:
             data_file = str(found)
         else:
