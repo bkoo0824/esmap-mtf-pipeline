@@ -38,6 +38,9 @@ Under no circumstances is World Bank survey microdata (`*.dta`, `*.xlsx`, `Data/
 ```
 esmap-mtf-pipeline/
 │
+├── config/                        <-- Standard Calibration Templates
+│   └── mtf_calibration_standard.xlsx <-- Unified 5-Sheet Calibration Workbook (Stoves, Recodes, Tariff)
+│
 ├── interactive_suite/             <-- [Pillar 1] Non-Technical Team Interactive Analyzer
 │   ├── MTF_Interactive_Analyzer.ipynb  <-- 5-module Jupyter analysis suite & diagnostics
 │   ├── run_mtf_local.bat          <-- Windows 1-click launcher
@@ -46,7 +49,6 @@ esmap-mtf-pipeline/
 │   ├── update_mtf.sh              <-- Mac/Linux 1-click GitHub updater
 │   ├── update_tools.py            <-- Safe GitHub updater engine (preserves Data/)
 │   ├── mtf_engine.py              <-- Vectorized survey-weighted calculation engine
-│   ├── country_tariff.csv         <-- Electricity tariff schedule benchmarks
 │   ├── LOCAL_SETUP_GUIDE.md       <-- Non-technical user guide
 │   └── Data/                      <-- Drop-in target for .dta microdata (.gitkeep)
 │
@@ -71,7 +73,7 @@ esmap-mtf-pipeline/
 │   └── guinea_bissau_reference/   <-- Canonical sample harmonization & master runner
 │       ├── 00_country_harmonization.do
 │       ├── Guinea-Bissau_MTF_Master.do
-│       ├── cookstove_calibration.csv
+│       ├── mtf_calibration_guinea_bissau.xlsx <-- Unified 5-Sheet Country Calibration
 │       └── README.md
 │
 ├── dev_tools/                     <-- [Pillar 4] Developer & Packaging Utilities

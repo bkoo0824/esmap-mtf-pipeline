@@ -296,8 +296,8 @@
 
 	** A. Grid electricity (SEC_C_Q25)
 	gen grid_exp_m = SEC_C_Q25
-	replace grid_exp_m = . if SEC_C_Q25 == -888
-	replace grid_exp_m = 0 if SEC_C_Q25 == . & SEC_C_Q12 == 111  // pays no one
+	replace grid_exp_m = . if inlist(SEC_C_Q25, 888, 9, -888, 999, -999)
+	replace grid_exp_m = 0 if grid_exp_m == . & SEC_C_Q12 == 111  // pays no one
 	gen grid_exp_yr = grid_exp_m * 12
 	lab var grid_exp_m  "Monthly grid electricity expenditure"
 	lab var grid_exp_yr "Annual grid electricity expenditure"

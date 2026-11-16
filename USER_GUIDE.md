@@ -47,11 +47,19 @@ The ESMAP MTF analytical architecture operates on a strict **Two-Track Confident
 3. Extract `esmap-mtf-pipeline-main.zip` onto your local machine (e.g., your Desktop or Documents folder).
    *(Git users may alternatively run: `git clone https://github.com/bkoo0824/esmap-mtf-pipeline.git`)*
 
-### Step 2: Place the Survey Microdata (.dta)
+### Step 2: Place Survey Microdata (.dta) & Calibration Workbook
 You have two flexible options for your data:
 - **Option A (Pre-compiled Master):** Place the official country master dataset (`MTF_2024_HH_<Country>_Master.dta`, e.g., `MTF_2024_HH_Guinea-Bissau_Master.dta`) directly into the **`interactive_suite/Data/`** folder.
 - **Option B (Raw Survey Solutions Modules):** Place the 15 raw Survey Solutions `.dta` files (`admin_info.dta`, `section_a1_hh_roster.dta`, `section_c_*.dta`, etc.) directly into the **`interactive_suite/Data/`** folder.
-> **Note:** If only raw files are present, the analytical engine (`mtf_engine.py`) will automatically launch `mtf_builder.py` and compile the master dataset on the fly!
+
+#### 💡 When to Use the Unified Calibration Workbook (`mtf_calibration_<country>.xlsx`):
+- **If using Option A (Pre-compiled Master):** You do **NOT** need to edit or touch the calibration workbook! The master `.dta` already has all text recodes, cookstove tiers, and tariff benchmarks baked into it. You can proceed directly to **Step 4**.
+- **If using Option B (Raw Modules) OR Customizing Country Parameters:**  
+  You review `mtf_calibration_<country>.xlsx` (located in `config/` or your country folder) **BEFORE** compiling or running:
+  - **Cookstove Typology (Sheet 2):** Clean cooking expert confirms ISO 19867 emission tiers.
+  - **Other-Specify Recodes (Sheet 3):** Survey statistician classifies open-text "Other" responses.
+  - **National Tariff Benchmark (Sheet 5):** Energy specialist enters the national lifeline tariff (e.g., EAGB 128 XOF/kWh).
+  *(When `run_engine.bat` runs, it auto-detects this unified workbook and compiles the master dataset seamlessly.)*
 
 ### Step 3: Install Python (One-Time Setup, ~1 Minute)
 *If Python 3.10+ is already installed on your machine, skip to Step 4.*
@@ -171,26 +179,38 @@ global usd_rate     605.0
 ```
 
 ### Step 4: Unified Calibration Workbook (`mtf_calibration_<country>.xlsx`)
-1. Generate or update the unified country calibration workbook using `dev_tools/extract_other_specify.py`:
-   ```bash
-   python dev_tools/extract_other_specify.py \
-       --data-dir "path/to/Data" \
-       --output "config/mtf_calibration_<country>.xlsx" \
-       --country "<Country>" \
-       --country-iso3 "<ISO3>"
-   ```
-2. Open `mtf_calibration_<country>.xlsx` in Microsoft Excel:
-   - **Sheet 1 (`Instructions_&_Metadata`)**: Verify country ISO3, wave year, currency exchange rate, and review status.
-   - **Sheet 2 (`Cookstove_Typology`)**: Clean Cooking Specialist reviews questionnaire codes, ISO 19867 emission tiers (0–5), and stove groups.
-   - **Sheet 3 (`Other_Specify_Recodes`)**: Survey Statistician reviews open-text CAPI verbatim responses and selects approved codes from dropdowns.
-   - **Sheet 4 (`Value_Codebook`)**: Reference catalog of pre-scanned microdata options.
-3. **How Calibration is Ingested into Master Dataset & Analysis (Dual-Engine Execution):**
-   - **In Python (`mtf_builder.py` & `mtf_engine.py`):**
-     - `mtf_builder.py` directly ingests `mtf_calibration_<country>.xlsx` to recode raw strings (`Other_Specify_Recodes`) and map ISO 19867 emission tiers (`Cookstove_Typology`) during master dataset assembly.
-     - **Automatic Smart-Rebuild:** Whenever `run_engine.bat` (or `mtf_engine.py`) executes, it automatically checks whether `mtf_calibration_<country>.xlsx` has been modified more recently than `Data/MTF_Master.dta`. If an updated workbook is detected (or if option `[5]` / `--rebuild` is selected), the engine automatically calls `mtf_builder.py` to re-compile the Master Dataset with your updated calibrations before computing indicators!
-   - **In Stata (`00_country_harmonization.do`):**
-     - After `00_build_master_dataset.do` merges the raw modules, Stage `[0b/7]` (`00_country_harmonization.do`) reads the calibration workbook and applies all approved recodes and missing value guardrails to `$master_dta` before downstream indicator do-files run.
-   - **Data Quality Guardrail:** In both engines, if unclassified "Other" responses exceed 5% of valid responses, an automatic audit alert is raised.
+
+> 🎯 **Key Concept: 1 Country = 1 Unified Excel Workbook**  
+> To prevent fragmented files, `country_tariff.csv` and legacy CSVs have been consolidated into **`mtf_calibration_<country>.xlsx`** across 5 structured sheets.
+
+#### When is this workbook prepared?
+- **Timing:** Immediately after CAPI survey fieldwork finishes and raw Survey Solutions data is received, **BEFORE running Stata Master Do-File** (`Step 5`) or Python Master Compilation.
+- **Workflow:**
+  1. Generate the initial template using `dev_tools/extract_other_specify.py`:
+     ```bash
+     python dev_tools/extract_other_specify.py \
+         --data-dir "path/to/Data" \
+         --output "config/mtf_calibration_<country>.xlsx" \
+         --country "<Country>" \
+         --country-iso3 "<ISO3>"
+     ```
+  2. Open `mtf_calibration_<country>.xlsx` in Excel and review by domain experts:
+     - **Sheet 1 (`Instructions_&_Metadata`)**: Country ISO3, wave year, official exchange rate to USD, and review sign-off.
+     - **Sheet 2 (`Cookstove_Typology`)**: Clean Cooking Specialist assigns ISO 19867 emission tiers (0–5), thermal efficiency tiers, and stove categories for national models.
+     - **Sheet 3 (`Other_Specify_Recodes`)**: Survey Statistician maps open-text verbatim CAPI responses (appliances, fuels, lighting) to standardized numerical codes.
+     - **Sheet 4 (`Value_Codebook`)**: Read-only reference catalog of pre-scanned survey microdata options.
+     - **Sheet 5 (`National_Tariff_Benchmark`)**: Energy Specialist / Utility Analyst enters the national electricity tariff schedule (e.g., EAGB social tariff @ 128 XOF/kWh, 30 kWh lifeline block) used to compute MTF Affordability and run tariff policy simulations.
+
+#### How Calibration is Ingested into Master Dataset & Analysis (Dual-Engine):
+- **In Python (`mtf_builder.py` & `mtf_engine.py`):**
+  - `mtf_builder.py` directly reads `mtf_calibration_<country>.xlsx`:
+    - Automatically recodes verbatim strings (`Other_Specify_Recodes`).
+    - Maps cookstove emission tiers (`Cookstove_Typology`).
+    - Loads the national lifeline tariff from `National_Tariff_Benchmark` to calculate the 365 kWh/year Affordability Tier.
+  - **Automatic Smart-Rebuild:** Whenever `run_engine.bat` (or `mtf_engine.py`) executes, it automatically checks whether `mtf_calibration_<country>.xlsx` has been modified more recently than `Data/MTF_Master.dta`. If updated, it re-compiles the master dataset on the fly.
+- **In Stata (`00_country_harmonization.do`):**
+  - Stage `[0b/7]` (`00_country_harmonization.do`) reads the calibration workbook and applies all approved recodes and missing value guardrails to `$master_dta` before downstream indicator do-files run.
+- **Data Quality Guardrail:** In both engines, if unclassified "Other" responses exceed 5% of valid responses, an automatic audit alert is raised.
 
 ### Step 5: Execute the Master Pipeline in Stata
 Execute the master do-file in Stata SE/MP:

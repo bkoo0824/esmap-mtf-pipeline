@@ -202,7 +202,20 @@ class MTFMasterBuilder:
                                     pass
                         print(f"[*] Dynamic Cookstove Typology Active: Ingested {len(self.cookstove_typology)} stove codes from {c.name}")
 
-                if self.excel_recodes or self.cookstove_typology:
+                # C. Ingest National_Tariff_Benchmark
+                if "National_Tariff_Benchmark" in xl.sheet_names:
+                    try:
+                        df_tf = xl.parse("National_Tariff_Benchmark")
+                        if "iso3" in df_tf.columns and "tariff_per_kwh_local" in df_tf.columns:
+                            matched = df_tf[df_tf["iso3"].astype(str).str.upper().str.strip() == iso3.upper()]
+                            if not matched.empty:
+                                val = float(matched.iloc[0]["tariff_per_kwh_local"])
+                                self.tariff_per_kwh = val
+                                print(f"[*] Dynamic Tariff Benchmark Active: Loaded {val} local currency/kWh from {c.name} [Sheet: National_Tariff_Benchmark]")
+                    except Exception as tf_err:
+                        print(f"[!] Note: Could not parse National_Tariff_Benchmark from {c}: {tf_err}")
+
+                if self.excel_recodes or self.cookstove_typology or hasattr(self, "tariff_per_kwh"):
                     return
             except Exception as e:
                 print(f"[!] Note: Could not read calibration from {c}: {e}")
@@ -1283,7 +1296,7 @@ class MTFMasterBuilder:
         df["elc_sft_tier"] = elc_sft
 
         # Affordability Tier (365 kWh < 5% HH exp)
-        tariff_avg = 2.7072
+        tariff_avg = getattr(self, "tariff_per_kwh", 2.7072)
         cost_365 = tariff_avg * 365.0
         share_365 = cost_365 / df["exp_total_yr"].clip(lower=1.0)
         elc_affrd = pd.Series(5.0, index=df.index)
