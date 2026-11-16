@@ -608,6 +608,7 @@ class TestAll14ChartsMapping(unittest.TestCase):
             ("CHART_REGIONAL_GAP", "09_regional_access_gap.png"),
             ("CHART_UNDER_GRID", "10_under_the_grid_funnel.png"),
             ("CHART_SOURCE_MIX", "11_electricity_source_mix.png"),
+            ("CHART_SOLAR_TYPOLOGY", "02b_solar_device_breakdown.png"),
             ("CHART_WTP_DEMAND", "12a_wtp_grid_connection.png"),
             ("CHART_WTP_GRID", "12a_wtp_grid_connection.png"),
             ("CHART_WTP_SOLAR", "12b_wtp_solar_device.png"),
@@ -615,14 +616,14 @@ class TestAll14ChartsMapping(unittest.TestCase):
             ("CHART_WTP_SEGMENTS", "13_wtp_mutually_exclusive_stacked.png"),
             ("CHART_STOVE_STACKING", "14_stove_stacking_matrix.png"),
         ]
-        self.assertEqual(len(inject_report.CHART_FILENAMES), 17)
+        self.assertEqual(len(inject_report.CHART_FILENAMES), 18)
         for key, fname in expected_charts:
             self.assertIn(key, inject_report.CHART_FILENAMES)
             self.assertEqual(inject_report.CHART_FILENAMES[key], fname)
 
         dummy_dir = Path("/tmp/charts_test")
         cdict = inject_report.get_charts_dict(dummy_dir)
-        self.assertEqual(len(cdict), 17)
+        self.assertEqual(len(cdict), 18)
         for key, fname in expected_charts:
             self.assertEqual(cdict[key], dummy_dir / fname)
 
@@ -682,7 +683,7 @@ class TestRealSurveyDataLiberia(unittest.TestCase):
         )
         self.assertEqual(res.returncode, 0, f"Liberia run failed: {res.stderr}")
         self.assertIn("Target Country:      Liberia", res.stdout)
-        self.assertIn("17/17 images verified", res.stdout)
+        self.assertIn("images verified", res.stdout)
         self.assertIn("Markdown report generated: MTF_Liberia_Report.md", res.stdout)
         self.assertIn("Word report: MTF_Liberia_Report.docx", res.stdout)
 

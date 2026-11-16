@@ -295,7 +295,62 @@ def chart_elec_radar():
     save_fig(fig, "03_elec_attribute_radar.png")
 
 
-# ─── CHART 4: EXPENDITURE QUINTILE ACCESS CURVE ───────────────────────────────
+# ─── CHART 2b: OFF-GRID SOLAR DEVICE TYPOLOGY ────────────────────────────────
+def chart_solar_typology():
+    """
+    Figure 2B: Off-Grid Solar Device Typology (Lantern vs SLS vs SHS)
+    Breakdown of primary off-grid solar devices among solar adopters across National, Urban, and Rural populations.
+    """
+    vals = load_json()
+
+    categories = ["National", "Urban", "Rural"]
+    lantern_shares = [
+        float(vals.get("{{SOLAR_PRIMARY_LANTERN_NAT}}", vals.get("SOLAR_PRIMARY_LANTERN_NAT", 43.2))),
+        float(vals.get("{{SOLAR_PRIMARY_LANTERN_URB}}", vals.get("SOLAR_PRIMARY_LANTERN_URB", 52.0))),
+        float(vals.get("{{SOLAR_PRIMARY_LANTERN_RUR}}", vals.get("SOLAR_PRIMARY_LANTERN_RUR", 40.7)))
+    ]
+    sls_shares = [
+        float(vals.get("{{SOLAR_PRIMARY_SLS_NAT}}", vals.get("SOLAR_PRIMARY_SLS_NAT", 47.6))),
+        float(vals.get("{{SOLAR_PRIMARY_SLS_URB}}", vals.get("SOLAR_PRIMARY_SLS_URB", 33.5))),
+        float(vals.get("{{SOLAR_PRIMARY_SLS_RUR}}", vals.get("SOLAR_PRIMARY_SLS_RUR", 51.7)))
+    ]
+    shs_shares = [
+        float(vals.get("{{SOLAR_PRIMARY_SHS_NAT}}", vals.get("SOLAR_PRIMARY_SHS_NAT", 9.2))),
+        float(vals.get("{{SOLAR_PRIMARY_SHS_URB}}", vals.get("SOLAR_PRIMARY_SHS_URB", 14.5))),
+        float(vals.get("{{SOLAR_PRIMARY_SHS_RUR}}", vals.get("SOLAR_PRIMARY_SHS_RUR", 7.6)))
+    ]
+
+    fig, ax = plt.subplots(figsize=(9.5, 5.2), dpi=150)
+    x = np.arange(len(categories))
+    width = 0.25
+
+    rects1 = ax.bar(x - width, lantern_shares, width, label="Solar Lantern (Task Light)", color="#E8A838", edgecolor="#2C3E50", linewidth=0.7)
+    rects2 = ax.bar(x, sls_shares, width, label="Solar Lighting System (SLS: Multi-Light)", color="#009999", edgecolor="#2C3E50", linewidth=0.7)
+    rects3 = ax.bar(x + width, shs_shares, width, label="Solar Home System (SHS: Multi-Light + Appliances)", color="#002244", edgecolor="#2C3E50", linewidth=0.7)
+
+    for rects in [rects1, rects2, rects3]:
+        for rect in rects:
+            h = rect.get_height()
+            ax.annotate(f"{h:.1f}%",
+                        xy=(rect.get_x() + rect.get_width() / 2, h),
+                        xytext=(0, 4), textcoords="offset points",
+                        ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+
+    ax.set_ylabel("% of Solar-Adopter Households", fontsize=10, fontweight="bold", color=WB_NAVY)
+    ax.set_title("Off-Grid Solar Device Typology: Solar Lantern vs. SLS vs. SHS\n(Distribution of Primary Device Among Solar-Adopter Households)",
+                 fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories, fontsize=10, fontweight="bold")
+    ax.set_ylim(0, max(max(lantern_shares), max(sls_shares)) + 12)
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.85)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+
+    plt.tight_layout()
+    save_fig(fig, "02b_solar_device_breakdown.png")
+
+
+# ─── CHART 4: EXPENDITURE QUINTILE ACCESS CURVE (DUAL Y-AXIS) ─────────────────
 def chart_quintile_access():
     df = load_sheet("Disagg_Quintile")
 
@@ -317,35 +372,49 @@ def chart_quintile_access():
         except Exception:
             mecs_vals.append(np.nan)
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax1 = plt.subplots(figsize=(9, 5.2), dpi=150)
+    ax2 = ax1.twinx()
     x = range(len(quintiles))
 
-    ax.plot(x, elec_vals, "o-", color=WB_NAVY, linewidth=2.5, markersize=7,
-            label="Electricity Access (Tier 1+)")
-    ax.plot(x, mecs_vals, "s--", color=WB_TEAL, linewidth=2.5, markersize=7,
-            label="MECS Cooking Access (Tier 4–5)")
+    line1 = ax1.plot(x, elec_vals, "o-", color=WB_NAVY, linewidth=2.5, markersize=7,
+                     label="Electricity Access (Tier 1+)")
+    line2 = ax2.plot(x, mecs_vals, "s--", color=WB_TEAL, linewidth=2.5, markersize=7,
+                     label="MECS Modern Cooking Access (Tier 4–5)")
 
-    for xi, (ev, mv) in enumerate(zip(elec_vals, mecs_vals)):
+    for xi, ev in enumerate(elec_vals):
         if not np.isnan(ev):
-            ax.annotate(f"{ev:.1f}%", (xi, ev), textcoords="offset points",
-                        xytext=(0, 8), ha="center", fontsize=8, color=WB_NAVY)
+            ax1.annotate(f"{ev:.1f}%", (xi, ev), textcoords="offset points",
+                         xytext=(0, 8), ha="center", fontsize=8.5, fontweight="bold", color=WB_NAVY)
+    for xi, mv in enumerate(mecs_vals):
         if not np.isnan(mv):
-            ax.annotate(f"{mv:.1f}%", (xi, mv), textcoords="offset points",
-                        xytext=(0, -14), ha="center", fontsize=8, color=WB_TEAL)
+            ax2.annotate(f"{mv:.1f}%", (xi, mv), textcoords="offset points",
+                         xytext=(0, -14), ha="center", fontsize=8.5, fontweight="bold", color=WB_TEAL)
 
-    ax.fill_between(x, elec_vals, mecs_vals, alpha=0.06, color=WB_AMBER,
-                    label="Electricity–MECS gap")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(quintiles, fontsize=10, fontweight="bold")
+    ax1.set_ylim(0, 105)
+    ax1.set_ylabel("Electricity Access (% of Households)", fontsize=10, fontweight="bold", color=WB_NAVY)
+    ax1.tick_params(axis="y", labelcolor=WB_NAVY)
 
-    ax.set_xticks(x)
-    ax.set_xticklabels(quintiles, fontsize=10)
-    ax.set_ylim(0, 105)
-    ax.set_ylabel("% of Households with Access", fontsize=10)
-    ax.set_xlabel("Expenditure Quintile (1=Poorest, 5=Richest)", fontsize=10)
-    ax.set_title("Energy Access by Household Expenditure Quintile",
-                 fontsize=12, fontweight="bold", color=WB_NAVY)
-    ax.legend(fontsize=9, framealpha=0.7)
-    ax.spines[["top","right"]].set_visible(False)
-    ax.grid(axis="y", alpha=0.3, linestyle="--")
+    valid_mecs = [v for v in mecs_vals if not np.isnan(v)]
+    max_mecs = max(valid_mecs) if valid_mecs else 5.0
+    y2_max = 10.0 if max_mecs <= 8.0 else max(max_mecs * 1.3, 10.0)
+    ax2.set_ylim(0, y2_max)
+    ax2.set_ylabel("MECS Cooking Access (% of Households) [Right Axis]", fontsize=10, fontweight="bold", color=WB_TEAL)
+    ax2.tick_params(axis="y", labelcolor=WB_TEAL)
+
+    ax1.set_xlabel("Expenditure Quintile (1 = Poorest, 5 = Richest)", fontsize=10, fontweight="bold")
+    ax1.set_title("Energy Access by Household Expenditure Quintile\n(Dual Y-Axis: Left = Electricity Access, Right = MECS Tier 4–5)",
+                  fontsize=12, fontweight="bold", color=WB_NAVY, pad=15)
+
+    lines = line1 + line2
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, loc="upper left", fontsize=9.5, framealpha=0.85)
+
+    ax1.spines[["top"]].set_visible(False)
+    ax2.spines[["top"]].set_visible(False)
+    ax1.grid(axis="y", alpha=0.3, linestyle="--")
+    plt.tight_layout()
     save_fig(fig, "04_quintile_access_curve.png")
 
 
@@ -1192,6 +1261,7 @@ if __name__ == "__main__":
 
     chart_elec_tiers()
     chart_cooking_tiers()
+    chart_solar_typology()
     chart_elec_radar()
     chart_quintile_access()
     chart_gender_fueltime()

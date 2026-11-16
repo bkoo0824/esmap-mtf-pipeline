@@ -110,6 +110,7 @@ CHART_FILENAMES = {
     "CHART_REGIONAL_GAP"   : "09_regional_access_gap.png",
     "CHART_UNDER_GRID"     : "10_under_the_grid_funnel.png",
     "CHART_SOURCE_MIX"     : "11_electricity_source_mix.png",
+    "CHART_SOLAR_TYPOLOGY" : "02b_solar_device_breakdown.png",
     "CHART_WTP_DEMAND"     : "12a_wtp_grid_connection.png",  # backward compatibility fallback
     "CHART_WTP_GRID"       : "12a_wtp_grid_connection.png",
     "CHART_WTP_SOLAR"      : "12b_wtp_solar_device.png",
@@ -1230,6 +1231,7 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
     figure_catalog = [
         ("Figure 1", "Figure 1: Electricity Access Tier Distribution", "01_elec_tier_distribution.png", "Fig01_Elec_Tiers", "Electricity Diagnostic"),
         ("Figure 2", "Figure 2: Primary Electricity Technology Distribution & Dry-Cell Exclusion", "11_electricity_source_mix.png", "Fig02_Source_Mix", "Electricity Diagnostic"),
+        ("Figure 2B", "Figure 2B: Off-Grid Solar Device Typology (Lantern vs SLS vs SHS)", "02b_solar_device_breakdown.png", "Fig02b_Solar_Typology", "Off-Grid Solar"),
         ("Figure 3", "Figure 3: Energy Access Across Expenditure Quintiles (Q1 to Q5)", "04_quintile_access_curve.png", "Fig03_Quintiles", "Equity & Poverty"),
         ("Figure 4", "Figure 4: Under-the-Grid Densification & Grid Uptake Funnel", "10_under_the_grid_funnel.png", "Fig04_Under_Grid_Funnel", "Electricity Infill Policy"),
         ("Figure 5", "Figure 5: Grid Connection Barriers & Payment Modalities", "06_grid_barriers_wtp.png", "Fig05_Grid_Barriers_WTP", "Consumer Affordability"),
@@ -1348,6 +1350,37 @@ def build_designer_chart_data_excel(base_dir: Path, output_dir: Path, country_na
         ws.cell(r_idx, 2, round(sh, 2)).alignment = align_right
         ws.cell(r_idx, 3, st).alignment = align_left
         ws.cell(r_idx, 4, c_hex).alignment = align_center
+        for c in range(1, 5):
+            ws.cell(r_idx, c).font = font_td
+            ws.cell(r_idx, c).border = table_border
+    auto_fit_cols(ws)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # FIG 02b: Off-Grid Solar Typology (02b_solar_device_breakdown.png)
+    # ─────────────────────────────────────────────────────────────────────────
+    ws = wb.create_sheet(title="Fig02b_Solar_Typology")
+    ws.views.sheetView[0].showGridLines = True
+    ws.cell(1, 1, "Figure 2B: Off-Grid Solar Device Typology (Lantern vs. SLS vs. SHS)").font = font_title
+    ws.cell(2, 1, "Source: 02b_solar_device_breakdown.png | Breakdown of primary devices among solar adopters").font = font_subtitle
+    ws.cell(4, 1, "Off-Grid Solar Typology (% of Solar-Adopter Households)").font = font_section
+
+    headers = ["Locality", "Solar Lantern (%)", "Solar Lighting System (SLS) (%)", "Solar Home System (SHS) (%)"]
+    for c_idx, h in enumerate(headers, 1):
+        cell = ws.cell(5, c_idx, h)
+        cell.font = font_th
+        cell.fill = fill_navy
+        cell.alignment = align_center
+
+    solar_typ_data = [
+        ("National", g("SOLAR_PRIMARY_LANTERN_NAT", 43.2), g("SOLAR_PRIMARY_SLS_NAT", 47.6), g("SOLAR_PRIMARY_SHS_NAT", 9.2)),
+        ("Urban", g("SOLAR_PRIMARY_LANTERN_URB", 52.0), g("SOLAR_PRIMARY_SLS_URB", 33.5), g("SOLAR_PRIMARY_SHS_URB", 14.5)),
+        ("Rural", g("SOLAR_PRIMARY_LANTERN_RUR", 40.7), g("SOLAR_PRIMARY_SLS_RUR", 51.7), g("SOLAR_PRIMARY_SHS_RUR", 7.6)),
+    ]
+    for r_idx, (loc, lan, sls, shs) in enumerate(solar_typ_data, 6):
+        ws.cell(r_idx, 1, loc).alignment = align_left
+        ws.cell(r_idx, 2, round(lan, 1)).alignment = align_right
+        ws.cell(r_idx, 3, round(sls, 1)).alignment = align_right
+        ws.cell(r_idx, 4, round(shs, 1)).alignment = align_right
         for c in range(1, 5):
             ws.cell(r_idx, c).font = font_td
             ws.cell(r_idx, c).border = table_border
