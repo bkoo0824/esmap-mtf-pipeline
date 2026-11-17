@@ -33,8 +33,37 @@ class MTFMasterBuilder:
         self._load_calibration_workbook()
         self.df_master: Optional[pd.DataFrame] = None
 
+    def _find_raw_dir(self) -> Path:
+        """Auto-discovers the directory containing raw survey files."""
+        candidates = [
+            Path("Data/raw"),
+            Path("Data"),
+            Path("Data/wip_hh"),
+            Path.cwd() / "Data",
+            Path.cwd()
+        ]
+        for c in candidates:
+            if c.exists():
+                if (c / "admin_info.dta").exists():
+                    return c
+                for f in c.glob("*.dta"):
+                    fname = f.name.lower()
+                    if "household" in fname and "master" not in fname:
+                        return c
+        return Path("Data")
+
     def _load_config(self, config_path: Optional[Path]) -> Dict[str, Any]:
-        """Loads country_config.yaml or provides fallback defaults."""
+        """Loads country_config.yaml or dynamically inspects raw survey modules."""
+        # Check if monolithic raw household dataset exists in raw_dir
+        monolithic_hh = None
+        if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
+            for f in self.raw_dir.glob("*.dta"):
+                fname = f.name.lower()
+                if "household" in fname and "master" not in fname:
+                    monolithic_hh = f
+                    break
+
+        cfg: Dict[str, Any] = {}
         search_paths = [
             Path(config_path) if config_path else None,
             self.base_dir / "config" / "country_config.yaml",
@@ -44,18 +73,40 @@ class MTFMasterBuilder:
         for p in search_paths:
             if p and p.exists():
                 with open(p, "r", encoding="utf-8") as f:
-                    return yaml.safe_load(f)
-        
-        return {
-            "country": "Guinea-Bissau",
-            "country_iso3": "GNB",
-            "survey_year": 2024,
-            "master_dta": "MTF_2024_HH_Guinea-Bissau_Master.dta",
-            "currency": "XOF",
-            "usd_rate": 605.0,
-            "lifeline_tariff": 128.0,
-            "basic_kwh_bundle": 365.0,
-            "raw_modules": {
+                    cfg = yaml.safe_load(f) or {}
+                break
+
+        # If monolithic household data is found, auto-detect country metadata
+        if monolithic_hh:
+            try:
+                with pd.read_stata(monolithic_hh, iterator=True) as reader:
+                    sample = reader.read(1)
+                detected_country = None
+                if "country_name" in sample.columns:
+                    detected_country = str(sample["country_name"].iloc[0]).strip().title()
+                elif "country" in sample.columns:
+                    detected_country = str(sample["country"].iloc[0]).strip().title()
+
+                if detected_country:
+                    cfg["country"] = detected_country
+                    iso_map = {"Liberia": "LBR", "Guinea-Bissau": "GNB", "Namibia": "NAM", "Nigeria": "NGA", "Rwanda": "RWA", "Ethiopia": "ETH", "Kenya": "KEN"}
+                    cfg["country_iso3"] = iso_map.get(detected_country, detected_country[:3].upper())
+                    cfg["master_dta"] = f"MTF_2024_HH_{detected_country}_Master.dta"
+            except Exception as e:
+                pass
+
+        if not cfg.get("country"):
+            cfg["country"] = "Guinea-Bissau"
+            cfg["country_iso3"] = "GNB"
+            cfg["survey_year"] = 2024
+            cfg["master_dta"] = "MTF_2024_HH_Guinea-Bissau_Master.dta"
+            cfg["currency"] = "XOF"
+            cfg["usd_rate"] = 605.0
+            cfg["lifeline_tariff"] = 128.0
+            cfg["basic_kwh_bundle"] = 365.0
+
+        if "raw_modules" not in cfg:
+            cfg["raw_modules"] = {
                 "admin_info": {"primary": "admin_info.dta", "fallbacks": []},
                 "hhroster": {"primary": "section_a1_hh_roster.dta", "fallbacks": ["hhroster.dta"]},
                 "food": {"primary": "section_o_food_roster.dta", "fallbacks": ["food.dta"]},
@@ -70,23 +121,9 @@ class MTFMasterBuilder:
                 "stove_fuel": {"primary": "section_g_stovefuel_roster.dta", "fallbacks": ["stove_fuel.dta"]},
                 "time_coll": {"primary": "section_i_time_collecting_roster.dta", "fallbacks": ["time_collecting.dta"]},
                 "time_use": {"primary": "section_i_time_use_roster.dta", "fallbacks": ["time_use.dta"]},
-                "appliances": {"primary": "section_f_appliance_roster.dta", "fallbacks": ["appliances.dta"]}
+                "appliances": {"primary": "section_f_appliance_roster.dta", "fallbacks": ["appliances.dta", "appliance.dta"]}
             }
-        }
-
-    def _find_raw_dir(self) -> Path:
-        """Auto-discovers the directory containing raw survey files."""
-        candidates = [
-            Path("Data/raw"),
-            Path("Data"),
-            Path("Data/wip_hh"),
-            Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Data"),
-            Path.cwd()
-        ]
-        for c in candidates:
-            if c.exists() and (c / "admin_info.dta").exists():
-                return c
-        return Path("Data")
+        return cfg
 
     def _resolve_file(self, mod_key: str) -> Optional[Path]:
         """Resolves the path to a raw module by checking primary and fallback names."""
@@ -119,27 +156,27 @@ class MTFMasterBuilder:
         cname = str(self.config.get("country", "")).lower().replace(" ", "_").replace("-", "_").strip()
 
         candidates = [
-            # 1. Unified Country Workbooks
-            self.base_dir / "config" / f"mtf_calibration_{iso3}.xlsx",
-            self.base_dir / "config" / f"mtf_calibration_{cname}.xlsx",
-            self.base_dir / "examples" / "guinea_bissau_reference" / "mtf_calibration_guinea_bissau.xlsx",
-            self.base_dir / "config" / "mtf_calibration_standard.xlsx",
-            self.base_dir / "config" / "mtf_calibration.xlsx",
-            self.base_dir / "Tools" / f"mtf_calibration_{cname}.xlsx",
-            self.base_dir / "Tools" / "mtf_calibration.xlsx",
+            # 1. Target country-specific calibration workbook
             self.raw_dir / f"mtf_calibration_{iso3}.xlsx",
             self.raw_dir / f"mtf_calibration_{cname}.xlsx",
+            self.base_dir / "config" / f"mtf_calibration_{iso3}.xlsx",
+            self.base_dir / "config" / f"mtf_calibration_{cname}.xlsx",
+            Path(f"mtf_calibration_{iso3}.xlsx"),
+            Path(f"mtf_calibration_{cname}.xlsx"),
+            # 2. Project standard calibration workbook
+            self.base_dir / "config" / "mtf_calibration_standard.xlsx",
+            self.raw_dir / "mtf_calibration_standard.xlsx",
+            Path("mtf_calibration_standard.xlsx"),
+            self.base_dir / "config" / "mtf_calibration.xlsx",
             self.raw_dir / "mtf_calibration.xlsx",
-            Path(f"/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/mtf_calibration_guinea_bissau.xlsx"),
-            Path("mtf_calibration_guinea_bissau.xlsx"),
             Path("mtf_calibration.xlsx"),
-            # 2. Legacy Fallbacks
+            # 3. Example Reference fallback
+            self.base_dir / "examples" / "guinea_bissau_reference" / "mtf_calibration_guinea_bissau.xlsx",
+            # 4. Legacy Fallbacks
             self.base_dir / "config" / "other_specify_calibration.xlsx",
             self.base_dir / "Tools" / "other_specify_calibration.xlsx",
             self.raw_dir / "other_specify_calibration.xlsx",
-            Path("other_specify_calibration.xlsx"),
-            Path("Tools/other_specify_calibration.xlsx"),
-            Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Tools/other_specify_calibration.xlsx")
+            Path("other_specify_calibration.xlsx")
         ]
 
         for c in candidates:
@@ -339,20 +376,87 @@ class MTFMasterBuilder:
         if edu_raw is not None:
             q7 = heads.get("SEC_A1_Q7", pd.Series(np.nan, index=heads.index))
             edu_tier = pd.Series(np.nan, index=heads.index)
-            edu_tier.loc[edu_raw.isin([1, 555]) | q7.isin([0, 2])] = 0.0
-            edu_tier.loc[edu_raw == 2] = 1.0
-            edu_tier.loc[edu_raw.isin([3, 4])] = 2.0
-            edu_tier.loc[edu_raw.isin([5, 6])] = 3.0
+            if edu_raw.max() > 6:
+                # Full Survey Solutions CAPI 35-grade education scale
+                edu_tier.loc[edu_raw.isin([1, 2]) | (q7 == 2)] = 0.0
+                edu_tier.loc[edu_raw.between(3, 9)] = 1.0
+                edu_tier.loc[edu_raw.between(10, 16)] = 2.0
+                edu_tier.loc[edu_raw.between(17, 35)] = 3.0
+            else:
+                edu_tier.loc[edu_raw.isin([1, 555]) | q7.isin([0, 2])] = 0.0
+                edu_tier.loc[edu_raw == 2] = 1.0
+                edu_tier.loc[edu_raw.isin([3, 4])] = 2.0
+                edu_tier.loc[edu_raw.isin([5, 6])] = 3.0
             heads_clean["hh_head_educ"] = edu_tier
-            heads_clean["head_educ_none"] = (edu_tier == 0).astype(float)
-            heads_clean["head_educ_prim"] = (edu_tier == 1).astype(float)
-            heads_clean["head_educ_sec"] = (edu_tier == 2).astype(float)
-            heads_clean["head_educ_high"] = (edu_tier == 3).astype(float)
+            heads_clean["head_educ_none"] = np.where(edu_tier.notna(), (edu_tier == 0).astype(float), np.nan)
+            heads_clean["head_educ_prim"] = np.where(edu_tier.notna(), (edu_tier == 1).astype(float), np.nan)
+            heads_clean["head_educ_sec"]  = np.where(edu_tier.notna(), (edu_tier == 2).astype(float), np.nan)
+            heads_clean["head_educ_high"] = np.where(edu_tier.notna(), (edu_tier == 3).astype(float), np.nan)
 
         df_demo = hhsize.merge(heads_clean, on="interview__id", how="left")
         return df_demo
 
     def _process_core_sections(self, df_demo: pd.DataFrame) -> pd.DataFrame:
+        # Check if monolithic raw household dataset exists
+        monolithic_hh = None
+        if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
+            for f in self.raw_dir.glob("*.dta"):
+                fname = f.name.lower()
+                if "household" in fname and "master" not in fname:
+                    monolithic_hh = f
+                    break
+
+        if monolithic_hh:
+            raw_hh = pd.read_stata(monolithic_hh, convert_categoricals=False)
+            raw_hh = self._normalize_id(raw_hh)
+            df = raw_hh.merge(df_demo, on="interview__id", how="left")
+
+            # Map sampling weights
+            if "HH_weights" in df.columns:
+                df["hh_wt"] = df["HH_weights"].astype(np.float32)
+            elif "hh_weight_final" in df.columns:
+                df["hh_wt"] = df["hh_weight_final"].astype(np.float32)
+            elif "weight" in df.columns:
+                df["hh_wt"] = df["weight"].astype(np.float32)
+            elif "hh_wt" not in df.columns:
+                df["hh_wt"] = 1.0
+
+            # Urban/Rural Locality: 1=Urban, 2=Rural
+            if "loc_urban_rural" not in df.columns:
+                if "SEC_A_Q06" in df.columns:
+                    df["loc_urban_rural"] = df["SEC_A_Q06"].replace({99: 2})
+                elif "SEC_A_Q05" in df.columns and set(df["SEC_A_Q05"].dropna().unique()).issubset({1, 2}):
+                    df["loc_urban_rural"] = df["SEC_A_Q05"]
+                elif "SEC_A_Q03" in df.columns:
+                    df["loc_urban_rural"] = np.where(df["SEC_A_Q03"] == 1, 1, np.where(df["SEC_A_Q03"] == 99, 2, np.nan))
+                else:
+                    df["loc_urban_rural"] = 1
+
+            # Strata: sorted unique (SEC_A_Q01, SEC_A_Q06) mapped to 1..N
+            if "strata_id" not in df.columns:
+                if "SEC_A_Q01" in df.columns and "SEC_A_Q06" in df.columns:
+                    strata_df = df[["SEC_A_Q01", "SEC_A_Q06"]].drop_duplicates().sort_values(["SEC_A_Q01", "SEC_A_Q06"]).reset_index(drop=True)
+                    strata_df["strata_id"] = range(1, len(strata_df) + 1)
+                    df = df.merge(strata_df, on=["SEC_A_Q01", "SEC_A_Q06"], how="left")
+                else:
+                    df["strata_id"] = 1
+
+            # PSU: sorted unique SEC_A_Q07 mapped to 1..N
+            if "psu_id" not in df.columns:
+                if "SEC_A_Q07" in df.columns:
+                    unique_psus = sorted(df["SEC_A_Q07"].dropna().unique())
+                    psu_df = pd.DataFrame({"SEC_A_Q07": unique_psus, "psu_id": range(1, len(unique_psus) + 1)})
+                    df = df.merge(psu_df, on="SEC_A_Q07", how="left")
+                else:
+                    df["psu_id"] = 1
+
+            # Population weight
+            if "hhsize" in df.columns:
+                df["pop_wt"] = (df["hh_wt"].astype(np.float32) * df["hhsize"].astype(np.float32))
+            else:
+                df["pop_wt"] = df["hh_wt"]
+            return df
+
         df = df_demo.copy()
 
         # Administrative / Sampling information
@@ -476,18 +580,21 @@ class MTFMasterBuilder:
         elec_base_yr = (grid_m + minigrid_m) * 12.0
 
         f_gen = self._resolve_file("generator")
-        gen_tot_yr = pd.Series(0.0, index=df.index)
         if f_gen:
             gen_df = pd.read_stata(f_gen, convert_categoricals=False)
             gen_df = self._normalize_id(gen_df)
-            maint = gen_df.get("SEC_C_Q88", pd.Series(0.0, index=gen_df.index)).replace({888: np.nan}).fillna(0.0)
-            nbr_m_cols = [c for c in gen_df.columns if c.startswith("SEC_C_Q84__") and not c.endswith("111")]
-            nbr_gen = gen_df[nbr_m_cols].sum(axis=1) if nbr_m_cols else pd.Series(12.0, index=gen_df.index)
-            if "SEC_C_Q84__111" in gen_df.columns:
-                nbr_gen.loc[gen_df["SEC_C_Q84__111"] == 1] = 12.0
-            fuel_gen = gen_df.get("SEC_C_Q91", pd.Series(0.0, index=gen_df.index)).replace({888: np.nan}).fillna(0.0) * nbr_gen
-            gen_agg = (maint + fuel_gen).groupby(gen_df["interview__id"]).sum().rename("gen_exp_tot_yr").reset_index()
-            df = df.merge(gen_agg, on="interview__id", how="left")
+            merged_gen = df[["interview__id"]].merge(gen_df, on="interview__id", how="left")
+            q88 = merged_gen["SEC_C_Q88"].replace({888: np.nan}) if "SEC_C_Q88" in merged_gen.columns else pd.Series(np.nan, index=df.index)
+            gen_exp_maint_yr = q88.fillna(0.0)
+
+            nbr_cols = [f"SEC_C_Q84__{i}" for i in range(1, 13) if f"SEC_C_Q84__{i}" in merged_gen.columns]
+            nbr_mth_gen = merged_gen[nbr_cols].fillna(0).sum(axis=1) if nbr_cols else pd.Series(12.0, index=df.index)
+            if "SEC_C_Q84__111" in merged_gen.columns:
+                nbr_mth_gen.loc[merged_gen["SEC_C_Q84__111"] == 1] = 12.0
+
+            q91 = merged_gen["SEC_C_Q91"].replace({888: np.nan}) if "SEC_C_Q91" in merged_gen.columns else pd.Series(np.nan, index=df.index)
+            gen_exp_yr = (q91 * nbr_mth_gen).fillna(0.0)
+            df["gen_exp_tot_yr"] = gen_exp_maint_yr + gen_exp_yr
         else:
             df["gen_exp_tot_yr"] = 0.0
 
@@ -595,8 +702,10 @@ class MTFMasterBuilder:
         df["exp_pc_yr"] = df["exp_total_yr"] / df["hhsize"].clip(lower=1)
 
         # Generate Population-Weighted Quintiles matching Stata xtile
-        # Primary: Per capita annual expenditure with population weights (World Bank / LSMS standard)
-        df["hh_exp_quintile"] = self._compute_weighted_quintiles(df["exp_pc_yr"], df["pop_wt"])
+        valid_pop = df["pop_wt"].notna()
+        q_series = pd.Series(np.nan, index=df.index)
+        q_series.loc[valid_pop] = self._compute_weighted_quintiles(df.loc[valid_pop, "exp_total_yr"], df.loc[valid_pop, "pop_wt"])
+        df["hh_exp_quintile"] = q_series
 
         # Audit reference: Household-level total expenditure with household weights
         df["hh_exp_quintile_hhlevel"] = self._compute_weighted_quintiles(df["exp_total_yr"], df["hh_wt"])
@@ -685,6 +794,36 @@ class MTFMasterBuilder:
         ratio = emit_agg["weighted_sum"] / emit_agg["time_sum"]
         emit_agg["weighted_emit_tier"] = np.floor(ratio + 0.5).clip(0, 5)
         df = df.merge(emit_agg[["interview__id", "weighted_emit_tier", "stove_count"]], on="interview__id", how="left")
+
+        # Stacking summary: clean_stove, ics, trad_stove, stove_stacking
+        try:
+            stype_code = pd.Series(np.nan, index=stoves.index)
+            stype_code.loc[stype.isin([1, 2, 3, 5, 22])] = 1.0
+            stype_code.loc[stype.isin([4, 6, 7, 8, 9, 20, 21])] = 2.0
+            stype_code.loc[stype.isin([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23])] = 3.0
+            stoves["stove_type_cat"] = stype_code
+
+            counts = stoves.groupby("interview__id").size() - 1
+            stoves["stacking_num"] = stoves["interview__id"].map(counts)
+            wide = stoves.pivot(index="interview__id", columns="cookstoves__id", values=["stove_type_cat", "stacking_num"])
+            wide.columns = [f"{col}_{int(val)}" for col, val in wide.columns]
+            if "stacking_num_1" in wide.columns:
+                wide["stove_stacking"] = wide["stacking_num_1"] + 1.0
+            else:
+                wide["stove_stacking"] = 1.0
+
+            s_cols = [c for c in wide.columns if c.startswith("stove_type_cat_")]
+            wide["clean_stove"] = wide[s_cols].isin([3]).any(axis=1).astype(float)
+            wide["ics"] = wide[s_cols].isin([2]).any(axis=1).astype(float)
+            wide["trad_stove"] = wide[s_cols].isin([1]).any(axis=1).astype(float)
+
+            df = df.merge(wide[["clean_stove", "ics", "trad_stove", "stove_stacking"]].reset_index(), on="interview__id", how="left")
+            df["clean_stove"] = df["clean_stove"].fillna(0.0)
+            df["ics"] = df["ics"].fillna(0.0)
+            df["trad_stove"] = df["trad_stove"].fillna(0.0)
+            df["stove_stacking"] = df["stove_stacking"].fillna(0.0)
+        except Exception:
+            pass
 
         return df
 
@@ -902,7 +1041,7 @@ class MTFMasterBuilder:
         else:
             df["cs_fcol_fpre"] = 0.0
 
-        # Main stove mapping
+        # 1. Main stove mapping
         stype = df["SEC_G_Q05"] if "SEC_G_Q05" in df.columns else pd.Series(np.nan, index=df.index)
         mainstove = pd.Series(np.nan, index=df.index)
         if self.config.get("country_iso3") == "GNB" or self.config.get("country") == "Guinea-Bissau":
@@ -930,15 +1069,31 @@ class MTFMasterBuilder:
         df["mainstove"] = mainstove
         df["electricstove"] = (mainstove == 5).astype(int)
 
-        # cs_exp_tier (Exposure)
-        cs_emit = df.get("weighted_emit_tier", pd.Series(np.nan, index=df.index)).copy()
-        cs_emit.loc[cs_emit.isna() & mainstove.isin([1, 2])] = 0.0
-        cs_emit.loc[cs_emit.isna() & (mainstove == 3)] = 3.0
-        cs_emit.loc[cs_emit.isna() & mainstove.isin([4, 5, 6])] = 4.0
-        cs_emit.loc[cs_emit.isna() & mainstove.isin([7, 8])] = 5.0
-        cs_emit = cs_emit.fillna(0.0)
+        # 2. cs_emit_tier (ISO emission tier)
+        cs_emit = pd.Series(np.nan, index=df.index)
+        if self.config.get("country_iso3") == "GNB" or self.config.get("country") == "Guinea-Bissau":
+            cs_emit.loc[stype.isin([1, 2])] = 0.0
+            cs_emit.loc[stype == 3] = 3.0
+            cs_emit.loc[stype == 4] = 1.0
+            cs_emit.loc[stype.isin([5, 6])] = 4.0
+            cs_emit.loc[stype.isin([7, 8])] = 5.0
+        else:
+            cs_emit.loc[stype.isin([1, 2])] = 0.0
+            cs_emit.loc[stype.isin([3, 5, 22])] = 0.0
+            cs_emit.loc[stype.isin([4, 6, 7, 8, 9, 20, 21])] = 3.0
+            cs_emit.loc[stype.isin([10, 11, 12, 13, 14, 23])] = 4.0
+            cs_emit.loc[stype.isin([19])] = 5.0
+            cs_emit.loc[stype.isin([17, 18])] = 5.0
+            cs_emit.loc[stype.isin([15])] = 5.0
+            cs_emit.loc[stype.isin([16])] = 4.0
 
-        # Ventilation
+            cs_emit.loc[mainstove.isin([1, 2]) & cs_emit.isna()] = 0.0
+            cs_emit.loc[mainstove.isin([3]) & cs_emit.isna()] = 3.0
+            cs_emit.loc[mainstove.isin([4, 8]) & cs_emit.isna()] = 4.0
+            cs_emit.loc[mainstove.isin([5, 6, 7]) & cs_emit.isna()] = 5.0
+        df["cs_emit_tier"] = cs_emit
+
+        # 3. Ventilation & Exposure Tier (cs_exp_tier)
         q14 = df.get("SEC_G_Q14", np.nan)
         q15_1 = df.get("SEC_G_Q15__1", 0)
         q15_2 = df.get("SEC_G_Q15__2", 0)
@@ -977,15 +1132,15 @@ class MTFMasterBuilder:
 
         trad_mode = cs_exp.loc[mainstove == 2].mode()
         if not trad_mode.empty:
-            cs_exp.loc[(mainstove == 2) & cs_exp.isna()] = trad_mode.iloc[0]
+            cs_exp.loc[(mainstove == 2) & cs_exp.isna()] = trad_mode.min()
         ics_mode = cs_exp.loc[mainstove == 3].mode()
         if not ics_mode.empty:
-            cs_exp.loc[(mainstove == 3) & cs_exp.isna()] = ics_mode.iloc[0]
+            cs_exp.loc[(mainstove == 3) & cs_exp.isna()] = ics_mode.min()
         cs_exp.loc[(mainstove == 1) & cs_exp.isna()] = 0.0
         cs_exp.loc[mainstove.isin([4, 5, 6, 7, 8]) & cs_exp.isna()] = 5.0
-        df["cs_exp_tier"] = cs_exp.fillna(0.0)
+        df["cs_exp_tier"] = cs_exp
 
-        # Efficiency Tier
+        # 4. Efficiency Tier (cs_efcy_tier)
         cs_efcy = pd.Series(np.nan, index=df.index)
         if self.config.get("country_iso3") == "GNB" or self.config.get("country") == "Guinea-Bissau":
             cs_efcy.loc[stype.isin([1, 2, 4])] = 0.0
@@ -993,10 +1148,20 @@ class MTFMasterBuilder:
             cs_efcy.loc[stype.isin([5, 6])] = 4.0
             cs_efcy.loc[stype.isin([7, 8])] = 5.0
         else:
-            cs_efcy.loc[mainstove.isin([1, 2])] = 0.0
-            cs_efcy.loc[mainstove == 3] = 3.0
-            cs_efcy.loc[mainstove == 4] = 4.0
-            cs_efcy.loc[mainstove.isin([5, 6, 7, 8])] = 5.0
+            cs_efcy.loc[stype.isin([1, 2])] = 0.0
+            cs_efcy.loc[stype.isin([3, 5, 22])] = 0.0
+            cs_efcy.loc[stype.isin([4, 6, 7, 8, 9, 20, 21])] = 2.0
+            cs_efcy.loc[stype.isin([10, 11, 12, 13, 14, 23])] = 4.0
+            cs_efcy.loc[stype.isin([19])] = 5.0
+            cs_efcy.loc[stype.isin([17, 18])] = 5.0
+            cs_efcy.loc[stype.isin([15])] = 4.0
+            cs_efcy.loc[stype.isin([16])] = 3.0
+
+            cs_efcy.loc[mainstove.isin([1, 2]) & cs_efcy.isna()] = 0.0
+            cs_efcy.loc[mainstove.isin([3]) & cs_efcy.isna()] = 2.0
+            cs_efcy.loc[mainstove.isin([8]) & cs_efcy.isna()] = 3.0
+            cs_efcy.loc[mainstove.isin([4, 7]) & cs_efcy.isna()] = 4.0
+            cs_efcy.loc[mainstove.isin([5, 6]) & cs_efcy.isna()] = 5.0
         df["cs_efcy_tier"] = cs_efcy
 
         # Convenience Tier
@@ -1131,10 +1296,30 @@ class MTFMasterBuilder:
         sat.loc[q162.isin([4, 5, 6]) & ((df.get("SEC_C_Q161__7", 0) == 1) | (df.get("SEC_C_Q125_7", 0) == 1))] = 5.0
         df["solar_app_tier"] = sat
 
+        # Rechargeable battery and generator appliance power tiers
+        def _get_app_tier(tech_code: int) -> pd.Series:
+            m = (nbr_e == 1) & (q162 == tech_code)
+            tier = pd.Series(np.nan, index=df.index)
+            t1_cols = [f"SEC_F_Q01__{i}" for i in [1, 2, 3, 4, 7, 28, 29, 33] if f"SEC_F_Q01__{i}" in df.columns]
+            t2_cols = [f"SEC_F_Q01__{i}" for i in [8, 9, 30, 31, 32, 26] if f"SEC_F_Q01__{i}" in df.columns]
+            t3_cols = [f"SEC_F_Q01__{i}" for i in [10, 15, 16, 17, 21, 27] if f"SEC_F_Q01__{i}" in df.columns]
+            t4_cols = [f"SEC_F_Q01__{i}" for i in [14, 18, 11, 13] if f"SEC_F_Q01__{i}" in df.columns]
+            t5_cols = [f"SEC_F_Q01__{i}" for i in [22, 23, 24, 25] if f"SEC_F_Q01__{i}" in df.columns]
+
+            if t1_cols: tier.loc[m & (df[t1_cols].max(axis=1) == 1)] = 1.0
+            if t2_cols: tier.loc[m & (df[t2_cols].max(axis=1) == 1)] = 2.0
+            if t3_cols: tier.loc[m & (df[t3_cols].max(axis=1) == 1)] = 3.0
+            if t4_cols: tier.loc[m & (df[t4_cols].max(axis=1) == 1)] = 4.0
+            if t5_cols: tier.loc[m & (df[t5_cols].max(axis=1) == 1)] = 5.0
+            return tier
+
+        rech_app_tier = _get_app_tier(7)
+        gen_app_tier = _get_app_tier(3)
+
         applpower = pd.Series(np.nan, index=df.index)
         applpower.loc[sat == 0] = 0.0
         for lv in range(1, 6):
-            applpower.loc[applpower.isna() & (sat == lv)] = float(lv)
+            applpower.loc[applpower.isna() & ((rech_app_tier == lv) | (gen_app_tier == lv) | (sat == lv))] = float(lv)
         df["applpower"] = applpower
 
         # Build elc_cap_tier exactly matching Stata
@@ -1185,19 +1370,19 @@ class MTFMasterBuilder:
         elc_dure.loc[dur_eve < 1] = 0.0
 
         if "SEC_A_Q05" in df.columns:
+            grid_m = (q162 == 1)
             for s_var in [elc_durd, elc_dure]:
-                grid_m = (q162 == 1)
-                modes = df[grid_m].groupby("SEC_A_Q05").apply(lambda g: s_var.loc[g.index].mode())
-                ov_mode = s_var.loc[grid_m].mode()
-                if not ov_mode.empty:
-                    s_var.loc[grid_m & s_var.isna()] = ov_mode.iloc[0]
+                for ea, grp in df[grid_m].groupby("SEC_A_Q05"):
+                    ea_m = s_var.loc[grp.index].dropna().mode()
+                    if not ea_m.empty:
+                        s_var.loc[grp.index] = s_var.loc[grp.index].fillna(ea_m.min())
 
-        for s_var in [elc_durd, elc_dure]:
-            for scode in [4, 5, 6]:
-                sm = (q162 == scode)
-                smode = s_var.loc[sm].mode()
+        for scode in [4, 5, 6]:
+            sm = (q162 == scode)
+            for s_var in [elc_durd, elc_dure]:
+                smode = s_var.loc[sm].dropna().mode()
                 if not smode.empty:
-                    s_var.loc[sm & s_var.isna()] = smode.iloc[0]
+                    s_var.loc[sm] = s_var.loc[sm].fillna(smode.min())
 
         valid_avbl = elc_durd.notna() & elc_dure.notna()
         elc_avbl = pd.Series(np.nan, index=df.index)
@@ -1208,10 +1393,10 @@ class MTFMasterBuilder:
         # Grid outage duration (SEC_C_Q30 from Q30a hr + Q30b min)
         q30_hr = df["SEC_C_Q30a"].replace({888: np.nan}).copy() if "SEC_C_Q30a" in df.columns else pd.Series(np.nan, index=df.index)
         if "SEC_C_Q29" in df.columns:
-            q30_hr.loc[df["SEC_C_Q29"].isin([0, 111])] = 0.0
+            q30_hr.loc[df["SEC_C_Q29"] == 111] = 0.0
         q30_min = df["SEC_C_Q30b"].replace({888: np.nan}).copy() if "SEC_C_Q30b" in df.columns else pd.Series(np.nan, index=df.index)
         if "SEC_C_Q29" in df.columns:
-            q30_min.loc[df["SEC_C_Q29"].isin([0, 111])] = 0.0
+            q30_min.loc[df["SEC_C_Q29"] == 111] = 0.0
         q30_min.loc[q30_hr.notna() & q30_min.isna()] = 0.0
         q30_hr.loc[q30_hr.isna() & q30_min.notna()] = 0.0
         df["SEC_C_Q30"] = q30_hr + (q30_min / 60.0)
@@ -1219,10 +1404,12 @@ class MTFMasterBuilder:
         # Mini-grid outage duration (SEC_C_Q68 from Q68a hr + Q68b min)
         q68_hr = df["SEC_C_Q68a"].replace({888: np.nan}).copy() if "SEC_C_Q68a" in df.columns else pd.Series(np.nan, index=df.index)
         if "SEC_C_Q67" in df.columns:
-            q68_hr.loc[df["SEC_C_Q67"].isin([0, 111])] = 0.0
+            q68_hr.loc[df["SEC_C_Q67"] == 111] = 0.0
         q68_min = df["SEC_C_Q68b"].replace({888: np.nan}).copy() if "SEC_C_Q68b" in df.columns else pd.Series(np.nan, index=df.index)
         if "SEC_C_Q67" in df.columns:
-            q68_min.loc[df["SEC_C_Q67"].isin([0, 111])] = 0.0
+            q68_min.loc[df["SEC_C_Q67"] == 111] = 0.0
+        q68_min.loc[q68_hr.notna() & q68_min.isna()] = 0.0
+        q68_hr.loc[q68_hr.isna() & q68_min.notna()] = 0.0
         df["SEC_C_Q68"] = q68_hr + (q68_min / 60.0)
 
         dis_frq = pd.Series(np.nan, index=df.index)
@@ -1303,15 +1490,24 @@ class MTFMasterBuilder:
         elc_affrd.loc[share_365 >= 0.05] = 2.0
         df["elc_affrd_tier"] = elc_affrd
 
+        # Adjusted tiers (non-grid/mini-grid defaulted to 5 to avoid penalizing off-grid)
+        rel_adj = df["elc_rel_tier"].copy()
+        rel_adj.loc[(~q162.isin([1, 2])) & rel_adj.isna()] = 5.0
+        df["elc_rel_tier_adj"] = rel_adj
+
+        qual_adj = df["elc_qual_tier"].copy()
+        qual_adj.loc[(~q162.isin([1, 2])) & qual_adj.isna()] = 5.0
+        df["elc_qual_tier_adj"] = qual_adj
+
+        leg_adj = df["elc_leg_tier"].copy()
+        leg_adj.loc[(~q162.isin([1, 2])) & leg_adj.isna()] = 5.0
+        df["elc_leg_tier_adj"] = leg_adj
+
         # Aggregate Electricity Tier = min of all 7 attributes
-        elc_attrs = ["elc_cap_tier", "elc_avbl_tier", "elc_rel_tier", "elc_qual_tier", "elc_affrd_tier", "elc_leg_tier", "elc_sft_tier"]
+        elc_attrs = ["elc_cap_tier", "elc_avbl_tier", "elc_rel_tier_adj", "elc_qual_tier_adj", "elc_affrd_tier", "elc_leg_tier_adj", "elc_sft_tier"]
         df["elc_aggr_tier"] = df[elc_attrs].min(axis=1)
         df["elec_access"] = np.where(df["elc_aggr_tier"].notna(), (df["elc_aggr_tier"] >= 1).astype(float), np.nan)
         df["elc_t45"] = np.where(df["elc_aggr_tier"].notna(), df["elc_aggr_tier"].isin([4, 5]).astype(float), np.nan)
-
-        df["elc_rel_tier_adj"] = df["elc_rel_tier"]
-        df["elc_qual_tier_adj"] = df["elc_qual_tier"]
-        df["elc_leg_tier_adj"] = df["elc_leg_tier"]
 
         return df
 
@@ -1319,8 +1515,11 @@ class MTFMasterBuilder:
         """Under-the-grid spatial analytics, connection barriers, and WTP demand curves."""
         df = df_base.copy()
 
-        # Under-the-Grid Analytics
-        df["ea_grid_present"] = df.groupby("psu_id")["grid_hh"].transform("max")
+        # Under-the-Grid Analytics (clustered by Locality/EA name SEC_A_Q05 if available, else psu_id)
+        if "SEC_A_Q05" in df.columns:
+            df["ea_grid_present"] = df.groupby("SEC_A_Q05")["grid_hh"].transform("max")
+        else:
+            df["ea_grid_present"] = df.groupby("psu_id")["grid_hh"].transform("max")
         df["under_the_grid"] = (df["ea_grid_present"] == 1).astype(int)
         df["under_grid_unconnected"] = ((df["ea_grid_present"] == 1) & (df["grid_hh"] == 0)).astype(int)
 
@@ -1345,7 +1544,7 @@ class MTFMasterBuilder:
         df["wtp_grid_3m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
         df["wtp_grid_6m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1)).astype(float), np.nan)
         df["wtp_grid_12m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1)).astype(float), np.nan)
-        df["wtp_grid_waived"] = np.where(d_valid, ((df["wtp_grid_12m"] == 1) | (q_d7 == 1)).astype(float), np.nan)
+        df["wtp_grid_waived"] = np.where((df["grid_hh"] == 0) & q_d7.notna(), (q_d7 == 1).astype(float), np.nan)
         df["wtp_grid_never"] = np.where((df["grid_hh"] == 0) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
         # Grid WTP by Randomized Price Point
@@ -1357,7 +1556,7 @@ class MTFMasterBuilder:
             df[f"wtp_grid_p{p_code}_3m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_6m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1)).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_12m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1)).astype(float), np.nan)
-            df[f"wtp_grid_p{p_code}_waived"] = np.where(mask_p, ((df[f"wtp_grid_p{p_code}_12m"] == 1) | (q_d7 == 1)).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_waived"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 1).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_never"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
         # WTP Solar
@@ -1370,7 +1569,7 @@ class MTFMasterBuilder:
         df["wtp_solar_6m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1)).astype(float), np.nan)
         df["wtp_solar_12m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
         df["wtp_solar_24m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
-        df["wtp_solar_never"] = np.where(q_e5.notna(), ((q_e5 == 0) | (q_e5 == 2)).astype(float), np.nan)
+        df["wtp_solar_never"] = np.where(q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
 
         # Solar WTP by System Tier and Subsidy Level
         sys_col = df.get("solar_system", pd.Series(np.nan, index=df.index))
