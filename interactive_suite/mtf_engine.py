@@ -790,37 +790,26 @@ def find_default_dataset(force_rebuild: bool = False) -> Optional[Path]:
     raw_dir = next((r for r in raw_dirs if r.exists() and (r / "admin_info.dta").exists()), None)
     latest_calib = find_latest_calibration_file()
 
-    candidates = [
-        Path("Data/MTF_2024_HH_Guinea-Bissau_Master.dta"),
-        Path("Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
-        Path("./MTF_2024_HH_Guinea-Bissau_Master.dta"),
-        Path("/media/bryan/Bryan/MTF/9_Data analysis_MTF countries/37_Guinea-Bissau/Data/wip_hh/MTF_2024_HH_Guinea-Bissau_Master.dta"),
-    ]
     existing_master = None
-    for c in candidates:
-        if c.exists():
-            existing_master = c
-            break
 
-    if not existing_master:
-        for search_dir in [Path("Data"), Path("Data/wip_hh"), Path(".")]:
-            if search_dir.exists():
-                for dta_f in search_dir.glob("*.dta"):
-                    if "master" in dta_f.name.lower():
-                        existing_master = dta_f
-                        break
-                if existing_master:
+    # 1. First priority: Check local project directories (Data/, Data/wip_hh/, .) for ANY master dataset
+    for search_dir in [Path("Data"), Path("Data/wip_hh"), Path(".")]:
+        if search_dir.exists():
+            for dta_f in sorted(search_dir.glob("*.dta")):
+                if "master" in dta_f.name.lower():
+                    existing_master = dta_f
                     break
+            if existing_master:
+                break
 
+    # 2. Second priority: If no master file found, check for single dta file in Data/
     if not existing_master:
         for search_dir in [Path("Data"), Path(".")]:
             if search_dir.exists():
                 dtas = list(search_dir.glob("*.dta"))
-                if dtas:
-                    # Avoid returning a raw module as if it were a master dataset
-                    if not (search_dir / "admin_info.dta").exists():
-                        existing_master = dtas[0]
-                        break
+                if len(dtas) == 1 and not (search_dir / "admin_info.dta").exists():
+                    existing_master = dtas[0]
+                    break
 
     # Smart-rebuild condition:
     # If raw modules exist:
