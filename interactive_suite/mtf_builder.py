@@ -126,7 +126,7 @@ class MTFMasterBuilder:
         return cfg
 
     def _resolve_file(self, mod_key: str) -> Optional[Path]:
-        """Resolves the path to a raw module by checking primary and fallback names."""
+        """Resolves the path to a raw module by checking primary, fallback names, and case-insensitivity."""
         raw_mods = self.config.get("raw_modules", {})
         mod_info = raw_mods.get(mod_key, {})
         names = []
@@ -137,10 +137,42 @@ class MTFMasterBuilder:
         elif isinstance(mod_info, str):
             names.append(mod_info)
 
+        # Standard Survey Solutions CAPI naming fallbacks
+        capi_fallbacks = {
+            "generator": ["SEC_C_GENERATOR.dta", "sec_c_generator.dta", "generator.dta"],
+            "rechar_ba": ["SEC_C_RECHAR_BA.dta", "sec_c_rechar_ba.dta", "rechar_ba.dta"],
+            "solar_device": ["Solar_C_Device.dta", "solar_c_device.dta", "solar_device.dta"],
+            "fuel_h11": ["fuel_H11.dta", "fuel_h11.dta"],
+            "cookstoves": ["cookstoves.dta"],
+            "appliances": ["appliances.dta", "appliance.dta"],
+            "hhroster": ["hhroster.dta", "section_a1_hh_roster.dta"],
+            "food": ["food.dta"],
+            "nonfood_1mon": ["nonfood_1mon.dta"],
+            "nonfood_12mon": ["nonfood_12mon.dta"],
+            "fuel_consump": ["fuel_consumption.dta"],
+            "time_coll": ["time_collecting.dta", "time_coll.dta"],
+            "time_use": ["time_use.dta"],
+            "lighting_fuel": ["lighting_fuel.dta"],
+            "solar_business": ["solar_business.dta"]
+        }
+        names.extend(capi_fallbacks.get(mod_key, []))
+
+        # 1. Exact match attempt
         for n in names:
             p = self.raw_dir / n
             if p.exists():
                 return p
+
+        # 2. Case-insensitive matching attempt (crucial for Linux cross-platform Survey Solutions)
+        try:
+            actual_files = {f.name.lower(): f for f in self.raw_dir.glob("*.dta")}
+            for n in names:
+                n_low = n.lower()
+                if n_low in actual_files:
+                    return actual_files[n_low]
+        except Exception:
+            pass
+
         return None
 
     @staticmethod
