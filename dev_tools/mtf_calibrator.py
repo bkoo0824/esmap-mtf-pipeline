@@ -594,6 +594,7 @@ class MTFGenerator:
         self._generate_enhancements_do(dofile_out)
         self._generate_export_do(dofile_out)
         self._deploy_python_scripts(dofile_out, scripts_out)
+        self._deploy_interactive_tools(self.target_dir / "Tools")
 
     def _generate_cooking_attributes_do(self, dofile_out: Path):
         src = self.template_dir / "Do-file" / "04_cooking_attributes.do"
@@ -745,7 +746,7 @@ global run_enhancements 1
 *======================    3. MAIN RUN & LOGGING =============================*
 clear all
 set more off
-set maxvar 10000
+capture set maxvar 10000
 
 * Create log directory and open master log file
 capture log close master_log
@@ -810,6 +811,7 @@ log close master_log
         weight_var = self.params.get("weight_var", "HH_weights")
         ur_var = self.params.get("urban_rural_var", "SEC_A_Q06")
         admin1_var = self.params.get("admin1_var", "SEC_A_Q01")
+        psu_var = self.params.get("psu_var", "SEC_A_Q07")
 
         text = re.sub(r'MTF_2024_HH_Namibia_Master\.dta', master_out, text)
 
@@ -891,8 +893,7 @@ gen hh_wt = {weight_var}
 lab var hh_wt "Final Calibrated Household Weight"
 
 * Merge household size and head characteristics
-merge 1:1 interview__id using "$wip_hh/hhsize.dta", nogen
-merge 1:1 interview__id using "$wip_hh/headgender.dta", nogen
+merge 1:1 interview__id using "$wip_hh/demographics.dta", nogen
 
 * Population weight:
 gen pop_wt = hh_wt * hhsize
@@ -908,6 +909,17 @@ lab var loc_urban_rural "Urban / Rural Locality"
 
 * Stratification variable: Admin 1 ({admin1_var}) × Locality ({ur_var})
 egen strata_id = group({admin1_var} {ur_var})
+
+* Primary Sampling Unit (Cluster / EA)
+capture confirm numeric variable {psu_var}
+if !_rc {{
+    gen double psu_id = {psu_var}
+}}
+else {{
+    egen psu_id = group({psu_var})
+}}
+lab var psu_id "Primary Sampling Unit (Numeric EA ID)"
+
 save "$wip_hh/$master_dta", replace
 """
             sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
@@ -978,8 +990,8 @@ di " 01_setup.do complete — Master dataset validated."
             lines.append(f"gen byte {var_name} = ({admin1_var} == {k_val})")
 
         enh11_block = "\n".join(lines)
-        pattern = re.compile(r'\*  ENHANCEMENT 11:.*?(?=save "\$wip_hh)', re.DOTALL)
-        text = pattern.sub(enh11_block + "\n\n", text)
+        pattern = re.compile(r'\*  ENHANCEMENT 11:.*?(?=\*  ENHANCEMENT 12:)', re.DOTALL)
+        text = pattern.sub(enh11_block + "\n\n\t", text)
 
         safe_write_text(dofile_out / "06_analytical_enhancements.do", text)
 
@@ -1042,9 +1054,17 @@ di " 01_setup.do complete — Master dataset validated."
         survey_year = self.params.get("survey_year", "2024")
         strata_count = self.params.get("strata_count", admin1_count * 2)
 
-        src_vis = self.template_dir / "Do-file" / "scripts" / "visualize.py"
-        src_inj = self.template_dir / "Do-file" / "scripts" / "inject_report.py"
-        src_tpl = self.template_dir / "Do-file" / "MTF_Report_Template.md"
+        src_vis = self.template_dir / "scripts" / "visualize.py"
+        if not src_vis.exists():
+            src_vis = self.template_dir / "Do-file" / "scripts" / "visualize.py"
+
+        src_inj = self.template_dir / "scripts" / "inject_report.py"
+        if not src_inj.exists():
+            src_inj = self.template_dir / "Do-file" / "scripts" / "inject_report.py"
+
+        src_tpl = self.template_dir / "MTF_Report_Template.md"
+        if not src_tpl.exists():
+            src_tpl = self.template_dir / "Do-file" / "MTF_Report_Template.md"
 
         if src_vis.exists():
             v_text = src_vis.read_text(encoding="utf-8")
@@ -1099,23 +1119,46 @@ di " 01_setup.do complete — Master dataset validated."
 
             safe_write_text(dofile_out / "MTF_Report_Template.md", t_text)
 
-        # Deploy country cookstove calibration CSV into country scripts folder for local editing
-        target_csv = scripts_out / f"cookstove_calibration_{country.lower()}.csv"
+        # Note: Cookstove typology is officially mastered in MTF_<Country>_Calibration.xlsx [Sheet: 3_Cookstove_Typology].
+        # We only keep a single cookstove_calibration.csv for downstream legacy compatibility.
         target_csv_generic = scripts_out / "cookstove_calibration.csv"
         active_csv_path = self.params.get("cookstove_csv_path")
         if active_csv_path and Path(active_csv_path).exists():
             try:
-                shutil.copy2(active_csv_path, target_csv)
                 shutil.copy2(active_csv_path, target_csv_generic)
             except Exception:
                 pass
         else:
             try:
                 csv_content = CookstoveLoader.generate_template_csv(country)
-                safe_write_text(target_csv, csv_content)
                 safe_write_text(target_csv_generic, csv_content)
             except Exception:
                 pass
+
+    def _deploy_interactive_tools(self, tools_out: Path):
+        """Deploy interactive suite tools (run_mtf_local.sh, mtf_engine.py, etc.) to country Tools/ directory."""
+        repo_root = self.template_dir.parent
+        interactive_dir = repo_root / "interactive_suite"
+        if not interactive_dir.exists():
+            interactive_dir = self.template_dir / "Tools"
+
+        if not interactive_dir.exists():
+            return
+
+        try:
+            tools_out.mkdir(parents=True, exist_ok=True)
+            for item in interactive_dir.iterdir():
+                if item.name.startswith(('.', '__')) or item.is_dir():
+                    continue
+                dst = tools_out / item.name
+                shutil.copy2(item, dst)
+                if dst.suffix in ('.sh', '.command'):
+                    try:
+                        dst.chmod(dst.stat().st_mode | 0o111)
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"[WARN] Could not deploy interactive Tools to {tools_out}: {e}", file=sys.stderr)
 
 
 def find_template_dir(custom_path: Optional[str] = None) -> Path:

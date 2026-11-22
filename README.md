@@ -9,17 +9,23 @@ This repository houses the global standard analytical codebase for national **Mu
 
 ## 🚀 3-Minute Quickstart for Team Members (No Stata Required)
 
-If you do not have a Stata license and want to explore MTF microdata, run policy simulations, or export custom charts and tables:
+If you do not have a Stata license and want to explore MTF microdata, run policy simulations, or export publication-ready reports, charts, and tables:
 
-1. **Download the Package:** Click the green **`[Code]`** button above ➔ **`[Download ZIP]`** and extract.
-2. **Place Data:** Drop your country `.dta` file into the `interactive_suite/Data/` folder.
+1. **Download the Package:** Click the green **`[Code]`** button above ➔ **`[Download ZIP]`** and extract to your computer.
+2. **Place Data:** Drop your country `.dta` file (or raw Survey Solutions modules) into the `interactive_suite/Data/` folder (or your country's root directory).
 3. **Launch with 1-Click:**
    - **Windows:** Double-click [`interactive_suite/run_mtf_local.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/run_mtf_local.bat)
-   - **Mac / Linux:** Run [`interactive_suite/run_mtf_local.sh`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/run_mtf_local.sh)
-4. **Get Updates:** When new tools are released, double-click [`interactive_suite/update_mtf.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/update_mtf.bat) (preserves your local `Data/` completely).
+   - **Mac / Linux:** Open terminal, navigate to `interactive_suite/` (or country `Tools/`), and run `./run_mtf_local.sh`
+4. **Choose Your Desired Output from the Menu:**
+   - **Option `[0]`**: **1-Click Country Setup** (scans raw `Data/`, detects country metadata, and generates `MTF_<Country>_Calibration.xlsx` for your manual review).
+   - **Option `[1]`**: Launch JupyterLab Interactive Analyzer in your web browser.
+   - **Option `[2]`**: 1-Click Fast Production Engine (exports 11-sheet Excel & JSON indicators).
+   - **Option `[3]`**: **1-Click Full Publication Report & Charts** (auto-generates 17 high-res 300 DPI publication charts and compiles the complete World Bank diagnostic Word report `.docx`).
+   - **Option `[6]`**: Force Rebuild Master Dataset from raw Survey Solutions modules and calibration workbook.
+5. **Get Updates:** When new tools are released, double-click [`interactive_suite/update_mtf.bat`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/update_mtf.bat) (preserves your local `Data/` completely).
 
-👉 *See [**`USER_GUIDE.md`**](file:///home/bryan/github/esmap-mtf-pipeline/USER_GUIDE.md) for the comprehensive End-to-End User Manual (Non-STATA & STATA Workflows).*
-👉 *See [`interactive_suite/LOCAL_SETUP_GUIDE.md`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/LOCAL_SETUP_GUIDE.md) for quick non-technical instructions.*
+👉 *See [**`USER_GUIDE.md`**](file:///home/bryan/github/esmap-mtf-pipeline/USER_GUIDE.md) for the comprehensive End-to-End User Manual (Non-STATA & STATA Workflows).*  
+👉 *See [`interactive_suite/LOCAL_SETUP_GUIDE.md`](file:///home/bryan/github/esmap-mtf-pipeline/interactive_suite/LOCAL_SETUP_GUIDE.md) for non-technical step-by-step instructions.*
 
 ---
 

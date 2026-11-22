@@ -66,12 +66,40 @@ REM 3. User Choice Menu
 echo ===============================================================================
 echo  Please select an operation [Default: 1]:
 echo.
+echo   [0] 1-Click Country Setup: Scan Data & Generate Calibration Excel (Step 1)
 echo   [1] Launch JupyterLab Interactive Analyzer (Web Browser Notebook)
 echo   [2] 1-Click Fast Production Engine (Instantly Export Excel & JSON)
-echo   [3] 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
-echo   [4] Update Tools & Apply Latest GitHub Patches
+echo   [3] 1-Click Full Publication Report & Charts (Generate 17 Charts + Word Report)
+echo   [4] 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
+echo   [5] Update Tools & Apply Latest GitHub Patches
+echo   [6] Force Rebuild Master Dataset from Raw Survey Modules & Calibration Excel
 echo ===============================================================================
-set /p CHOICE="Select (1/2/3/4, Default Enter=1): "
+set /p CHOICE="Select (0/1/2/3/4/5/6, Default Enter=1): "
+
+if "%CHOICE%"=="0" (
+    echo.
+    echo [*] Scanning Data\ folder to detect country metadata and generate Calibration Workbook...
+    set CALIB_SCRIPT=
+    if exist "..\dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py
+    if exist "dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=dev_tools\mtf_calibrator.py
+    if exist "mtf_calibrator.py" set CALIB_SCRIPT=mtf_calibrator.py
+
+    if defined CALIB_SCRIPT (
+        python %CALIB_SCRIPT% --country-dir ".." --calibrate-country --auto-confirm
+        echo.
+        echo ===============================================================================
+        echo  ✓ Success! Country Calibration Workbook generated in the root folder.
+        echo  ★ Next Step: Open MTF_..._Calibration.xlsx, review Sheet 3 and 6, save it,
+        echo    and then run this launcher again and select Option [3]!
+        echo ===============================================================================
+    ) else (
+        echo [ERROR] Could not find mtf_calibrator.py in dev_tools\.
+    )
+    echo.
+    echo Press any key to close this window...
+    pause >nul
+    exit /b 0
+)
 
 if "%CHOICE%"=="2" (
     echo.
@@ -89,7 +117,28 @@ if "%CHOICE%"=="2" (
 
 if "%CHOICE%"=="3" (
     echo.
-    python report_error.py
+    echo [*] Step 1/3: Running MTF Engine to export calibrated econometric JSON...
+    python mtf_engine.py
+    if %errorlevel% neq 0 (
+        python report_error.py --error "Engine crashed during report prep"
+        exit /b 1
+    )
+
+    set SCRIPTS_DIR=
+    if exist "..\Do-file\scripts\visualize.py" set SCRIPTS_DIR=..\Do-file\scripts
+    if exist "scripts\visualize.py" set SCRIPTS_DIR=scripts
+    if exist "..\stata_pipeline\scripts\visualize.py" set SCRIPTS_DIR=..\stata_pipeline\scripts
+
+    if defined SCRIPTS_DIR (
+        echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts (300 DPI)...
+        python %SCRIPTS_DIR%\visualize.py --base-dir ".."
+        echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report (.docx)...
+        python %SCRIPTS_DIR%\inject_report.py --base-dir ".."
+        echo ✓ All publication charts and World Bank Word report generated in ..\Output!
+        if exist "..\Output" start "" "..\Output"
+    ) else (
+        echo [WARN] Could not find visualize.py or inject_report.py in scripts directories.
+    )
     echo.
     echo Press any key to close this window...
     pause >nul
@@ -98,7 +147,7 @@ if "%CHOICE%"=="3" (
 
 if "%CHOICE%"=="4" (
     echo.
-    python update_tools.py
+    python report_error.py
     echo.
     echo Press any key to close this window...
     pause >nul
@@ -106,6 +155,15 @@ if "%CHOICE%"=="4" (
 )
 
 if "%CHOICE%"=="5" (
+    echo.
+    python update_tools.py
+    echo.
+    echo Press any key to close this window...
+    pause >nul
+    exit /b 0
+)
+
+if "%CHOICE%"=="6" (
     echo.
     echo [*] Force-rebuilding Master Dataset from raw survey modules and calibration workbook...
     python mtf_engine.py --rebuild

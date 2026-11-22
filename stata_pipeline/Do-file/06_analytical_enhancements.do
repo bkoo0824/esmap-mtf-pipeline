@@ -503,7 +503,13 @@
 	capture drop credit_access head_educ_none head_educ_prim head_educ_sec head_educ_high ///
 		head_marital_single head_marital_married head_marital_widow head_marital_divsep
 
-	gen byte credit_access = (SEC_B_Q16__1 == 1 | SEC_B_Q16__2 == 1 | SEC_B_Q16__3 == 1 | SEC_B_Q16__4 == 1 | SEC_B_Q16__5 == 1)
+	gen byte credit_access = 0
+	capture unab b16_list : SEC_B_Q16__*
+	if !_rc {
+		foreach v of local b16_list {
+			capture replace credit_access = 1 if `v' == 1
+		}
+	}
 	lab var credit_access "Household has access to loans / credit from formal/informal sources"
 
 	gen byte head_educ_none = (hh_head_educ == 0) if hh_head_educ < .

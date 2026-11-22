@@ -772,10 +772,11 @@ class MTFEngine:
 
 def find_latest_calibration_file() -> Optional[Path]:
     """Finds the most recently modified calibration workbook if present across standard directories."""
-    search_dirs = [Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".")]
+    search_dirs = [Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".."), Path(".")]
     candidates = []
     for s_dir in search_dirs:
         if s_dir.exists():
+            candidates.extend(list(s_dir.glob("MTF_*_Calibration.xlsx")))
             candidates.extend(list(s_dir.glob("mtf_calibration*.xlsx")))
             candidates.extend(list(s_dir.glob("other_specify_calibration*.xlsx")))
     if not candidates:

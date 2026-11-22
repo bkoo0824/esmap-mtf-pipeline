@@ -13,6 +13,7 @@ Purpose:
 
 import sys
 import os
+import re
 import argparse
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -40,7 +41,11 @@ class MTFMasterBuilder:
             Path("Data"),
             Path("Data/wip_hh"),
             Path.cwd() / "Data",
-            Path.cwd()
+            Path.cwd(),
+            Path(".."),
+            Path("../Data"),
+            self.base_dir / "Data",
+            self.base_dir
         ]
         for c in candidates:
             if c.exists():
@@ -48,9 +53,9 @@ class MTFMasterBuilder:
                     return c
                 for f in c.glob("*.dta"):
                     fname = f.name.lower()
-                    if "household" in fname and "master" not in fname:
+                    if ("household" in fname or "hh" in fname or "energy" in fname) and "master" not in fname:
                         return c
-        return Path("Data")
+        return Path("..") if (Path("..") / "hhroster.dta").exists() else Path("Data")
 
     def _load_config(self, config_path: Optional[Path]) -> Dict[str, Any]:
         """Loads country_config.yaml or dynamically inspects raw survey modules."""
@@ -59,7 +64,7 @@ class MTFMasterBuilder:
         if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
             for f in self.raw_dir.glob("*.dta"):
                 fname = f.name.lower()
-                if "household" in fname and "master" not in fname:
+                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname:
                     monolithic_hh = f
                     break
 
@@ -67,8 +72,10 @@ class MTFMasterBuilder:
         search_paths = [
             Path(config_path) if config_path else None,
             self.base_dir / "config" / "country_config.yaml",
+            self.raw_dir / "country_config.yaml",
             Path.cwd() / "country_config.yaml",
-            Path.cwd() / "config" / "country_config.yaml"
+            Path.cwd() / "config" / "country_config.yaml",
+            Path("..") / "country_config.yaml"
         ]
         for p in search_paths:
             if p and p.exists():
@@ -76,9 +83,26 @@ class MTFMasterBuilder:
                     cfg = yaml.safe_load(f) or {}
                 break
 
+        # Check for MTF_<Country>_Calibration.xlsx to infer country
+        if not cfg.get("country"):
+            for s_dir in [self.raw_dir, self.base_dir, Path(".."), Path(".")]:
+                if s_dir and s_dir.exists():
+                    for cal_f in s_dir.glob("MTF_*_Calibration.xlsx"):
+                        m = re.match(r"MTF_(.+)_Calibration\.xlsx", cal_f.name)
+                        if m:
+                            cfg["country"] = m.group(1).replace("_", " ").title()
+                            break
+                if cfg.get("country"):
+                    break
+
         # If monolithic household data is found, auto-detect country metadata
         if monolithic_hh:
             try:
+                # Infer country from filename first, e.g. Gambia_MTF_Energy_HH_Field.dta
+                m_file = re.match(r"^([A-Za-z]+)_MTF", monolithic_hh.name)
+                if m_file and not cfg.get("country"):
+                    cfg["country"] = m_file.group(1).title()
+
                 with pd.read_stata(monolithic_hh, iterator=True) as reader:
                     sample = reader.read(1)
                 detected_country = None
@@ -89,9 +113,12 @@ class MTFMasterBuilder:
 
                 if detected_country:
                     cfg["country"] = detected_country
-                    iso_map = {"Liberia": "LBR", "Guinea-Bissau": "GNB", "Namibia": "NAM", "Nigeria": "NGA", "Rwanda": "RWA", "Ethiopia": "ETH", "Kenya": "KEN"}
-                    cfg["country_iso3"] = iso_map.get(detected_country, detected_country[:3].upper())
-                    cfg["master_dta"] = f"MTF_2024_HH_{detected_country}_Master.dta"
+                
+                if cfg.get("country"):
+                    c_name = cfg["country"]
+                    iso_map = {"Liberia": "LBR", "Guinea-Bissau": "GNB", "Namibia": "NAM", "Nigeria": "NGA", "Rwanda": "RWA", "Ethiopia": "ETH", "Kenya": "KEN", "Gambia": "GMB"}
+                    cfg["country_iso3"] = iso_map.get(c_name, c_name[:3].upper())
+                    cfg["master_dta"] = f"MTF_2024_HH_{c_name}_Master.dta"
             except Exception as e:
                 pass
 
@@ -189,6 +216,10 @@ class MTFMasterBuilder:
 
         candidates = [
             # 1. Target country-specific calibration workbook
+            self.raw_dir / f"MTF_{cname.capitalize()}_Calibration.xlsx",
+            self.base_dir / f"MTF_{cname.capitalize()}_Calibration.xlsx",
+            Path(f"MTF_{cname.capitalize()}_Calibration.xlsx"),
+            Path(f"../MTF_{cname.capitalize()}_Calibration.xlsx"),
             self.raw_dir / f"mtf_calibration_{iso3}.xlsx",
             self.raw_dir / f"mtf_calibration_{cname}.xlsx",
             self.base_dir / "config" / f"mtf_calibration_{iso3}.xlsx",
@@ -434,7 +465,7 @@ class MTFMasterBuilder:
         if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
             for f in self.raw_dir.glob("*.dta"):
                 fname = f.name.lower()
-                if "household" in fname and "master" not in fname:
+                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname:
                     monolithic_hh = f
                     break
 
@@ -1208,7 +1239,7 @@ class MTFMasterBuilder:
         df["cs_conv_tier"] = cs_conv.fillna(5.0)
 
         # Safety Tier
-        q23 = df.get("SEC_G_Q23", np.nan)
+        q23 = df["SEC_G_Q23"] if "SEC_G_Q23" in df.columns else pd.Series(np.nan, index=df.index)
         cs_sfty = pd.Series(5.0, index=df.index)
         cs_sfty.loc[q23 == 1] = 0.0
         cs_sfty.loc[q23.isin([2, 5, 7])] = 2.0
@@ -1222,7 +1253,7 @@ class MTFMasterBuilder:
         df["cs_affd_tier"] = cs_affd
 
         # Availability Tier
-        q17 = df.get("SEC_G_Q17", np.nan)
+        q17 = df["SEC_G_Q17"] if "SEC_G_Q17" in df.columns else pd.Series(np.nan, index=df.index)
         cs_avbl = pd.Series(np.nan, index=df.index)
         cs_avbl.loc[q17 == 4] = 2.0
         cs_avbl.loc[q17 == 3] = 3.0

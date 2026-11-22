@@ -67,12 +67,13 @@ If you want to interactively explore data, apply custom demographic filters, or 
 - A menu will prompt you to choose an option (press **Enter** for default `[1]`):
   - `[1]`: Launch JupyterLab Interactive Notebook
   - `[2]`: 1-Click Fast Production Engine (Excel & JSON)
-  - `[3]`: 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
-  - `[4]`: Update Tools & Apply Latest GitHub Patches
-  - `[5]`: Rebuild Master Dataset from Calibration Workbook (`--rebuild`)
+  - `[3]`: **1-Click Full Publication Report & Charts** (Auto-generates 17 publication-grade 300 DPI charts and compiles the complete World Bank diagnostic Word report `.docx`)
+  - `[4]`: 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
+  - `[5]`: Update Tools & Apply Latest GitHub Patches
+  - `[6]`: Force Rebuild Master Dataset from Raw Survey Modules & Calibration Workbook (`--rebuild`)
 
 > 💡 **Smart-Rebuild on Calibration Updates:**  
-> When you edit and save `mtf_calibration_<country>.xlsx` (e.g. updating cookstove tiers or verbatim recodes), `run_engine.bat` automatically detects that the calibration workbook is newer than `Data/MTF_Master.dta` and recompiles the master dataset on the fly before calculating indicators. You can also manually trigger a clean re-compilation anytime by selecting Option `[5]`.
+> When you edit and save `MTF_<Country>_Calibration.xlsx` (e.g. updating cookstove tiers or verbatim recodes), the engine automatically detects that the calibration workbook is newer than `Data/MTF_Master.dta` and recompiles the master dataset on the fly before calculating indicators. You can also manually trigger a clean re-compilation anytime by selecting Option `[6]`.
 
 > ⚠️ **Important UI Tip in JupyterLab:**  
 > - When your browser opens, look at the tabs: **Always work inside `MTF_Interactive_Analyzer.ipynb`** (orange notebook icon with interactive cells)!  
