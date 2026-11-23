@@ -654,7 +654,7 @@ class MTFEngine:
         if "mainstove" in df.columns:
             mstove = df["mainstove"]
             # Handle categorical or numeric
-            if pd.api.types.is_categorical_dtype(mstove) or mstove.dtype == object:
+            if isinstance(mstove.dtype, pd.CategoricalDtype) or mstove.dtype == object:
                 s3_cond = mstove.astype(str).str.contains("3-Stone|Open Fire", case=False, na=False).astype(float)
                 trad_cond = mstove.astype(str).str.contains("Traditional|Local", case=False, na=False).astype(float)
                 ics_cond = mstove.astype(str).str.contains("Biomass|ICS", case=False, na=False).astype(float)
@@ -725,6 +725,12 @@ class MTFEngine:
         # ─── CREDIT ACCESS & MARITAL STATUS BY GENDER ─────────────────────────
         if "credit_access" in df.columns:
             c_ser = df["credit_access"].astype(float)
+        elif "SEC_B_Q16__1" in df.columns:
+            c_ser = ((df["SEC_B_Q16__1"] == 1) | (df.get("SEC_B_Q16__2", 0) == 1) | (df.get("SEC_B_Q16__3", 0) == 1) | (df.get("SEC_B_Q16__4", 0) == 1) | (df.get("SEC_B_Q16__5", 0) == 1)).astype(float)
+        else:
+            c_ser = None
+
+        if c_ser is not None:
             self.set_tok("CREDIT_ACCESS_NAT", svy_pct(c_ser, w))
             self.set_tok("CREDIT_ACCESS_MHH", svy_pct(c_ser, w, mhh))
             self.set_tok("CREDIT_ACCESS_FHH", svy_pct(c_ser, w, fhh))
@@ -739,12 +745,79 @@ class MTFEngine:
             self.set_tok("HEAD_MARITAL_WIDOW_MHH", svy_pct(wid_mask, w, mhh))
             self.set_tok("HEAD_MARITAL_WIDOW_FHH", svy_pct(wid_mask, w, fhh))
 
-        # Additional analytical indicators
-        if "women_fuel_min_day" in df.columns: self.set_tok("WOMEN_FUEL_TIME", svy_mean_val(df["women_fuel_min_day"], w, decimals=1))
-        if "men_fuel_min_day" in df.columns: self.set_tok("MEN_FUEL_TIME", svy_mean_val(df["men_fuel_min_day"], w, decimals=1))
-        if "women_fuel_days_yr" in df.columns: self.set_tok("WOMEN_FUEL_WORKDAYS", svy_mean_val(df["women_fuel_days_yr"], w, decimals=1))
-        if "stacking_dilution" in df.columns: self.set_tok("PCT_STACKING_DILUTION", svy_pct(df["stacking_dilution"], w))
-        if "own_both_stoves" in df.columns: self.set_tok("PCT_STOVE_STACKING", svy_pct(df["own_both_stoves"], w))
+        # Additional analytical indicators (Matching 07_export.do)
+        if "women_fuel_min_day" in df.columns:
+            self.set_tok("WOMEN_FUEL_TIME", svy_mean_val(df["women_fuel_min_day"], w, decimals=1))
+        elif "women_fuel_hr_yr_hh" in df.columns:
+            self.set_tok("WOMEN_FUEL_TIME", svy_mean_val(df["women_fuel_hr_yr_hh"] / 52 / 7 * 60, w, decimals=1))
+
+        if "men_fuel_min_day" in df.columns:
+            self.set_tok("MEN_FUEL_TIME", svy_mean_val(df["men_fuel_min_day"], w, decimals=1))
+        elif "men_fuel_hr_yr_hh" in df.columns:
+            self.set_tok("MEN_FUEL_TIME", svy_mean_val(df["men_fuel_hr_yr_hh"] / 52 / 7 * 60, w, decimals=1))
+
+        if "women_fuel_days_yr" in df.columns:
+            self.set_tok("WOMEN_FUEL_WORKDAYS", svy_mean_val(df["women_fuel_days_yr"], w, decimals=1))
+        elif "women_fuel_hr_yr_hh" in df.columns:
+            self.set_tok("WOMEN_FUEL_WORKDAYS", svy_mean_val(df["women_fuel_hr_yr_hh"] / 8, w, decimals=1))
+
+        if "cooktime_female" in df.columns:
+            self.set_tok("WOMEN_COOK_TIME", svy_mean_val(df["cooktime_female"], w, decimals=1))
+        if "cooktime_male" in df.columns:
+            self.set_tok("MEN_COOK_TIME", svy_mean_val(df["cooktime_male"], w, decimals=1))
+
+        if "stacking_dilution" in df.columns:
+            self.set_tok("PCT_STACKING_DILUTION", svy_pct(df["stacking_dilution"], w))
+        if "own_both_stoves" in df.columns:
+            self.set_tok("PCT_STOVE_STACKING", svy_pct(df["own_both_stoves"], w))
+        elif "stove_stacking" in df.columns:
+            self.set_tok("PCT_STOVE_STACKING", svy_pct(df["stove_stacking"], w))
+
+        if "deficit_qual" in df.columns:
+            self.set_tok("PCT_VOLTAGE_DAMAGE", svy_pct(df["deficit_qual"], w, df["elec_tech_type"] == 1 if "elec_tech_type" in df.columns else grid_hh))
+        elif "SEC_C_Q34" in df.columns:
+            self.set_tok("PCT_VOLTAGE_DAMAGE", svy_pct((df["SEC_C_Q34"] == 1).astype(float), w, grid_hh & df["SEC_C_Q34"].notna()))
+
+        if "deficit_avbl" in df.columns:
+            self.set_tok("PCT_EVE_SHORTAGE", svy_pct(df["deficit_avbl"], w, df["elec_tech_type"] == 1 if "elec_tech_type" in df.columns else grid_hh))
+        elif "SEC_C_Q36" in df.columns:
+            self.set_tok("PCT_EVE_SHORTAGE", svy_pct((df["SEC_C_Q36"] == 1).astype(float), w, grid_hh & df["SEC_C_Q36"].notna()))
+
+        if "deficit_cap" in df.columns:
+            self.set_tok("PCT_CAP_LIMITED", svy_pct(df["deficit_cap"], w, df["elec_tech_type"] == 1 if "elec_tech_type" in df.columns else grid_hh))
+
+        if "sl_tier1_stuck" in df.columns and "elec_tech_type" in df.columns:
+            self.set_tok("PCT_SL_STUCK_T1", svy_pct(df["sl_tier1_stuck"], w, df["elec_tech_type"] == 6))
+
+        if "has_any_lights" in df.columns:
+            self.set_tok("HAS_ANY_LIGHTS_NAT", svy_pct(df["has_any_lights"], w))
+        if "has_electric_lights" in df.columns:
+            self.set_tok("HAS_ELECTRIC_LIGHTS_NAT", svy_pct(df["has_electric_lights"], w))
+        if "has_solar_lights" in df.columns:
+            self.set_tok("HAS_SOLAR_LIGHTS_NAT", svy_pct(df["has_solar_lights"], w))
+
+        # Weekly cooking hours by stove type
+        for hr_var, hr_tok in [
+            ("hr_3stone_hh", "HR_3STONE_NAT"), ("hr_trad_hh", "HR_TRAD_NAT"),
+            ("hr_ics_hh", "HR_ICS_NAT"), ("hr_lpg_hh", "HR_LPG_NAT"), ("hr_elec_hh", "HR_ELEC_NAT")
+        ]:
+            if hr_var in df.columns:
+                self.set_tok(hr_tok, svy_mean_val(df[hr_var], w, decimals=1))
+
+        # Electric cooking on grid
+        if "elec_stove_grid" in df.columns:
+            self.set_tok("ELEC_STOVE_GRID_NAT", svy_pct(df["elec_stove_grid"], w))
+            self.set_tok("ELEC_STOVE_GRID_URB", svy_pct(df["elec_stove_grid"], w, u))
+            self.set_tok("ELEC_STOVE_GRID_RUR", svy_pct(df["elec_stove_grid"], w, r))
+
+        # Lighting backups on grid
+        if "grid_backup_none" in df.columns:
+            self.set_tok("GRID_BACKUP_NONE_NAT", svy_pct(df["grid_backup_none"], w, grid_hh))
+        if "grid_backup_torch" in df.columns:
+            self.set_tok("GRID_BACKUP_TORCH_NAT", svy_pct(df["grid_backup_torch"], w, grid_hh))
+        if "grid_backup_solar" in df.columns:
+            self.set_tok("GRID_BACKUP_SOLAR_NAT", svy_pct(df["grid_backup_solar"], w, grid_hh))
+
         if "clean_stove" in df.columns: self.set_tok("PCT_CLEAN_STOVE_OWNERSHIP", svy_pct(df["clean_stove"], w))
         if "dis_frq" in df.columns: self.set_tok("AVG_OUTAGES_PER_WEEK", svy_mean_val(df["dis_frq"], w, grid_hh, decimals=1))
         elif "SEC_C_Q29" in df.columns:

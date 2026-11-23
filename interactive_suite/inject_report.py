@@ -266,6 +266,11 @@ def load_values(
         Path("Output") / "mtf_report_values_stata.json",
         Path("..") / "Output" / "mtf_report_values.json",
         Path("..") / "Output" / "mtf_report_values_stata.json",
+        SCRIPT_DIR / "mtf_report_values_reference.json",
+        Path("mtf_report_values_reference.json"),
+        SCRIPT_DIR.parent / "examples" / "guinea_bissau_reference" / "mtf_report_values.json",
+        Path("examples") / "guinea_bissau_reference" / "mtf_report_values.json",
+        Path("..") / "examples" / "guinea_bissau_reference" / "mtf_report_values.json",
     ]
     for sc in stata_candidates:
         if sc.exists() and sc.resolve() != json_path.resolve():

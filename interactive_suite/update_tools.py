@@ -70,7 +70,7 @@ def update():
                         "visualize.py", "inject_report.py", "MTF_Report_Template.md",
                         "mtf_builder.py", "mtf_engine.py", "run_mtf_local.bat",
                         "report_error.py", "update_tools.py", "requirements.txt",
-                        "MTF_Interactive_Analyzer.ipynb"
+                        "MTF_Interactive_Analyzer.ipynb", "mtf_report_values_reference.json"
                     )
                     if fname and ((curr_dir / fname).exists() or is_core_tool):
                         target_file = curr_dir / fname

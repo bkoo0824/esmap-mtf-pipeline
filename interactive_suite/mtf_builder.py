@@ -1665,18 +1665,20 @@ class MTFMasterBuilder:
         df["barrier_unrel"] = np.where(unconn, (q03 == 5).astype(float), np.nan)
         df["barrier_admin"] = np.where(unconn, q03.isin([6, 7]).astype(float), np.nan)
 
-        # WTP Grid (Contingent valuation bidding)
+        # WTP Grid (Contingent valuation bidding: Cumulative adoption demand curve)
         q_d3 = self._col(df, "SEC_D_Q03", np.nan)
         q_d4 = self._col(df, "SEC_D_Q04", np.nan)
         q_d5 = self._col(df, "SEC_D_Q05", np.nan)
         q_d6 = self._col(df, "SEC_D_Q06", np.nan)
         q_d7 = self._col(df, "SEC_D_Q07", np.nan)
         d_valid = (df["grid_hh"] == 0) & q_d3.notna()
+        wtp_12m_cond = ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1))
         df["wtp_grid_upfront"] = np.where(d_valid, (q_d3 == 1).astype(float), np.nan)
         df["wtp_grid_3m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
         df["wtp_grid_6m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1)).astype(float), np.nan)
-        df["wtp_grid_12m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1)).astype(float), np.nan)
-        df["wtp_grid_waived"] = np.where((df["grid_hh"] == 0) & q_d7.notna(), (q_d7 == 1).astype(float), np.nan)
+        df["wtp_grid_12m"] = np.where(d_valid, wtp_12m_cond.astype(float), np.nan)
+        # Cumulative waived: connected at 12M or accepts 100% subsidy (Rule 6.5)
+        df["wtp_grid_waived"] = np.where(d_valid, (wtp_12m_cond | (q_d7 == 1)).astype(float), np.nan)
         df["wtp_grid_never"] = np.where((df["grid_hh"] == 0) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
         # Grid WTP by Randomized Price Point
@@ -1684,14 +1686,15 @@ class MTFMasterBuilder:
         rand_pct = self._col(df, "random_percentage", np.nan)
         for pct_val, p_code in [(0.14, "14"), (0.29, "29"), (0.43, "43"), (0.57, "57"), (0.71, "71"), (1.00, "100")]:
             mask_p = d_valid & (np.isclose(rand_pct, pct_val, atol=0.01))
+            wtp_p_12m = ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1))
             df[f"wtp_grid_p{p_code}_upfront"] = np.where(mask_p, (q_d3 == 1).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_3m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_6m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1)).astype(float), np.nan)
-            df[f"wtp_grid_p{p_code}_12m"] = np.where(mask_p, ((q_d3 == 1) | (q_d4 == 1) | (q_d5 == 1) | (q_d6 == 1)).astype(float), np.nan)
-            df[f"wtp_grid_p{p_code}_waived"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 1).astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_12m"] = np.where(mask_p, wtp_p_12m.astype(float), np.nan)
+            df[f"wtp_grid_p{p_code}_waived"] = np.where(mask_p, (wtp_p_12m | (q_d7 == 1)).astype(float), np.nan)
             df[f"wtp_grid_p{p_code}_never"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
-        # WTP Solar
+        # WTP Solar (Cumulative adoption demand curve)
         q_e2 = self._col(df, "SEC_E_Q02", np.nan)
         q_e3 = self._col(df, "SEC_E_Q03", np.nan)
         q_e4 = self._col(df, "SEC_E_Q04", np.nan)
@@ -1718,6 +1721,26 @@ class MTFMasterBuilder:
                 df[f"wtp_solar_{sys_code}_p{p_code}_12m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1)).astype(float), np.nan)
                 df[f"wtp_solar_{sys_code}_p{p_code}_24m"] = np.where(mask_sp, ((q_e2 == 1) | (q_e3 == 1) | (q_e4 == 1) | (q_e5 == 1)).astype(float), np.nan)
                 df[f"wtp_solar_{sys_code}_p{p_code}_never"] = np.where(mask_sp & q_e5.notna(), ((q_e5 == 0) | (q_e5 == 2)).astype(float), np.nan)
+
+        # WTP Cookstoves (Section K Contingent valuation bidding)
+        q_k3 = self._col(df, "SEC_K_Q03", np.nan)
+        q_k4 = self._col(df, "SEC_K_Q04", np.nan)
+        q_k5 = self._col(df, "SEC_K_Q05", np.nan)
+        q_k6 = self._col(df, "SEC_K_Q06", np.nan)
+        q_k7 = self._col(df, "SEC_K_Q07", np.nan)
+        k_valid = q_k3.notna()
+        df["wtp_cook_upfront"] = np.where(k_valid, (q_k3 == 1).astype(float), np.nan)
+        df["wtp_cook_3m"] = np.where(k_valid, ((q_k3 == 1) | (q_k4 == 1)).astype(float), np.nan)
+        df["wtp_cook_6m"] = np.where(k_valid, ((q_k3 == 1) | (q_k4 == 1) | (q_k5 == 1)).astype(float), np.nan)
+        df["wtp_cook_12m"] = np.where(k_valid, ((q_k3 == 1) | (q_k4 == 1) | (q_k5 == 1) | (q_k6 == 1)).astype(float), np.nan)
+        df["wtp_cook_never"] = np.where(k_valid, ((q_k6 == 2) | q_k7.notna()).astype(float), np.nan)
+        df["refuse_cook_cost"] = np.where(q_k7.notna(), (q_k7 == 1).astype(float), np.nan)
+
+        # Refusal costs
+        q_d8 = self._col(df, "SEC_D_Q08", np.nan)
+        q_e6 = self._col(df, "SEC_E_Q06", np.nan)
+        df["refuse_wiring_cost"] = np.where(q_d8.notna(), (q_d8 == 1).astype(float), np.nan)
+        df["refuse_solar_cost"] = np.where(q_e6.notna(), (q_e6 == 1).astype(float), np.nan)
 
         return df
 
