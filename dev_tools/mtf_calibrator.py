@@ -103,6 +103,32 @@ def safe_write_text(file_path: Path, content: str, encoding: str = "utf-8"):
                 return
 
 
+def safe_copy_file(src: Path, dst: Path):
+    """Robust file copy supporting Windows OneDrive locks, antivirus scanning, and open file handles."""
+    s = Path(src).resolve()
+    d = Path(dst).resolve()
+    d.parent.mkdir(parents=True, exist_ok=True)
+
+    import time
+    for attempt in range(5):
+        try:
+            shutil.copy2(str(s), str(d))
+            return
+        except PermissionError:
+            # File may be open in Stata/editor or locked by OneDrive/antivirus
+            time.sleep(0.5)
+        except Exception:
+            break
+
+    # If direct overwrite failed because target is locked, try read-and-safe-write
+    try:
+        content = s.read_bytes()
+        safe_write_text(d, content.decode("utf-8", errors="replace"))
+    except Exception as e:
+        print(f"[WARN] Could not update {d.name} (file may be locked by Stata or editor): {e}", file=sys.stderr)
+
+
+
 class CookstoveLoader:
     """Reads cookstove_calibration.csv and generates do-file code and report tables."""
 
@@ -588,7 +614,7 @@ class MTFGenerator:
         for f in ["02_elec_attributes.do", "03_elec_aggregate.do", "05_cooking_aggregate.do"]:
             src = self.template_dir / "Do-file" / f
             if src.exists():
-                shutil.copy2(src, dofile_out / f)
+                safe_copy_file(src, dofile_out / f)
 
         self._generate_cooking_attributes_do(dofile_out)
         self._generate_enhancements_do(dofile_out)
@@ -1164,7 +1190,7 @@ di " 01_setup.do complete — Master dataset validated."
         active_csv_path = self.params.get("cookstove_csv_path")
         if active_csv_path and Path(active_csv_path).exists():
             try:
-                shutil.copy2(active_csv_path, target_csv_generic)
+                safe_copy_file(active_csv_path, target_csv_generic)
             except Exception:
                 pass
         else:
@@ -1190,7 +1216,7 @@ di " 01_setup.do complete — Master dataset validated."
                 if item.name.startswith(('.', '__')) or item.is_dir():
                     continue
                 dst = tools_out / item.name
-                shutil.copy2(item, dst)
+                safe_copy_file(item, dst)
                 if dst.suffix in ('.sh', '.command'):
                     try:
                         dst.chmod(dst.stat().st_mode | 0o111)
