@@ -79,27 +79,27 @@ parser = argparse.ArgumentParser(description="ESMAP MTF Visualization Pipeline")
 parser.add_argument("--base-dir", default=None, help="Country working directory")
 _cli_args, _ = parser.parse_known_args()
 
-    if _cli_args.base_dir:
-        BASE_DIR = Path(_cli_args.base_dir)
-        OUTPUT_DIR = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
-        CHARTS_DIR = OUTPUT_DIR / "charts"
-        JSON_PATH  = OUTPUT_DIR / "mtf_report_values.json"
-        _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+if _cli_args.base_dir:
+    BASE_DIR = Path(_cli_args.base_dir)
+    OUTPUT_DIR = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
+    CHARTS_DIR = OUTPUT_DIR / "charts"
+    JSON_PATH  = OUTPUT_DIR / "mtf_report_values.json"
+    _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+    if not _xls_candidates:
+        _xls_candidates = [f for f in OUTPUT_DIR.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
+    if not _xls_candidates and (BASE_DIR / "interactive_suite" / "Output").exists():
+        _alt_dir = BASE_DIR / "interactive_suite" / "Output"
+        _xls_candidates = [f for f in _alt_dir.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
         if not _xls_candidates:
-            _xls_candidates = [f for f in OUTPUT_DIR.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
-        if not _xls_candidates and (BASE_DIR / "interactive_suite" / "Output").exists():
-            _alt_dir = BASE_DIR / "interactive_suite" / "Output"
-            _xls_candidates = [f for f in _alt_dir.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
-            if not _xls_candidates:
-                _xls_candidates = [f for f in _alt_dir.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
-            if _xls_candidates:
-                XLS_PATH = _xls_candidates[0]
-            if not JSON_PATH.exists() and (_alt_dir / "mtf_report_values.json").exists():
-                JSON_PATH = _alt_dir / "mtf_report_values.json"
-        if not _xls_candidates:
-            XLS_PATH = OUTPUT_DIR / "MTF_Summary.xlsx"
-        else:
+            _xls_candidates = [f for f in _alt_dir.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
+        if _xls_candidates:
             XLS_PATH = _xls_candidates[0]
+        if not JSON_PATH.exists() and (_alt_dir / "mtf_report_values.json").exists():
+            JSON_PATH = _alt_dir / "mtf_report_values.json"
+    if not _xls_candidates:
+        XLS_PATH = OUTPUT_DIR / "MTF_Summary.xlsx"
+    else:
+        XLS_PATH = _xls_candidates[0]
 
 try:
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -168,11 +168,24 @@ def save_fig(fig, filename: str):
 
 # ─── CHART 1: ELECTRICITY TIER DISTRIBUTION ──────────────────────────────────
 def chart_elec_tiers():
-    df = load_sheet("Electricity_Tiers")
-    # Extract Tier 0–5 rows for National, Urban, Rural
     tiers = [f"Tier {t}" for t in range(6)]
     rows  = [f"Tier {t}" for t in range(6)]
-    data  = df.loc[rows, ["National (%)", "Urban (%)", "Rural (%)"]].copy()
+    try:
+        df = load_sheet("Electricity_Tiers")
+        if all(r in df.index for r in rows):
+            data = df.loc[rows, ["National (%)", "Urban (%)", "Rural (%)"]].copy()
+        else:
+            raise KeyError("Tier rows not in index")
+    except Exception:
+        # Fallback to JSON values
+        j = load_json()
+        def_v = {
+            "National (%)": [float(j.get(f"{{{{ELEC_T{t}_NAT}}}}", j.get(f"ELEC_T{t}_NAT", 0))) for t in range(6)],
+            "Urban (%)":    [float(j.get(f"{{{{ELEC_T{t}_URB}}}}", j.get(f"ELEC_T{t}_URB", 0))) for t in range(6)],
+            "Rural (%)":    [float(j.get(f"{{{{ELEC_T{t}_RUR}}}}", j.get(f"ELEC_T{t}_RUR", 0))) for t in range(6)],
+        }
+        data = pd.DataFrame(def_v, index=rows)
+
     data.index = [f"T{t}" for t in range(6)]
     data = data.T      # rows = locations, cols = tiers
 
@@ -208,9 +221,22 @@ def chart_elec_tiers():
 
 # ─── CHART 2: COOKING TIER DISTRIBUTION ──────────────────────────────────────
 def chart_cooking_tiers():
-    df = load_sheet("Cooking_Tiers")
     rows = [f"Tier {t}" for t in range(6)]
-    data = df.loc[rows, ["National (%)", "Urban (%)", "Rural (%)"]].copy()
+    try:
+        df = load_sheet("Cooking_Tiers")
+        if all(r in df.index for r in rows):
+            data = df.loc[rows, ["National (%)", "Urban (%)", "Rural (%)"]].copy()
+        else:
+            raise KeyError("Tier rows not in index")
+    except Exception:
+        j = load_json()
+        def_v = {
+            "National (%)": [float(j.get(f"{{{{COOK_T{t}_NAT}}}}", j.get(f"COOK_T{t}_NAT", 0))) for t in range(6)],
+            "Urban (%)":    [float(j.get(f"{{{{COOK_T{t}_URB}}}}", j.get(f"COOK_T{t}_URB", 0))) for t in range(6)],
+            "Rural (%)":    [float(j.get(f"{{{{COOK_T{t}_RUR}}}}", j.get(f"COOK_T{t}_RUR", 0))) for t in range(6)],
+        }
+        data = pd.DataFrame(def_v, index=rows)
+
     data.index = [f"T{t}" for t in range(6)]
     data = data.T
 
