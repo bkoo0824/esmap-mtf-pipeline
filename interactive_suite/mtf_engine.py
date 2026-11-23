@@ -644,6 +644,101 @@ class MTFEngine:
         self.set_tok("COUNTRY_NAME", detected_cname)
         self.set_tok("COUNTRY", detected_cname)
 
+        # ─── COMPREHENSIVE STOVE TYPOLOGY TOKENS ─────────────────────────────────
+        stype_col = None
+        for c_cand in ["mainstove", "SEC_G_Q05", "clean_stove"]:
+            if c_cand in df.columns:
+                stype_col = c_cand
+                break
+
+        if "mainstove" in df.columns:
+            mstove = df["mainstove"]
+            # Handle categorical or numeric
+            if pd.api.types.is_categorical_dtype(mstove) or mstove.dtype == object:
+                s3_cond = mstove.astype(str).str.contains("3-Stone|Open Fire", case=False, na=False).astype(float)
+                trad_cond = mstove.astype(str).str.contains("Traditional|Local", case=False, na=False).astype(float)
+                ics_cond = mstove.astype(str).str.contains("Biomass|ICS", case=False, na=False).astype(float)
+                lpg_cond = mstove.astype(str).str.contains("LPG|Gas", case=False, na=False).astype(float)
+                elec_cond = mstove.astype(str).str.contains("Electric", case=False, na=False).astype(float)
+            else:
+                s3_cond = (mstove == 1).astype(float)
+                trad_cond = (mstove == 2).astype(float)
+                ics_cond = (mstove == 3).astype(float)
+                lpg_cond = (mstove == 4).astype(float)
+                elec_cond = (mstove == 5).astype(float)
+
+            clean_cond = lpg_cond + elec_cond
+            for s_name, cond_s in [
+                ("STOVE_3STONE", s3_cond), ("STOVE_TRAD", trad_cond),
+                ("STOVE_ICS", ics_cond), ("STOVE_CLEAN", clean_cond), ("STOVE_ELEC", elec_cond)
+            ]:
+                self.set_tok(f"{s_name}_N", svy_pct(cond_s, w))
+                self.set_tok(f"{s_name}_U", svy_pct(cond_s, w, u))
+                self.set_tok(f"{s_name}_R", svy_pct(cond_s, w, r))
+                self.set_tok(f"{s_name}_NAT", svy_pct(cond_s, w))
+                self.set_tok(f"{s_name}_URB", svy_pct(cond_s, w, u))
+                self.set_tok(f"{s_name}_RUR", svy_pct(cond_s, w, r))
+        elif "clean_stove" in df.columns and "trad_stove" in df.columns:
+            cl = df["clean_stove"].astype(float)
+            tr = df["trad_stove"].astype(float)
+            self.set_tok("STOVE_CLEAN_N", svy_pct(cl, w))
+            self.set_tok("STOVE_CLEAN_U", svy_pct(cl, w, u))
+            self.set_tok("STOVE_CLEAN_R", svy_pct(cl, w, r))
+            self.set_tok("STOVE_TRAD_N", svy_pct(tr, w))
+            self.set_tok("STOVE_TRAD_U", svy_pct(tr, w, u))
+            self.set_tok("STOVE_TRAD_R", svy_pct(tr, w, r))
+            self.set_tok("STOVE_3STONE_N", svy_pct(tr, w))
+            self.set_tok("STOVE_3STONE_U", svy_pct(tr, w, u))
+            self.set_tok("STOVE_3STONE_R", svy_pct(tr, w, r))
+            self.set_tok("STOVE_ICS_N", 0.0)
+            self.set_tok("STOVE_ICS_U", 0.0)
+            self.set_tok("STOVE_ICS_R", 0.0)
+            self.set_tok("STOVE_ELEC_N", 0.0)
+            self.set_tok("STOVE_ELEC_U", 0.0)
+            self.set_tok("STOVE_ELEC_R", 0.0)
+
+        # ─── GRID MONTHLY EXPENDITURES ──────────────────────────────────────────
+        spend_col = "grid_exp_m" if "grid_exp_m" in df.columns else ("elec_exp_m" if "elec_exp_m" in df.columns else None)
+        if spend_col:
+            g_mask = grid_hh & (df[spend_col] > 0)
+            if g_mask.sum() > 0:
+                self.set_tok("GRID_MONTHLY_SPEND_NAT", svy_mean_val(df[spend_col], w, g_mask, decimals=1))
+                self.set_tok("GRID_MONTHLY_SPEND_URB", svy_mean_val(df[spend_col], w, g_mask & u, decimals=1))
+                self.set_tok("GRID_MONTHLY_SPEND_RUR", svy_mean_val(df[spend_col], w, g_mask & r, decimals=1))
+                self.set_tok("GRID_MONTHLY_SPEND_MEDIAN", round(float(df.loc[g_mask, spend_col].median()), 1))
+            else:
+                self.set_tok("GRID_MONTHLY_SPEND_NAT", "—")
+                self.set_tok("GRID_MONTHLY_SPEND_URB", "—")
+                self.set_tok("GRID_MONTHLY_SPEND_RUR", "—")
+                self.set_tok("GRID_MONTHLY_SPEND_MEDIAN", "—")
+
+        # ─── POWER OUTAGES BREAKDOWN ───────────────────────────────────────────
+        outage_col = "dis_frq" if "dis_frq" in df.columns else ("SEC_C_Q29" if "SEC_C_Q29" in df.columns else None)
+        if outage_col:
+            q_out = df[outage_col].replace({888: np.nan, 111: 0.0})
+            g_conn = grid_hh & q_out.notna()
+            if g_conn.sum() > 0:
+                self.set_tok("OUTAGES_LT3_WK", svy_pct((q_out < 3).astype(float), w, g_conn))
+                self.set_tok("OUTAGES_3TO14_WK", svy_pct((q_out.between(3, 14)).astype(float), w, g_conn))
+                self.set_tok("OUTAGES_GT14_WK", svy_pct((q_out > 14).astype(float), w, g_conn))
+
+        # ─── CREDIT ACCESS & MARITAL STATUS BY GENDER ─────────────────────────
+        if "credit_access" in df.columns:
+            c_ser = df["credit_access"].astype(float)
+            self.set_tok("CREDIT_ACCESS_NAT", svy_pct(c_ser, w))
+            self.set_tok("CREDIT_ACCESS_MHH", svy_pct(c_ser, w, mhh))
+            self.set_tok("CREDIT_ACCESS_FHH", svy_pct(c_ser, w, fhh))
+
+        if "hh_head_marital" in df.columns:
+            m_stat = df["hh_head_marital"]
+            # 1=Married, 2=Cohabiting, 3=Widowed, 4=Divorced, 5=Separated, 6=Single
+            marr_mask = m_stat.isin([1, 2]).astype(float)
+            wid_mask = (m_stat == 3).astype(float)
+            self.set_tok("HEAD_MARITAL_MARRIED_MHH", svy_pct(marr_mask, w, mhh))
+            self.set_tok("HEAD_MARITAL_MARRIED_FHH", svy_pct(marr_mask, w, fhh))
+            self.set_tok("HEAD_MARITAL_WIDOW_MHH", svy_pct(wid_mask, w, mhh))
+            self.set_tok("HEAD_MARITAL_WIDOW_FHH", svy_pct(wid_mask, w, fhh))
+
         # Additional analytical indicators
         if "women_fuel_min_day" in df.columns: self.set_tok("WOMEN_FUEL_TIME", svy_mean_val(df["women_fuel_min_day"], w, decimals=1))
         if "men_fuel_min_day" in df.columns: self.set_tok("MEN_FUEL_TIME", svy_mean_val(df["men_fuel_min_day"], w, decimals=1))
