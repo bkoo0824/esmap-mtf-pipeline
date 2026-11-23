@@ -201,6 +201,23 @@ echo  [*] Close this console window when you are finished to stop the server.
 echo ===============================================================================
 echo.
 
+python -c "import jupyterlab" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [NOTE] JupyterLab is not yet installed in this environment.
+    echo [*] Running Option [2] Fast Production Engine directly instead...
+    echo.
+    python mtf_engine.py
+    if %errorlevel% neq 0 (
+        python report_error.py --error "Engine crashed from launcher menu"
+    ) else (
+        if exist "Output" start "" "Output"
+    )
+    echo.
+    echo Press any key to close this window...
+    pause >nul
+    exit /b 0
+)
+
 if exist "MTF_Interactive_Analyzer.ipynb" (
     start jupyter lab MTF_Interactive_Analyzer.ipynb
     exit /b 0

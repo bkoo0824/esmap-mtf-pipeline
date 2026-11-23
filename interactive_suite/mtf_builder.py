@@ -17,8 +17,10 @@ import re
 import argparse
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+import warnings
 import numpy as np
 import pandas as pd
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 try:
     import yaml
 except ImportError:
@@ -219,6 +221,7 @@ class MTFMasterBuilder:
     def _normalize_id(df: pd.DataFrame) -> pd.DataFrame:
         """Ensures interview__id is present by copying interview__key if necessary."""
         if "interview__id" not in df.columns and "interview__key" in df.columns:
+            df = df.copy()
             df["interview__id"] = df["interview__key"]
         return df
 
@@ -593,6 +596,8 @@ class MTFMasterBuilder:
             cols_to_drop = [c for c in sec_df.columns if c in df.columns and c != "interview__id"]
             sec_df = sec_df.drop(columns=cols_to_drop)
             df = df.merge(sec_df, on="interview__id", how="left")
+
+        df = df.copy()
 
         # Ensure population weight exists
         if "hh_wt" in df.columns and "hhsize" in df.columns:
