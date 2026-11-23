@@ -79,25 +79,22 @@ echo.
 
 REM 3. User Choice Menu
 echo ===============================================================================
-echo  Please select an operation [Default: 1]:
+echo  Please select an operation [Default: 2]:
 echo.
-echo   [0] 1-Click Country Setup: Scan Data ^& Generate Calibration Excel (Step 1)
-echo   [1] Launch JupyterLab Interactive Analyzer (Web Browser Notebook)
-echo   [2] 1-Click Fast Production Engine (Instantly Export Excel ^& JSON)
-echo   [3] 1-Click Full Publication Report ^& Charts (Generate 17 Charts + Word Report)
-echo   [4] 1-Click Error Diagnostics ^& Support Dispatcher (Report to Bryan Koo)
-echo   [5] Update Tools ^& Apply Latest GitHub Patches
-echo   [6] Force Rebuild Master Dataset from Raw Survey Modules ^& Calibration Excel
+echo   [1] 1-Click Full Publication Report ^& Charts (17 Charts + Word Report)
+echo   [2] Launch JupyterLab Interactive Analyzer (Web Browser Notebook)
+echo   [3] 1-Click Country Setup: Scan Data ^& Generate Calibration Excel
+echo   [4] Update Tools ^& Apply Latest GitHub Patches
+echo   [5] 1-Click Error Diagnostics ^& Support Dispatcher (Report to Bryan Koo)
 echo ===============================================================================
-set /p CHOICE="Select (0/1/2/3/4/5/6, Default Enter=1): "
+set /p CHOICE="Select (1/2/3/4/5, Default Enter=1): "
 
-if "%CHOICE%"=="0" goto run_option_0
-if "%CHOICE%"=="2" goto run_option_2
-if "%CHOICE%"=="3" goto run_option_3
-if "%CHOICE%"=="4" goto run_option_4
-if "%CHOICE%"=="5" goto run_option_5
-if "%CHOICE%"=="6" goto run_option_6
-goto run_option_1
+if "%CHOICE%"=="1" goto run_option_3
+if "%CHOICE%"=="2" goto run_option_1
+if "%CHOICE%"=="3" goto run_option_0
+if "%CHOICE%"=="4" goto run_option_5
+if "%CHOICE%"=="5" goto run_option_4
+goto run_option_3
 
 :run_option_0
 echo.
