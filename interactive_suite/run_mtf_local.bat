@@ -210,10 +210,14 @@ if not defined INJ_SCRIPT (
     if exist "..\Output" (
         if exist "Output\charts" xcopy /y /i /e "Output\charts" "..\Output\charts" >nul 2>&1
         if exist "..\Output\charts" xcopy /y /i /e "..\Output\charts" "Output\charts" >nul 2>&1
+        REM Clean up any stale TEST report artifacts
+        del /f /q Output\MTF_TEST_*.* Output\MTF_Test_*.* "Output\MTF_interactive_suite_*.*" >nul 2>&1
+        del /f /q ..\Output\MTF_TEST_*.* ..\Output\MTF_Test_*.* "..\Output\MTF_interactive_suite_*.*" >nul 2>&1
         copy /y Output\MTF_*.* ..\Output\ >nul 2>&1
         copy /y ..\Output\MTF_*.* Output\ >nul 2>&1
         start "" "..\Output"
     ) else if exist "Output" (
+        del /f /q Output\MTF_TEST_*.* Output\MTF_Test_*.* "Output\MTF_interactive_suite_*.*" >nul 2>&1
         start "" "Output"
     )
 )
