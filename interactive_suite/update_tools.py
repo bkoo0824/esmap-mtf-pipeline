@@ -58,10 +58,9 @@ def update():
                 members = zip_ref.namelist()
                 interactive_members = [m for m in members if "interactive_suite/" in m and not m.endswith("/")]
 
-                # Fallback list if not running in an interactive_suite setup
-                target_members = interactive_members if interactive_members and curr_dir.name == "interactive_suite" else members
-
-                for member in target_members:
+                for member in members:
+                    if member.endswith("/"):
+                        continue
                     p = Path(member)
                     parts = p.parts[1:]  # strip root 'esmap-mtf-pipeline-main'
                     if not parts:
@@ -71,21 +70,22 @@ def update():
                     if any(part in ("Data", "Output", "wip", "clean") for part in parts):
                         continue
                     
-                    fname = p.name
-                    # If this is a tool/script file matching our current directory, or one of the core interactive tools
-                    is_core_tool = fname in (
-                        "visualize.py", "inject_report.py", "MTF_Report_Template.md",
-                        "mtf_builder.py", "mtf_engine.py", "run_mtf_local.bat",
-                        "report_error.py", "update_tools.py", "requirements.txt",
-                        "MTF_Interactive_Analyzer.ipynb", "mtf_report_values_reference.json"
-                    )
-                    if fname and ((curr_dir / fname).exists() or is_core_tool):
-                        target_file = curr_dir / fname
+                    # 1. Update interactive_suite files
+                    if "interactive_suite/" in member and curr_dir.name == "interactive_suite":
+                        target_file = curr_dir / p.name
                         zip_ref.extract(member, tmpdir)
-                        src_file = Path(tmpdir) / member
-                        shutil.copy2(src_file, target_file)
-                        print(f"  ✓ Updated: {fname}")
+                        shutil.copy2(Path(tmpdir) / member, target_file)
+                        print(f"  ✓ Updated [interactive]: {p.name}")
                         extracted_count += 1
+                    # 2. Update dev_tools files (mtf_calibrator.py, etc.)
+                    elif "dev_tools/" in member:
+                        target_dev = curr_dir.parent / "dev_tools" if curr_dir.name == "interactive_suite" else curr_dir / "dev_tools"
+                        if target_dev.exists():
+                            target_file = target_dev / p.name
+                            zip_ref.extract(member, tmpdir)
+                            shutil.copy2(Path(tmpdir) / member, target_file)
+                            print(f"  ✓ Updated [dev_tools]: {p.name}")
+                            extracted_count += 1
 
             print(f"\n✓ Update finished! {extracted_count} tools/scripts successfully refreshed.")
             print("  🔒 Confidential Data/ files and custom outputs were fully preserved.")
