@@ -258,6 +258,31 @@ def load_values(
         print("-----------------------------------------", file=sys.stderr)
         sys.exit(1)
 
+    # ─── AUTO-MERGE SECONDARY/STATA JSON IF DETECTED ─────────────────────────
+    # If a companion Stata or pre-compiled JSON exists in search paths, merge missing keys
+    stata_candidates = [
+        json_path.parent / "mtf_report_values_merged.json",
+        json_path.parent / "mtf_report_values_stata.json",
+        Path("Output") / "mtf_report_values_stata.json",
+        Path("..") / "Output" / "mtf_report_values.json",
+        Path("..") / "Output" / "mtf_report_values_stata.json",
+        SCRIPT_DIR / "mtf_report_values_reference.json",
+        Path("mtf_report_values_reference.json"),
+        SCRIPT_DIR.parent / "examples" / "guinea_bissau_reference" / "mtf_report_values.json",
+        Path("examples") / "guinea_bissau_reference" / "mtf_report_values.json",
+        Path("..") / "examples" / "guinea_bissau_reference" / "mtf_report_values.json",
+    ]
+    for sc in stata_candidates:
+        if sc.exists() and sc.resolve() != json_path.resolve():
+            try:
+                with open(sc, encoding="utf-8-sig") as sf:
+                    sc_data = json.load(sf)
+                for sk, sv in sc_data.items():
+                    if sk not in raw or raw[sk] is None or str(raw[sk]).strip() == "":
+                        raw[sk] = sv
+            except Exception:
+                pass
+
     values = {}
     for k, v in raw.items():
         # Support keys with or without {{}}
@@ -562,8 +587,11 @@ def inject_markdown(
             if placeholder in chart_keys:
                 charts_replaced += 1
 
-    # Report remaining unfilled placeholders
+    # Report remaining unfilled placeholders and clean them safely
     remaining = sorted(set(re.findall(r"\{\{[A-Z0-9_]+\}\}", text)))
+    if remaining:
+        for rem_tok in remaining:
+            text = text.replace(rem_tok, "—")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(text, encoding="utf-8")

@@ -54,7 +54,14 @@ def update():
             
             with zipfile.ZipFile(tmp_zip, 'r') as zip_ref:
                 extracted_count = 0
-                for member in zip_ref.namelist():
+                # Filter members: if curr_dir is interactive_suite, prioritize members from interactive_suite/
+                members = zip_ref.namelist()
+                interactive_members = [m for m in members if "interactive_suite/" in m and not m.endswith("/")]
+
+                # Fallback list if not running in an interactive_suite setup
+                target_members = interactive_members if interactive_members and curr_dir.name == "interactive_suite" else members
+
+                for member in target_members:
                     p = Path(member)
                     parts = p.parts[1:]  # strip root 'esmap-mtf-pipeline-main'
                     if not parts:
