@@ -146,49 +146,73 @@ if "%CHOICE%"=="3" (
         copy /y "Output\MTF_Full_Indicators.xlsx" "..\Output\" >nul 2>&1
     )
 
-    set VIS_SCRIPT=
-    if exist "visualize.py" set VIS_SCRIPT=visualize.py
-    if not defined VIS_SCRIPT if exist "..\stata_pipeline\scripts\visualize.py" set VIS_SCRIPT=..\stata_pipeline\scripts\visualize.py
-    if not defined VIS_SCRIPT if exist "..\Do-file\scripts\visualize.py" set VIS_SCRIPT=..\Do-file\scripts\visualize.py
-    if not defined VIS_SCRIPT if exist "scripts\visualize.py" set VIS_SCRIPT=scripts\visualize.py
-    if not defined VIS_SCRIPT if exist "stata_pipeline\scripts\visualize.py" set VIS_SCRIPT=stata_pipeline\scripts\visualize.py
+    REM Discover visualize.py, inject_report.py, and MTF_Report_Template.md
+    set "VIS_SCRIPT="
+    if exist "visualize.py" (
+        set "VIS_SCRIPT=visualize.py"
+    ) else if exist "..\stata_pipeline\scripts\visualize.py" (
+        set "VIS_SCRIPT=..\stata_pipeline\scripts\visualize.py"
+    ) else if exist "..\Do-file\scripts\visualize.py" (
+        set "VIS_SCRIPT=..\Do-file\scripts\visualize.py"
+    ) else if exist "scripts\visualize.py" (
+        set "VIS_SCRIPT=scripts\visualize.py"
+    ) else if exist "stata_pipeline\scripts\visualize.py" (
+        set "VIS_SCRIPT=stata_pipeline\scripts\visualize.py"
+    )
 
-    set INJ_SCRIPT=
-    if exist "inject_report.py" set INJ_SCRIPT=inject_report.py
-    if not defined INJ_SCRIPT if exist "..\stata_pipeline\scripts\inject_report.py" set INJ_SCRIPT=..\stata_pipeline\scripts\inject_report.py
-    if not defined INJ_SCRIPT if exist "..\Do-file\scripts\inject_report.py" set INJ_SCRIPT=..\Do-file\scripts\inject_report.py
-    if not defined INJ_SCRIPT if exist "scripts\inject_report.py" set INJ_SCRIPT=scripts\inject_report.py
-    if not defined INJ_SCRIPT if exist "stata_pipeline\scripts\inject_report.py" set INJ_SCRIPT=stata_pipeline\scripts\inject_report.py
+    set "INJ_SCRIPT="
+    if exist "inject_report.py" (
+        set "INJ_SCRIPT=inject_report.py"
+    ) else if exist "..\stata_pipeline\scripts\inject_report.py" (
+        set "INJ_SCRIPT=..\stata_pipeline\scripts\inject_report.py"
+    ) else if exist "..\Do-file\scripts\inject_report.py" (
+        set "INJ_SCRIPT=..\Do-file\scripts\inject_report.py"
+    ) else if exist "scripts\inject_report.py" (
+        set "INJ_SCRIPT=scripts\inject_report.py"
+    ) else if exist "stata_pipeline\scripts\inject_report.py" (
+        set "INJ_SCRIPT=stata_pipeline\scripts\inject_report.py"
+    )
 
-    set TEMPLATE_PATH=
-    if exist "MTF_Report_Template.md" set TEMPLATE_PATH=MTF_Report_Template.md
-    if not defined TEMPLATE_PATH if exist "..\stata_pipeline\MTF_Report_Template.md" set TEMPLATE_PATH=..\stata_pipeline\MTF_Report_Template.md
-    if not defined TEMPLATE_PATH if exist "..\Do-file\MTF_Report_Template.md" set TEMPLATE_PATH=..\Do-file\MTF_Report_Template.md
+    set "TEMPLATE_PATH="
+    if exist "MTF_Report_Template.md" (
+        set "TEMPLATE_PATH=MTF_Report_Template.md"
+    ) else if exist "..\stata_pipeline\MTF_Report_Template.md" (
+        set "TEMPLATE_PATH=..\stata_pipeline\MTF_Report_Template.md"
+    ) else if exist "..\Do-file\MTF_Report_Template.md" (
+        set "TEMPLATE_PATH=..\Do-file\MTF_Report_Template.md"
+    )
 
-    set BASE_TARGET=.
-    if exist "..\stata_pipeline" set BASE_TARGET=..
-    if exist "..\Do-file" set BASE_TARGET=..
+    set "BASE_TARGET=."
+    if exist "..\stata_pipeline" set "BASE_TARGET=.."
+    if exist "..\Do-file" set "BASE_TARGET=.."
 
-    if defined VIS_SCRIPT if defined INJ_SCRIPT (
+    if not defined VIS_SCRIPT (
+        echo [ERROR] visualize.py not found!
+        echo Please select Option [5] Update Tools to download the required scripts from GitHub.
+    ) else (
         echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts [300 DPI]...
-        python %VIS_SCRIPT% --base-dir "%BASE_TARGET%"
+        python "%VIS_SCRIPT%" --base-dir "%BASE_TARGET%"
+    )
+
+    if not defined INJ_SCRIPT (
+        echo [ERROR] inject_report.py not found!
+        echo Please select Option [5] Update Tools to download the required scripts from GitHub.
+    ) else (
         echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report [.docx]...
         if defined TEMPLATE_PATH (
-            python %INJ_SCRIPT% --base-dir "%BASE_TARGET%" --template "%TEMPLATE_PATH%"
+            python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%" --template "%TEMPLATE_PATH%"
         ) else (
-            python %INJ_SCRIPT% --base-dir "%BASE_TARGET%"
+            python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%"
         )
         echo.
         echo ===============================================================================
-        echo  [OK] Success! 17 Publication charts and World Bank Word report generated.
+        echo  [OK] Success! Publication charts and World Bank Word report generated.
         echo ===============================================================================
         if exist "..\Output" (
             start "" "..\Output"
         ) else if exist "Output" (
             start "" "Output"
         )
-    ) else (
-        echo [WARN] Could not find visualize.py or inject_report.py.
     )
     echo.
     echo Press any key to close this window...
