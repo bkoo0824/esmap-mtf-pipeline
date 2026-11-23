@@ -16,15 +16,28 @@
 	di "---------------------------------------------------------"
 
 	* Verify and declare survey design
-		capture confirm variable psu_id
-	if !_rc {
-		svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
-	}
-	else {
+	capture confirm variable psu_id
+	if _rc {
 		capture confirm variable SEC_A_Q07
-		if !_rc svyset SEC_A_Q07 [pw=hh_wt], strata(strata_id) singleunit(centered)
-		else svyset SEC_A_Q05 [pw=hh_wt], strata(strata_id) singleunit(centered)
+		if !_rc {
+			egen psu_id = group(SEC_A_Q07)
+		}
+		else {
+			capture confirm variable SEC_A_Q06
+			if !_rc egen psu_id = group(SEC_A_Q06)
+			else {
+				capture confirm variable SEC_A_Q05
+				if !_rc egen psu_id = group(SEC_A_Q05)
+				else gen psu_id = _n
+			}
+		}
+		lab var psu_id "Primary Sampling Unit (Numeric EA ID)"
 	}
+
+	capture confirm variable strata_id
+	if _rc gen strata_id = 1
+
+	svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
 	svydescribe
 
 	* Quick diagnostic summary of core disaggregation variables

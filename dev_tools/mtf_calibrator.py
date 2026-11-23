@@ -938,6 +938,28 @@ lab var loc_urban_rural "Urban / Rural Locality"
 egen strata_id = group(SEC_A_Q01 SEC_A_Q05)
 lab var strata_id "Survey Stratum: Admin 1 × Locality"
 
+* Primary Sampling Unit (Cluster / EA)
+capture confirm numeric variable SEC_A_Q07
+if !_rc {
+    gen double psu_id = SEC_A_Q07
+}
+else {
+    capture confirm variable SEC_A_Q07
+    if !_rc {
+        egen psu_id = group(SEC_A_Q07)
+    }
+    else {
+        capture confirm variable SEC_A_Q06
+        if !_rc egen psu_id = group(SEC_A_Q06)
+        else {
+            capture confirm variable SEC_A_Q05
+            if !_rc egen psu_id = group(SEC_A_Q05)
+            else gen psu_id = _n
+        }
+    }
+}
+lab var psu_id "Primary Sampling Unit (Numeric EA ID)"
+
 save "$wip_hh/$master_dta", replace"""
             sec2_pattern = re.compile(r'\*={5,}\s*\*  2\. SAMPLING WEIGHTS.*?save "\$wip_hh/[^"]+", replace', re.DOTALL)
             text = sec2_pattern.sub(split_merge_code.strip(), text)
@@ -1011,17 +1033,34 @@ di " Total Observations: " _N
 di "---------------------------------------------------------"
 
 * Verify and declare survey design
-capture confirm numeric variable {psu}
-if _rc != 0 {{
-    capture drop psu_id
-    egen psu_id = group({psu})
+capture confirm variable psu_id
+if _rc {{
+    capture confirm variable {psu}
+    if !_rc {{
+        capture drop psu_id
+        egen psu_id = group({psu})
+    }}
+    else {{
+        capture confirm variable SEC_A_Q07
+        if !_rc egen psu_id = group(SEC_A_Q07)
+        else {{
+            capture confirm variable SEC_A_Q06
+            if !_rc egen psu_id = group(SEC_A_Q06)
+            else {{
+                capture confirm variable SEC_A_Q05
+                if !_rc egen psu_id = group(SEC_A_Q05)
+                else gen psu_id = _n
+            }}
+        }}
+    }}
     lab var psu_id "Primary Sampling Unit (Numeric EA ID)"
-    local psu_use "psu_id"
 }}
-else {{
-    local psu_use "{psu}"
-}}
-svyset `psu_use' [pw=hh_wt], strata(strata_id) singleunit(centered)
+
+* Ensure strata_id exists
+capture confirm variable strata_id
+if _rc gen strata_id = 1
+
+svyset psu_id [pw=hh_wt], strata(strata_id) singleunit(centered)
 svydescribe
 
 * Quick diagnostic summary of core disaggregation variables
