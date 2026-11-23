@@ -36,49 +36,44 @@ for /f "tokens=*" %%i in ('python --version') do set PY_VER=%%i
 echo [*] Detected Python version: %PY_VER%
 echo.
 
-REM 2. Check and initialize local virtual environment [.venv]
-REM On World Bank Group managed laptops, corporate Device Guard / AppLocker
-REM blocks unsigned EXEs created inside user directories (.venv\Scripts\pip.exe).
-REM We invoke pip via 'python -m pip' to safely inherit the signed Python trust boundary.
+REM 2. Environment Setup & Dependency Audit
+REM On World Bank Group managed laptops, Device Guard blocks unsigned binaries in .venv.
+REM We configure .venv with '--system-site-packages' so it seamlessly inherits packages
+REM installed via 'python -m pip install --user' when .venv pip is blocked.
 
-if exist ".venv\Scripts\activate.bat" goto activate_venv
+if exist ".venv\pyvenv.cfg" goto verify_libs
 
 echo [*] Initializing isolated local virtual environment [.venv]...
-python -m venv .venv --without-pip >nul 2>&1 || python -m venv .venv
-if %errorlevel% neq 0 (
-    echo [WARN] Could not create isolated .venv. Proceeding with user-level environment...
-    goto install_reqs_fallback
+python -m venv --system-site-packages .venv >nul 2>&1 || python -m venv .venv
+if exist ".venv\pyvenv.cfg" (
+    powershell -Command "(Get-Content .venv\pyvenv.cfg) -replace 'include-system-site-packages = false', 'include-system-site-packages = true' | Set-Content .venv\pyvenv.cfg" >nul 2>&1
 )
 
+:verify_libs
 if exist ".venv\Scripts\activate.bat" (
-    call .venv\Scripts\activate.bat
-    echo [*] Checking package dependencies inside virtual environment...
-    python -m pip install -r requirements.txt
-    if %errorlevel% neq 0 (
-        echo.
-        echo [WARN] Virtual environment pip was blocked by corporate Device Guard policy.
-        echo [*] Falling back to user-level Python packages (Device Guard compliant)...
-        goto install_reqs_fallback
-    )
-    echo [OK] Library setup complete!
+    call ".venv\Scripts\activate.bat" 2>nul
+)
+
+REM Verify if core packages (pandas) are importable
+python -c "import pandas, numpy, matplotlib, openpyxl" >nul 2>&1
+if %errorlevel% equ 0 goto menu_start
+
+echo [*] Installing required analytical packages (pandas, numpy, matplotlib, etc.)...
+REM Attempt 1: Standard pip via current python environment
+python -m pip install -r requirements.txt >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [OK] Package installation complete!
     echo.
     goto menu_start
 )
 
-:install_reqs_fallback
-echo [*] Installing required packages into user library space...
+REM Attempt 2: Device Guard fallback (install into user site packages)
+echo [*] Device Guard detected: Installing packages into user-level Python directory...
 python -m pip install --user -r requirements.txt
 if %errorlevel% neq 0 (
-    echo.
-    echo [WARN] Automated package installation encountered an issue.
-    echo        If libraries are already installed, you can proceed directly.
+    echo [WARN] Automatic package install had warnings. Proceeding with execution...
 )
 echo.
-goto menu_start
-
-:activate_venv
-call .venv\Scripts\activate.bat 2>nul
-goto menu_start
 
 :menu_start
 
