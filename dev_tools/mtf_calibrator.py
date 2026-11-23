@@ -722,7 +722,27 @@ else {{
 
 *======================    1. USER & PATH SETUP   ============================*
 
+local current_dir "`c(pwd)'"
+
 {user_setup_str}
+
+* Dynamic Path Auto-Discovery: If configured $user or $raw_hh does not exist on this machine,
+* automatically fall back to current directory or parent directory containing Data/
+capture confirm file "$user/Data"
+if _rc {
+    capture confirm file "`current_dir'/Data"
+    if !_rc {
+        global user "`current_dir'"
+        global raw_hh "`current_dir'/Data"
+    }
+    else {
+        capture confirm file "`current_dir'/../Data"
+        if !_rc {
+            global user "`current_dir'/.."
+            global raw_hh "`current_dir'/../Data"
+        }
+    }
+}
 
 * Common folder paths
 global wip_hh    "$user/Data/wip_hh"
@@ -730,6 +750,17 @@ global clean     "$user/Data/clean"
 global output    "$user/Output"
 global scripts   "$user/Do-file"
 global out_sl    "$output"
+
+* Locate Do-file scripts directory dynamically if moved
+capture confirm file "$scripts/01_setup.do"
+if _rc {
+    capture confirm file "`current_dir'/01_setup.do"
+    if !_rc global scripts "`current_dir'"
+    else {
+        capture confirm file "`current_dir'/Do-file/01_setup.do"
+        if !_rc global scripts "`current_dir'/Do-file"
+    }
+}
 
 * Parameters
 global country    "{country}"
