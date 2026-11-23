@@ -5,7 +5,7 @@ color 0A
 
 echo ===============================================================================
 echo     World Bank ESMAP Multi-Tier Framework (MTF) Tools Auto-Updater
-echo                 (GitHub Sync & Safe Script Refresh)
+echo                 [GitHub Sync and Safe Script Refresh]
 echo ===============================================================================
 echo.
 

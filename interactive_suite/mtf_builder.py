@@ -1161,7 +1161,7 @@ class MTFMasterBuilder:
         q15_1 = df.get("SEC_G_Q15__1", 0)
         q15_2 = df.get("SEC_G_Q15__2", 0)
         q15_111 = df.get("SEC_G_Q15__111", 0)
-        q28 = df.get("SEC_G_Q28", np.nan).replace({20: 1})
+        q28 = (df["SEC_G_Q28"] if "SEC_G_Q28" in df.columns else pd.Series(np.nan, index=df.index)).replace({20: 1})
 
         vent_strc = pd.Series(np.nan, index=df.index)
         vent_strc.loc[(q14 == 5) | mainstove.isin([4, 5, 6, 7, 8])] = 5.0
@@ -1476,8 +1476,10 @@ class MTFMasterBuilder:
         df["SEC_C_Q68"] = q68_hr + (q68_min / 60.0)
 
         dis_frq = pd.Series(np.nan, index=df.index)
-        dis_frq.loc[q162 == 1] = df.get("SEC_C_Q29", np.nan).replace({888: np.nan, 111: 0.0})
-        dis_frq.loc[q162 == 2] = df.get("SEC_C_Q67", np.nan).replace({888: np.nan, 111: 0.0})
+        q29_s = (df["SEC_C_Q29"] if "SEC_C_Q29" in df.columns else pd.Series(np.nan, index=df.index)).replace({888: np.nan, 111: 0.0})
+        q67_s = (df["SEC_C_Q67"] if "SEC_C_Q67" in df.columns else pd.Series(np.nan, index=df.index)).replace({888: np.nan, 111: 0.0})
+        dis_frq.loc[q162 == 1] = q29_s
+        dis_frq.loc[q162 == 2] = q67_s
 
         dis_dur = pd.Series(np.nan, index=df.index)
         dis_dur.loc[q162 == 1] = df["SEC_C_Q30"].replace({888: np.nan})

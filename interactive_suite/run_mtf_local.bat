@@ -37,33 +37,48 @@ echo [*] Detected Python version: %PY_VER%
 echo.
 
 REM 2. Check and initialize local virtual environment [.venv]
+REM On World Bank Group managed laptops, corporate Device Guard / AppLocker
+REM blocks unsigned EXEs created inside user directories (.venv\Scripts\pip.exe).
+REM We invoke pip via 'python -m pip' to safely inherit the signed Python trust boundary.
+
 if exist ".venv\Scripts\activate.bat" goto activate_venv
 
-echo [*] First-time setup: Initializing isolated local virtual environment...
-python -m venv .venv
+echo [*] Initializing isolated local virtual environment [.venv]...
+python -m venv .venv --without-pip >nul 2>&1 || python -m venv .venv
 if %errorlevel% neq 0 (
-    color 0C
-    echo [ERROR] Failed to create virtual environment. Please check write permissions.
-    pause
-    exit /b 1
+    echo [WARN] Could not create isolated .venv. Proceeding with user-level environment...
+    goto install_reqs_fallback
 )
 
-echo [*] Installing required libraries - pandas, matplotlib, jupyterlab, etc...
-call .venv\Scripts\activate.bat
-python -m pip install --upgrade pip >nul 2>&1
-pip install -r requirements.txt
-if %errorlevel% neq 0 (
-    color 0C
-    echo [ERROR] Failed to install libraries. Please check your internet connection.
-    pause
-    exit /b 1
+if exist ".venv\Scripts\activate.bat" (
+    call .venv\Scripts\activate.bat
+    echo [*] Checking package dependencies inside virtual environment...
+    python -m pip install -r requirements.txt
+    if %errorlevel% neq 0 (
+        echo.
+        echo [WARN] Virtual environment pip was blocked by corporate Device Guard policy.
+        echo [*] Falling back to user-level Python packages (Device Guard compliant)...
+        goto install_reqs_fallback
+    )
+    echo [OK] Library setup complete!
+    echo.
+    goto menu_start
 )
-echo [OK] Library installation complete!
+
+:install_reqs_fallback
+echo [*] Installing required packages into user library space...
+python -m pip install --user -r requirements.txt
+if %errorlevel% neq 0 (
+    echo.
+    echo [WARN] Automated package installation encountered an issue.
+    echo        If libraries are already installed, you can proceed directly.
+)
 echo.
 goto menu_start
 
 :activate_venv
-call .venv\Scripts\activate.bat
+call .venv\Scripts\activate.bat 2>nul
+goto menu_start
 
 :menu_start
 
