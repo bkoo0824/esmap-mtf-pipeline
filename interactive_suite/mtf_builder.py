@@ -60,6 +60,13 @@ class MTFMasterBuilder:
                         return c
         return Path("..") if (Path("..") / "hhroster.dta").exists() else Path("Data")
 
+    @staticmethod
+    def _col(df: pd.DataFrame, col_name: str, default: Any = np.nan) -> pd.Series:
+        """Safely retrieves a column as a pandas Series matching df index, avoiding scalar bool indexing errors."""
+        if col_name in df.columns:
+            return df[col_name]
+        return pd.Series(default, index=df.index)
+
     def _load_config(self, config_path: Optional[Path]) -> Dict[str, Any]:
         """Loads country_config.yaml or dynamically inspects raw survey modules."""
         # Check if monolithic raw household dataset exists in raw_dir
@@ -724,10 +731,10 @@ class MTFMasterBuilder:
             fc = pd.read_stata(f_fc, convert_categoricals=False)
             fc = self._normalize_id(fc)
             nbr_m = fc["SEC_I_Q04"].fillna(12.0) if "SEC_I_Q04" in fc.columns else 12.0
-            freq_c = fc.get("SEC_I_Q07", 4)
-            pay_c = fc.get("SEC_I_Q09", 0.0).replace({888: np.nan})
+            freq_c = self._col(fc, "SEC_I_Q07", 4)
+            pay_c = self._col(fc, "SEC_I_Q09", 0.0).replace({888: np.nan})
 
-            fid = fc.get("fuel_consumption__id", pd.Series(0, index=fc.index))
+            fid = self._col(fc, "fuel_consumption__id", 0)
             pay_c.loc[fid.isin([3, 16])] = 0.0
 
             m_c = pd.Series(np.nan, index=fc.index)
@@ -1075,10 +1082,10 @@ class MTFMasterBuilder:
                 18: 2.0 * (7.0 / 30.0), 19: 7.0 / 30.0
             }
             tc = self._apply_excel_recodes(tc, "SEC_I_Q13", "SEC_I_Q13_oth")
-            q13 = tc.get("SEC_I_Q13", np.nan)
+            q13 = self._col(tc, "SEC_I_Q13", np.nan)
             mult = q13.map(mult_map)
-            tc["SEC_I_Q12_week"] = ((tc.get("SEC_I_Q12", 0.0).fillna(0.0) / 60.0) * mult).astype(np.float32)
-            tc["SEC_I_Q14_week"] = ((tc.get("SEC_I_Q14", 0.0).fillna(0.0) / 60.0) * 7.0).astype(np.float32)
+            tc["SEC_I_Q12_week"] = ((self._col(tc, "SEC_I_Q12", 0.0).fillna(0.0) / 60.0) * mult).astype(np.float32)
+            tc["SEC_I_Q14_week"] = ((self._col(tc, "SEC_I_Q14", 0.0).fillna(0.0) / 60.0) * 7.0).astype(np.float32)
             
             tc_tot12 = tc.groupby("interview__id")["SEC_I_Q12_week"].sum(min_count=0).astype(np.float32).rename("SEC_I_Q12_total")
             tc_tot14 = tc.groupby("interview__id")["SEC_I_Q14_week"].sum(min_count=0).astype(np.float32).rename("SEC_I_Q14_total")
@@ -1087,7 +1094,7 @@ class MTFMasterBuilder:
             tc_hh["cs_fcol_fpre"] = (tc_hh["SEC_I_Q12_total"] + tc_hh["SEC_I_Q14_total"]).astype(np.float32)
             
             tc["yr_coll_hr"] = tc["SEC_I_Q12_week"] * 52.0
-            tid = tc.get("time_collecting__id", 0)
+            tid = self._col(tc, "time_collecting__id", 0)
             tc["women_fuel_hr_yr"] = np.where(tid == 1, tc["yr_coll_hr"], 0.0)
             tc["girls_fuel_hr_yr"] = np.where(tid == 2, tc["yr_coll_hr"], 0.0)
             tc["men_fuel_hr_yr"]   = np.where(tid == 3, tc["yr_coll_hr"], 0.0)
@@ -1163,11 +1170,11 @@ class MTFMasterBuilder:
         df["cs_emit_tier"] = cs_emit
 
         # 3. Ventilation & Exposure Tier (cs_exp_tier)
-        q14 = df.get("SEC_G_Q14", np.nan)
-        q15_1 = df.get("SEC_G_Q15__1", 0)
-        q15_2 = df.get("SEC_G_Q15__2", 0)
-        q15_111 = df.get("SEC_G_Q15__111", 0)
-        q28 = (df["SEC_G_Q28"] if "SEC_G_Q28" in df.columns else pd.Series(np.nan, index=df.index)).replace({20: 1})
+        q14 = self._col(df, "SEC_G_Q14", np.nan)
+        q15_1 = self._col(df, "SEC_G_Q15__1", 0)
+        q15_2 = self._col(df, "SEC_G_Q15__2", 0)
+        q15_111 = self._col(df, "SEC_G_Q15__111", 0)
+        q28 = self._col(df, "SEC_G_Q28", np.nan).replace({20: 1})
 
         vent_strc = pd.Series(np.nan, index=df.index)
         vent_strc.loc[(q14 == 5) | mainstove.isin([4, 5, 6, 7, 8])] = 5.0
@@ -1300,10 +1307,10 @@ class MTFMasterBuilder:
         elec_src_cols = [c for c in ["SEC_C_Q02", "SEC_C_Q40", "SEC_C_Q78", "SEC_C_Q100", "SEC_C_Q117"] if c in df.columns]
         df["nbr_elec"] = df[elec_src_cols].fillna(0).sum(axis=1)
 
-        q128b = df.get("SEC_C_Q128b", np.nan)
-        q162 = df.get("SEC_C_Q162", np.nan).copy()
-        q02 = df.get("SEC_C_Q02", 0)
-        q117 = df.get("SEC_C_Q117", 0)
+        q128b = self._col(df, "SEC_C_Q128b", np.nan)
+        q162 = self._col(df, "SEC_C_Q162", np.nan).copy()
+        q02 = self._col(df, "SEC_C_Q02", 0)
+        q117 = self._col(df, "SEC_C_Q117", 0)
         nbr_e = df["nbr_elec"]
 
         q162.loc[(q128b == 1) & q162.isin([5, 6])] = 4
@@ -1357,12 +1364,13 @@ class MTFMasterBuilder:
 
         # Solar appliance tier & applpower
         sat = pd.Series(np.nan, index=df.index)
-        sat.loc[q162.isin([4, 5, 6]) & (df.get("SEC_C_Q125__111", 0) == 1)] = 0.0
-        sat.loc[q162.isin([4, 5, 6]) & ((df.get("SEC_C_Q161__1", 0) == 1) | (df.get("SEC_C_Q161__2", 0) == 1) | (df.get("SEC_C_Q125_5", 0) == 1))] = 1.0
-        sat.loc[q162.isin([4, 5, 6]) & ((df.get("SEC_C_Q125__1", 0) == 1) | (df.get("SEC_C_Q125__2", 0) == 1) | (df.get("SEC_C_Q125__4", 0) == 1) | (df.get("SEC_C_Q125_9", 0) == 1) | (df.get("SEC_C_Q161__3", 0) == 1) | (df.get("SEC_C_Q161__4", 0) == 1))] = 2.0
-        sat.loc[q162.isin([4, 5, 6]) & ((df.get("SEC_C_Q125__3", 0) == 1) | (df.get("SEC_C_Q125_6", 0) == 1) | (df.get("SEC_C_Q125_8", 0) == 1) | (df.get("SEC_C_Q161__5", 0) == 1))] = 3.0
-        sat.loc[q162.isin([4, 5, 6]) & (df.get("SEC_C_Q161__8", 0) == 1)] = 4.0
-        sat.loc[q162.isin([4, 5, 6]) & ((df.get("SEC_C_Q161__7", 0) == 1) | (df.get("SEC_C_Q125_7", 0) == 1))] = 5.0
+        sat.loc[q162.isin([4, 5, 6]) & (self._col(df, "SEC_C_Q125__111", 0) == 1)] = 0.0
+        sat.loc[q162.isin([4, 5, 6]) & ((self._col(df, "SEC_C_Q161__1", 0) == 1) | (self._col(df, "SEC_C_Q161__2", 0) == 1) | (self._col(df, "SEC_C_Q125_5", 0) == 1))] = 1.0
+        sat.loc[q162.isin([4, 5, 6]) & ((self._col(df, "SEC_C_Q125__1", 0) == 1) | (self._col(df, "SEC_C_Q125__2", 0) == 1) | (self._col(df, "SEC_C_Q125__4", 0) == 1) | (self._col(df, "SEC_C_Q125_9", 0) == 1) | (self._col(df, "SEC_C_Q161__3", 0) == 1) | (self._col(df, "SEC_C_Q161__4", 0) == 1))] = 2.0
+        sat.loc[q162.isin([4, 5, 6]) & ((self._col(df, "SEC_C_Q125__3", 0) == 1) | (self._col(df, "SEC_C_Q125_6", 0) == 1) | (self._col(df, "SEC_C_Q125_8", 0) == 1) | (self._col(df, "SEC_C_Q161__5", 0) == 1))] = 3.0
+        sat.loc[q162.isin([4, 5, 6]) & (self._col(df, "SEC_C_Q161__8", 0) == 1)] = 4.0
+        sat.loc[q162.isin([4, 5, 6]) & ((self._col(df, "SEC_C_Q161__7", 0) == 1) | (self._col(df, "SEC_C_Q125_7", 0) == 1))] = 5.0
+        df["solar_app_tier"] = sat
         df["solar_app_tier"] = sat
 
         # Rechargeable battery and generator appliance power tiers
@@ -1409,19 +1417,19 @@ class MTFMasterBuilder:
 
         # Availability Tier
         dur_day = pd.Series(np.nan, index=df.index)
-        dur_day.loc[q162 == 1] = df.get("SEC_C_Q27", np.nan)
-        dur_day.loc[q162 == 2] = df.get("SEC_C_Q65", np.nan)
-        dur_day.loc[q162 == 3] = df.get("SEC_C_Q93", np.nan)
-        dur_day.loc[q162.isin([4, 5, 6])] = df.get("SEC_C_Q148", np.nan)
-        dur_day.loc[q162 == 7] = df.get("SEC_C_Q111", np.nan)
+        dur_day.loc[q162 == 1] = self._col(df, "SEC_C_Q27", np.nan)
+        dur_day.loc[q162 == 2] = self._col(df, "SEC_C_Q65", np.nan)
+        dur_day.loc[q162 == 3] = self._col(df, "SEC_C_Q93", np.nan)
+        dur_day.loc[q162.isin([4, 5, 6])] = self._col(df, "SEC_C_Q148", np.nan)
+        dur_day.loc[q162 == 7] = self._col(df, "SEC_C_Q111", np.nan)
         dur_day = dur_day.replace({888: np.nan})
 
         dur_eve = pd.Series(np.nan, index=df.index)
-        dur_eve.loc[q162 == 1] = df.get("SEC_C_Q28", np.nan)
-        dur_eve.loc[q162 == 2] = df.get("SEC_C_Q66", np.nan)
-        dur_eve.loc[q162 == 3] = df.get("SEC_C_Q94", np.nan)
-        dur_eve.loc[q162.isin([4, 5, 6])] = df.get("SEC_C_Q149", np.nan)
-        dur_eve.loc[q162 == 7] = df.get("SEC_C_Q112", np.nan)
+        dur_eve.loc[q162 == 1] = self._col(df, "SEC_C_Q28", np.nan)
+        dur_eve.loc[q162 == 2] = self._col(df, "SEC_C_Q66", np.nan)
+        dur_eve.loc[q162 == 3] = self._col(df, "SEC_C_Q94", np.nan)
+        dur_eve.loc[q162.isin([4, 5, 6])] = self._col(df, "SEC_C_Q149", np.nan)
+        dur_eve.loc[q162 == 7] = self._col(df, "SEC_C_Q112", np.nan)
         dur_eve = dur_eve.replace({888: np.nan})
 
         elc_durd = pd.Series(np.nan, index=df.index)
@@ -1513,10 +1521,12 @@ class MTFMasterBuilder:
 
         # Quality Tier (grid/mini-grid only)
         appl_dam = pd.Series(np.nan, index=df.index)
-        appl_dam.loc[(df.get("SEC_C_Q35", np.nan) == 0) & (q162 == 1)] = 0.0
-        appl_dam.loc[(df.get("SEC_C_Q35", np.nan) == 1) & (q162 == 1)] = 1.0
-        appl_dam.loc[(df.get("SEC_C_Q73", np.nan) == 0) & (q162 == 2)] = 0.0
-        appl_dam.loc[(df.get("SEC_C_Q73", np.nan) == 1) & (q162 == 2)] = 1.0
+        q35 = self._col(df, "SEC_C_Q35", np.nan)
+        q73 = self._col(df, "SEC_C_Q73", np.nan)
+        appl_dam.loc[(q35 == 0) & (q162 == 1)] = 0.0
+        appl_dam.loc[(q35 == 1) & (q162 == 1)] = 1.0
+        appl_dam.loc[(q73 == 0) & (q162 == 2)] = 0.0
+        appl_dam.loc[(q73 == 1) & (q162 == 2)] = 1.0
 
         elc_qual = pd.Series(np.nan, index=df.index)
         elc_qual.loc[appl_dam == 1] = 3.0
@@ -1530,10 +1540,12 @@ class MTFMasterBuilder:
 
         # Formality Tier (grid/mini-grid only)
         elec_pay = pd.Series(np.nan, index=df.index)
-        elec_pay.loc[(df.get("SEC_C_Q12", np.nan) != 111) & (q162 == 1)] = 1.0
-        elec_pay.loc[(df.get("SEC_C_Q12", np.nan) == 111) & (q162 == 1)] = 0.0
-        elec_pay.loc[(df.get("SEC_C_Q48", np.nan) != 111) & (q162 == 2)] = 1.0
-        elec_pay.loc[(df.get("SEC_C_Q48", np.nan) == 111) & (q162 == 2)] = 0.0
+        q12 = self._col(df, "SEC_C_Q12", np.nan)
+        q48 = self._col(df, "SEC_C_Q48", np.nan)
+        elec_pay.loc[(q12 != 111) & (q162 == 1)] = 1.0
+        elec_pay.loc[(q12 == 111) & (q162 == 1)] = 0.0
+        elec_pay.loc[(q48 != 111) & (q162 == 2)] = 1.0
+        elec_pay.loc[(q48 == 111) & (q162 == 2)] = 0.0
         elc_leg = pd.Series(np.nan, index=df.index)
         elc_leg.loc[elec_pay == 0] = 3.0
         elc_leg.loc[elec_pay == 1] = 5.0
@@ -1541,11 +1553,16 @@ class MTFMasterBuilder:
 
         # Safety Tier
         elec_inj = pd.Series(0.0, index=df.index)
-        elec_inj.loc[(df.get("SEC_C_Q38", 0) == 1) & (q162 == 1)] = 1.0
-        elec_inj.loc[(df.get("SEC_C_Q76", 0) == 1) & (q162 == 2)] = 1.0
-        elec_inj.loc[(df.get("SEC_C_Q98", 0) == 1) & (q162 == 3)] = 1.0
-        elec_inj.loc[(df.get("SEC_C_Q116", 0) == 1) & (q162 == 7)] = 1.0
-        elec_inj.loc[(df.get("SEC_C_Q152", 0) == 1) & q162.isin([4, 5, 6])] = 1.0
+        q38 = self._col(df, "SEC_C_Q38", 0)
+        q76 = self._col(df, "SEC_C_Q76", 0)
+        q98 = self._col(df, "SEC_C_Q98", 0)
+        q116 = self._col(df, "SEC_C_Q116", 0)
+        q152 = self._col(df, "SEC_C_Q152", 0)
+        elec_inj.loc[(q38 == 1) & (q162 == 1)] = 1.0
+        elec_inj.loc[(q76 == 1) & (q162 == 2)] = 1.0
+        elec_inj.loc[(q98 == 1) & (q162 == 3)] = 1.0
+        elec_inj.loc[(q116 == 1) & (q162 == 7)] = 1.0
+        elec_inj.loc[(q152 == 1) & q162.isin([4, 5, 6])] = 1.0
         elec_inj.loc[q162.isin([8, 111])] = np.nan
 
         elc_sft = pd.Series(np.nan, index=df.index)
@@ -1595,7 +1612,7 @@ class MTFMasterBuilder:
         df["under_grid_unconnected"] = ((df["ea_grid_present"] == 1) & (df["grid_hh"] == 0)).astype(int)
 
         # Grid connection barriers (SEC_C_Q03)
-        q03 = df.get("SEC_C_Q03", np.nan)
+        q03 = self._col(df, "SEC_C_Q03", np.nan)
         unconn = (df["grid_hh"] == 0) & q03.notna()
         df["barrier_cost"] = np.where(unconn, (q03 == 1).astype(float), np.nan)
         df["barrier_dist"] = np.where(unconn, (q03 == 2).astype(float), np.nan)
@@ -1605,11 +1622,11 @@ class MTFMasterBuilder:
         df["barrier_admin"] = np.where(unconn, q03.isin([6, 7]).astype(float), np.nan)
 
         # WTP Grid (Contingent valuation bidding)
-        q_d3 = df.get("SEC_D_Q03", np.nan)
-        q_d4 = df.get("SEC_D_Q04", np.nan)
-        q_d5 = df.get("SEC_D_Q05", np.nan)
-        q_d6 = df.get("SEC_D_Q06", np.nan)
-        q_d7 = df.get("SEC_D_Q07", np.nan)
+        q_d3 = self._col(df, "SEC_D_Q03", np.nan)
+        q_d4 = self._col(df, "SEC_D_Q04", np.nan)
+        q_d5 = self._col(df, "SEC_D_Q05", np.nan)
+        q_d6 = self._col(df, "SEC_D_Q06", np.nan)
+        q_d7 = self._col(df, "SEC_D_Q07", np.nan)
         d_valid = (df["grid_hh"] == 0) & q_d3.notna()
         df["wtp_grid_upfront"] = np.where(d_valid, (q_d3 == 1).astype(float), np.nan)
         df["wtp_grid_3m"] = np.where(d_valid, ((q_d3 == 1) | (q_d4 == 1)).astype(float), np.nan)
@@ -1620,7 +1637,7 @@ class MTFMasterBuilder:
 
         # Grid WTP by Randomized Price Point
         df = df.copy()
-        rand_pct = df.get("random_percentage", pd.Series(np.nan, index=df.index))
+        rand_pct = self._col(df, "random_percentage", np.nan)
         for pct_val, p_code in [(0.14, "14"), (0.29, "29"), (0.43, "43"), (0.57, "57"), (0.71, "71"), (1.00, "100")]:
             mask_p = d_valid & (np.isclose(rand_pct, pct_val, atol=0.01))
             df[f"wtp_grid_p{p_code}_upfront"] = np.where(mask_p, (q_d3 == 1).astype(float), np.nan)
@@ -1631,10 +1648,10 @@ class MTFMasterBuilder:
             df[f"wtp_grid_p{p_code}_never"] = np.where((df["grid_hh"] == 0) & (np.isclose(rand_pct, pct_val, atol=0.01)) & q_d7.notna(), (q_d7 == 2).astype(float), np.nan)
 
         # WTP Solar
-        q_e2 = df.get("SEC_E_Q02", np.nan)
-        q_e3 = df.get("SEC_E_Q03", np.nan)
-        q_e4 = df.get("SEC_E_Q04", np.nan)
-        q_e5 = df.get("SEC_E_Q05", np.nan)
+        q_e2 = self._col(df, "SEC_E_Q02", np.nan)
+        q_e3 = self._col(df, "SEC_E_Q03", np.nan)
+        q_e4 = self._col(df, "SEC_E_Q04", np.nan)
+        q_e5 = self._col(df, "SEC_E_Q05", np.nan)
         e_valid = q_e2.notna()
         df["wtp_solar_upfront"] = np.where(e_valid, (q_e2 == 1).astype(float), np.nan)
         df["wtp_solar_6m"] = np.where(e_valid, ((q_e2 == 1) | (q_e3 == 1)).astype(float), np.nan)
@@ -1643,11 +1660,11 @@ class MTFMasterBuilder:
         df["wtp_solar_never"] = np.where(q_e5.notna(), (q_e5 == 2).astype(float), np.nan)
 
         # Solar WTP by System Tier and Subsidy Level
-        sys_col = df.get("solar_system", pd.Series(np.nan, index=df.index))
+        sys_col = self._col(df, "solar_system", np.nan)
         is_t1 = sys_col.isin([1, 1.0, "Tier 1", "1"])
         is_t2 = sys_col.isin([2, 2.0, "Tier 2", "2"])
         is_pooled = pd.Series(True, index=df.index)
-        rand_pct_solar = df.get("random_percentage_3", pd.Series(np.nan, index=df.index))
+        rand_pct_solar = self._col(df, "random_percentage_3", np.nan)
 
         for sys_code, sys_mask in [("t1", is_t1), ("t2", is_t2), ("pooled", is_pooled)]:
             for pct_val, p_code in [(0.33, "33"), (0.66, "66"), (1.00, "100")]:
