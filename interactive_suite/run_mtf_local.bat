@@ -36,31 +36,36 @@ for /f "tokens=*" %%i in ('python --version') do set PY_VER=%%i
 echo [*] Detected Python version: %PY_VER%
 echo.
 
-REM 2. Check and initialize local virtual environment (.venv)
-if not exist ".venv" (
-    echo [*] First-time setup: Initializing isolated local virtual environment (.venv)...
-    python -m venv .venv
-    if %errorlevel% neq 0 (
-        color 0C
-        echo [ERROR] Failed to create virtual environment. Please check write permissions.
-        pause
-        exit /b 1
-    )
-    echo [*] Installing required libraries (pandas, matplotlib, jupyterlab, etc.)...
-    call .venv\Scripts\activate.bat
-    python -m pip install --upgrade pip >nul 2>&1
-    pip install -r requirements.txt
-    if %errorlevel% neq 0 (
-        color 0C
-        echo [ERROR] Failed to install libraries. Please check your internet connection.
-        pause
-        exit /b 1
-    )
-    echo ✓ Library installation complete!
-    echo.
-) else (
-    call .venv\Scripts\activate.bat
+REM 2. Check and initialize local virtual environment [.venv]
+if exist ".venv\Scripts\activate.bat" goto activate_venv
+
+echo [*] First-time setup: Initializing isolated local virtual environment...
+python -m venv .venv
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Failed to create virtual environment. Please check write permissions.
+    pause
+    exit /b 1
 )
+
+echo [*] Installing required libraries - pandas, matplotlib, jupyterlab, etc...
+call .venv\Scripts\activate.bat
+python -m pip install --upgrade pip >nul 2>&1
+pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    color 0C
+    echo [ERROR] Failed to install libraries. Please check your internet connection.
+    pause
+    exit /b 1
+)
+echo [OK] Library installation complete!
+echo.
+goto menu_start
+
+:activate_venv
+call .venv\Scripts\activate.bat
+
+:menu_start
 
 REM 3. User Choice Menu
 echo ===============================================================================
@@ -130,11 +135,11 @@ if "%CHOICE%"=="3" (
     if exist "..\stata_pipeline\scripts\visualize.py" set SCRIPTS_DIR=..\stata_pipeline\scripts
 
     if defined SCRIPTS_DIR (
-        echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts (300 DPI)...
+        echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts [300 DPI]...
         python %SCRIPTS_DIR%\visualize.py --base-dir ".."
-        echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report (.docx)...
+        echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report [.docx]...
         python %SCRIPTS_DIR%\inject_report.py --base-dir ".."
-        echo ✓ All publication charts and World Bank Word report generated in ..\Output!
+        echo [OK] All publication charts and World Bank Word report generated in ..\Output!
         if exist "..\Output" start "" "..\Output"
     ) else (
         echo [WARN] Could not find visualize.py or inject_report.py in scripts directories.
@@ -180,7 +185,7 @@ if "%CHOICE%"=="6" (
 
 REM Default: Launch Local JupyterLab with the Interactive Analyzer Notebook
 echo ===============================================================================
-echo  [*] Launching MTF Interactive Analyzer in web browser (localhost)...
+echo  [*] Launching MTF Interactive Analyzer in web browser [localhost]...
 echo  [*] When browser opens, ensure you work inside 'MTF_Interactive_Analyzer.ipynb'!
 echo  [*] Close this console window when you are finished to stop the server.
 echo ===============================================================================
@@ -188,10 +193,11 @@ echo.
 
 if exist "MTF_Interactive_Analyzer.ipynb" (
     start jupyter lab MTF_Interactive_Analyzer.ipynb
-) else if exist "Tools\MTF_Interactive_Analyzer.ipynb" (
-    start jupyter lab Tools\MTF_Interactive_Analyzer.ipynb
-) else (
-    start jupyter lab
+    exit /b 0
 )
-
+if exist "Tools\MTF_Interactive_Analyzer.ipynb" (
+    start jupyter lab Tools\MTF_Interactive_Analyzer.ipynb
+    exit /b 0
+)
+start jupyter lab
 exit /b 0
