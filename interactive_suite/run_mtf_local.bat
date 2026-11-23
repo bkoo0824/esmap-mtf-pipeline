@@ -91,180 +91,168 @@ echo   [6] Force Rebuild Master Dataset from Raw Survey Modules ^& Calibration E
 echo ===============================================================================
 set /p CHOICE="Select (0/1/2/3/4/5/6, Default Enter=1): "
 
-if "%CHOICE%"=="0" (
-    echo.
-    echo [*] 1-Click Country Setup: Scan Data & Generate Calibration Workbook...
-    echo If you want to specify a Country Name, enter it below (or press Enter to auto-detect):
-    set "USER_COUNTRY="
-    set /p "USER_COUNTRY=Enter Country Name (e.g. Guinea-Bissau, Liberia, Namibia, or press Enter): "
+if "%CHOICE%"=="0" goto run_option_0
+if "%CHOICE%"=="2" goto run_option_2
+if "%CHOICE%"=="3" goto run_option_3
+if "%CHOICE%"=="4" goto run_option_4
+if "%CHOICE%"=="5" goto run_option_5
+if "%CHOICE%"=="6" goto run_option_6
+goto run_option_1
 
-    set CALIB_SCRIPT=
-    if exist "..\dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py
-    if exist "dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=dev_tools\mtf_calibrator.py
-    if exist "mtf_calibrator.py" set CALIB_SCRIPT=mtf_calibrator.py
+:run_option_0
+echo.
+echo [*] 1-Click Country Setup: Scan Data ^& Generate Calibration Workbook...
+echo If you want to specify a Country Name, enter it below (or press Enter to auto-detect):
+set "USER_COUNTRY="
+set /p USER_COUNTRY=Country Name: 
 
-    if defined CALIB_SCRIPT (
-        if defined USER_COUNTRY (
-            python "%CALIB_SCRIPT%" --country-dir ".." --country-name "%USER_COUNTRY%" --calibrate-country --auto-confirm
-        ) else (
-            python "%CALIB_SCRIPT%" --country-dir ".." --calibrate-country --auto-confirm
-        )
-        echo.
-        echo ===============================================================================
-        echo  ✓ Success! Country Calibration Workbook generated in the root folder.
-        echo  ★ Next Step: Open MTF_..._Calibration.xlsx, review Sheet 3 and 6, save it,
-        echo    and then run this launcher again and select Option [3]!
-        echo ===============================================================================
+set "CALIB_SCRIPT="
+if exist "..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py"
+if exist "dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=dev_tools\mtf_calibrator.py"
+if exist "mtf_calibrator.py" set "CALIB_SCRIPT=mtf_calibrator.py"
+
+if defined CALIB_SCRIPT (
+    if defined USER_COUNTRY (
+        python "%CALIB_SCRIPT%" --country-dir ".." --country-name "%USER_COUNTRY%" --calibrate-country --auto-confirm
     ) else (
-        echo [ERROR] Could not find mtf_calibrator.py in dev_tools\.
+        python "%CALIB_SCRIPT%" --country-dir ".." --calibrate-country --auto-confirm
     )
     echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
+    echo ===============================================================================
+    echo  ✓ Success! Country Calibration Workbook generated in the root folder.
+    echo  ★ Next Step: Open MTF_..._Calibration.xlsx, review Sheet 3 and 6, save it,
+    echo    and then run this launcher again and select Option [3]!
+    echo ===============================================================================
+) else (
+    echo [ERROR] Could not find mtf_calibrator.py in dev_tools\.
+)
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
+
+:run_option_2
+echo.
+python mtf_engine.py
+if %errorlevel% neq 0 (
+    python report_error.py --error "Engine crashed from launcher menu"
+) else (
+    if exist "Output" start "" "Output"
+)
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
+
+:run_option_3
+echo.
+echo [*] Step 1/3: Running MTF Engine to export calibrated econometric JSON...
+python mtf_engine.py
+if %errorlevel% neq 0 (
+    python report_error.py --error "Engine crashed during report prep"
+    exit /b 1
 )
 
-if "%CHOICE%"=="2" (
-    echo.
-    python mtf_engine.py
-    if %errorlevel% neq 0 (
-        python report_error.py --error "Engine crashed from launcher menu"
+REM Ensure outputs in interactive_suite\Output are mirrored to ..\Output if running inside interactive_suite
+if exist "Output\mtf_report_values.json" (
+    if not exist "..\Output" mkdir "..\Output" >nul 2>&1
+    copy /y "Output\mtf_report_values.json" "..\Output\" >nul 2>&1
+    copy /y "Output\MTF_Full_Indicators.xlsx" "..\Output\" >nul 2>&1
+)
+
+REM Discover visualize.py, inject_report.py, and MTF_Report_Template.md
+set "VIS_SCRIPT="
+if exist "visualize.py" set "VIS_SCRIPT=visualize.py"
+if not defined VIS_SCRIPT if exist "..\stata_pipeline\scripts\visualize.py" set "VIS_SCRIPT=..\stata_pipeline\scripts\visualize.py"
+if not defined VIS_SCRIPT if exist "..\Do-file\scripts\visualize.py" set "VIS_SCRIPT=..\Do-file\scripts\visualize.py"
+if not defined VIS_SCRIPT if exist "scripts\visualize.py" set "VIS_SCRIPT=scripts\visualize.py"
+if not defined VIS_SCRIPT if exist "stata_pipeline\scripts\visualize.py" set "VIS_SCRIPT=stata_pipeline\scripts\visualize.py"
+
+set "INJ_SCRIPT="
+if exist "inject_report.py" set "INJ_SCRIPT=inject_report.py"
+if not defined INJ_SCRIPT if exist "..\stata_pipeline\scripts\inject_report.py" set "INJ_SCRIPT=..\stata_pipeline\scripts\inject_report.py"
+if not defined INJ_SCRIPT if exist "..\Do-file\scripts\inject_report.py" set "INJ_SCRIPT=..\Do-file\scripts\inject_report.py"
+if not defined INJ_SCRIPT if exist "scripts\inject_report.py" set "INJ_SCRIPT=scripts\inject_report.py"
+if not defined INJ_SCRIPT if exist "stata_pipeline\scripts\inject_report.py" set "INJ_SCRIPT=stata_pipeline\scripts\inject_report.py"
+
+set "TEMPLATE_PATH="
+if exist "MTF_Report_Template.md" set "TEMPLATE_PATH=MTF_Report_Template.md"
+if not defined TEMPLATE_PATH if exist "..\stata_pipeline\MTF_Report_Template.md" set "TEMPLATE_PATH=..\stata_pipeline\MTF_Report_Template.md"
+if not defined TEMPLATE_PATH if exist "..\Do-file\MTF_Report_Template.md" set "TEMPLATE_PATH=..\Do-file\MTF_Report_Template.md"
+
+set "BASE_TARGET=."
+if exist "..\stata_pipeline" set "BASE_TARGET=.."
+if exist "..\Do-file" set "BASE_TARGET=.."
+
+if not defined VIS_SCRIPT (
+    echo [ERROR] visualize.py not found!
+    echo Please select Option [5] Update Tools to download the required scripts from GitHub.
+) else (
+    echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts [300 DPI]...
+    python "%VIS_SCRIPT%" --base-dir "%BASE_TARGET%"
+)
+
+if not defined INJ_SCRIPT (
+    echo [ERROR] inject_report.py not found!
+    echo Please select Option [5] Update Tools to download the required scripts from GitHub.
+) else (
+    echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report [.docx]...
+    if defined TEMPLATE_PATH (
+        python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%" --template "%TEMPLATE_PATH%"
     ) else (
-        if exist "Output" start "" "Output"
+        python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%"
     )
     echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
+    echo ===============================================================================
+    echo  [OK] Success! Publication charts and World Bank Word report generated.
+    echo ===============================================================================
+    REM Ensure charts and reports are available in both Output\ and ..\Output\
+    if exist "..\Output" (
+        if exist "Output\charts" xcopy /y /i /e "Output\charts" "..\Output\charts" >nul 2>&1
+        if exist "..\Output\charts" xcopy /y /i /e "..\Output\charts" "Output\charts" >nul 2>&1
+        copy /y Output\MTF_*.* ..\Output\ >nul 2>&1
+        copy /y ..\Output\MTF_*.* Output\ >nul 2>&1
+        start "" "..\Output"
+    ) else if exist "Output" (
+        start "" "Output"
+    )
 )
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
 
-if "%CHOICE%"=="3" (
-    echo.
-    echo [*] Step 1/3: Running MTF Engine to export calibrated econometric JSON...
-    python mtf_engine.py
-    if %errorlevel% neq 0 (
-        python report_error.py --error "Engine crashed during report prep"
-        exit /b 1
-    )
+:run_option_4
+echo.
+python report_error.py
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
 
-    REM Ensure outputs in interactive_suite\Output are mirrored to ..\Output if running inside interactive_suite
-    if exist "Output\mtf_report_values.json" (
-        if not exist "..\Output" mkdir "..\Output" >nul 2>&1
-        copy /y "Output\mtf_report_values.json" "..\Output\" >nul 2>&1
-        copy /y "Output\MTF_Full_Indicators.xlsx" "..\Output\" >nul 2>&1
-    )
+:run_option_5
+echo.
+python update_tools.py
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
 
-    REM Discover visualize.py, inject_report.py, and MTF_Report_Template.md
-    set "VIS_SCRIPT="
-    if exist "visualize.py" (
-        set "VIS_SCRIPT=visualize.py"
-    ) else if exist "..\stata_pipeline\scripts\visualize.py" (
-        set "VIS_SCRIPT=..\stata_pipeline\scripts\visualize.py"
-    ) else if exist "..\Do-file\scripts\visualize.py" (
-        set "VIS_SCRIPT=..\Do-file\scripts\visualize.py"
-    ) else if exist "scripts\visualize.py" (
-        set "VIS_SCRIPT=scripts\visualize.py"
-    ) else if exist "stata_pipeline\scripts\visualize.py" (
-        set "VIS_SCRIPT=stata_pipeline\scripts\visualize.py"
-    )
-
-    set "INJ_SCRIPT="
-    if exist "inject_report.py" (
-        set "INJ_SCRIPT=inject_report.py"
-    ) else if exist "..\stata_pipeline\scripts\inject_report.py" (
-        set "INJ_SCRIPT=..\stata_pipeline\scripts\inject_report.py"
-    ) else if exist "..\Do-file\scripts\inject_report.py" (
-        set "INJ_SCRIPT=..\Do-file\scripts\inject_report.py"
-    ) else if exist "scripts\inject_report.py" (
-        set "INJ_SCRIPT=scripts\inject_report.py"
-    ) else if exist "stata_pipeline\scripts\inject_report.py" (
-        set "INJ_SCRIPT=stata_pipeline\scripts\inject_report.py"
-    )
-
-    set "TEMPLATE_PATH="
-    if exist "MTF_Report_Template.md" (
-        set "TEMPLATE_PATH=MTF_Report_Template.md"
-    ) else if exist "..\stata_pipeline\MTF_Report_Template.md" (
-        set "TEMPLATE_PATH=..\stata_pipeline\MTF_Report_Template.md"
-    ) else if exist "..\Do-file\MTF_Report_Template.md" (
-        set "TEMPLATE_PATH=..\Do-file\MTF_Report_Template.md"
-    )
-
-    set "BASE_TARGET=."
-    if exist "..\stata_pipeline" set "BASE_TARGET=.."
-    if exist "..\Do-file" set "BASE_TARGET=.."
-
-    if not defined VIS_SCRIPT (
-        echo [ERROR] visualize.py not found!
-        echo Please select Option [5] Update Tools to download the required scripts from GitHub.
-    ) else (
-        echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts [300 DPI]...
-        python "%VIS_SCRIPT%" --base-dir "%BASE_TARGET%"
-    )
-
-    if not defined INJ_SCRIPT (
-        echo [ERROR] inject_report.py not found!
-        echo Please select Option [5] Update Tools to download the required scripts from GitHub.
-    ) else (
-        echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report [.docx]...
-        if defined TEMPLATE_PATH (
-            python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%" --template "%TEMPLATE_PATH%"
-        ) else (
-            python "%INJ_SCRIPT%" --base-dir "%BASE_TARGET%"
-        )
-        echo.
-        echo ===============================================================================
-        echo  [OK] Success! Publication charts and World Bank Word report generated.
-        echo ===============================================================================
-        REM Ensure charts and reports are available in both Output\ and ..\Output\
-        if exist "..\Output" (
-            if exist "Output\charts" xcopy /y /i /e "Output\charts" "..\Output\charts" >nul 2>&1
-            if exist "..\Output\charts" xcopy /y /i /e "..\Output\charts" "Output\charts" >nul 2>&1
-            copy /y Output\MTF_*.* ..\Output\ >nul 2>&1
-            copy /y ..\Output\MTF_*.* Output\ >nul 2>&1
-            start "" "..\Output"
-        ) else if exist "Output" (
-            start "" "Output"
-        )
-    )
-    echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
+:run_option_6
+echo.
+echo [*] Force-rebuilding Master Dataset from raw survey modules and calibration workbook...
+python mtf_engine.py --rebuild
+if %errorlevel% neq 0 (
+    python report_error.py --error "Engine crashed during master rebuild"
+) else (
+    if exist "Output" start "" "Output"
 )
+echo.
+echo Press any key to close this window...
+pause >nul
+exit /b 0
 
-if "%CHOICE%"=="4" (
-    echo.
-    python report_error.py
-    echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
-)
-
-if "%CHOICE%"=="5" (
-    echo.
-    python update_tools.py
-    echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
-)
-
-if "%CHOICE%"=="6" (
-    echo.
-    echo [*] Force-rebuilding Master Dataset from raw survey modules and calibration workbook...
-    python mtf_engine.py --rebuild
-    if %errorlevel% neq 0 (
-        python report_error.py --error "Engine crashed during master rebuild"
-    ) else (
-        if exist "Output" start "" "Output"
-    )
-    echo.
-    echo Press any key to close this window...
-    pause >nul
-    exit /b 0
-)
+:run_option_1
 
 REM Default: Launch Local JupyterLab with the Interactive Analyzer Notebook
 echo ===============================================================================
