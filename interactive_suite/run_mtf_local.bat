@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (
     echo   2. ★CRITICAL CHECKPOINT★ On the very first installer screen:
     echo      [v] "Add python.exe to PATH"
     echo      Check this box before clicking [Install Now]!
-    echo   3. Once installed, double-click this launcher (run_mtf_local.bat) again.
+    echo   3. Once installed, double-click this launcher [run_mtf_local.bat] again.
     echo -------------------------------------------------------------------------------
     echo.
     echo Opening web browser to Python download page...
