@@ -81,13 +81,13 @@ REM 3. User Choice Menu
 echo ===============================================================================
 echo  Please select an operation [Default: 1]:
 echo.
-echo   [0] 1-Click Country Setup: Scan Data & Generate Calibration Excel (Step 1)
+echo   [0] 1-Click Country Setup: Scan Data ^& Generate Calibration Excel (Step 1)
 echo   [1] Launch JupyterLab Interactive Analyzer (Web Browser Notebook)
-echo   [2] 1-Click Fast Production Engine (Instantly Export Excel & JSON)
-echo   [3] 1-Click Full Publication Report & Charts (Generate 17 Charts + Word Report)
-echo   [4] 1-Click Error Diagnostics & Support Dispatcher (Report to Bryan Koo)
-echo   [5] Update Tools & Apply Latest GitHub Patches
-echo   [6] Force Rebuild Master Dataset from Raw Survey Modules & Calibration Excel
+echo   [2] 1-Click Fast Production Engine (Instantly Export Excel ^& JSON)
+echo   [3] 1-Click Full Publication Report ^& Charts (Generate 17 Charts + Word Report)
+echo   [4] 1-Click Error Diagnostics ^& Support Dispatcher (Report to Bryan Koo)
+echo   [5] Update Tools ^& Apply Latest GitHub Patches
+echo   [6] Force Rebuild Master Dataset from Raw Survey Modules ^& Calibration Excel
 echo ===============================================================================
 set /p CHOICE="Select (0/1/2/3/4/5/6, Default Enter=1): "
 
@@ -139,20 +139,44 @@ if "%CHOICE%"=="3" (
         exit /b 1
     )
 
+    REM Ensure outputs in interactive_suite\Output are mirrored to ..\Output if running inside interactive_suite
+    if exist "Output\mtf_report_values.json" (
+        if not exist "..\Output" mkdir "..\Output" >nul 2>&1
+        copy /y "Output\mtf_report_values.json" "..\Output\" >nul 2>&1
+        copy /y "Output\MTF_Full_Indicators.xlsx" "..\Output\" >nul 2>&1
+    )
+
     set SCRIPTS_DIR=
+    if exist "..\stata_pipeline\scripts\visualize.py" set SCRIPTS_DIR=..\stata_pipeline\scripts
     if exist "..\Do-file\scripts\visualize.py" set SCRIPTS_DIR=..\Do-file\scripts
     if exist "scripts\visualize.py" set SCRIPTS_DIR=scripts
-    if exist "..\stata_pipeline\scripts\visualize.py" set SCRIPTS_DIR=..\stata_pipeline\scripts
+    if exist "stata_pipeline\scripts\visualize.py" set SCRIPTS_DIR=stata_pipeline\scripts
+
+    set TEMPLATE_PATH=
+    if exist "..\stata_pipeline\MTF_Report_Template.md" set TEMPLATE_PATH=..\stata_pipeline\MTF_Report_Template.md
+    if exist "..\Do-file\MTF_Report_Template.md" set TEMPLATE_PATH=..\Do-file\MTF_Report_Template.md
+    if exist "MTF_Report_Template.md" set TEMPLATE_PATH=MTF_Report_Template.md
 
     if defined SCRIPTS_DIR (
         echo [*] Step 2/3: Generating 17 High-Resolution Publication Charts [300 DPI]...
         python %SCRIPTS_DIR%\visualize.py --base-dir ".."
         echo [*] Step 3/3: Injecting Econometric Values into World Bank Word Report [.docx]...
-        python %SCRIPTS_DIR%\inject_report.py --base-dir ".."
-        echo [OK] All publication charts and World Bank Word report generated in ..\Output!
-        if exist "..\Output" start "" "..\Output"
+        if defined TEMPLATE_PATH (
+            python %SCRIPTS_DIR%\inject_report.py --base-dir ".." --template "%TEMPLATE_PATH%"
+        ) else (
+            python %SCRIPTS_DIR%\inject_report.py --base-dir ".."
+        )
+        echo.
+        echo ===============================================================================
+        echo  [OK] Success! 17 Publication charts and World Bank Word report generated.
+        echo ===============================================================================
+        if exist "..\Output" (
+            start "" "..\Output"
+        ) else if exist "Output" (
+            start "" "Output"
+        )
     ) else (
-        echo [WARN] Could not find visualize.py or inject_report.py in scripts directories.
+        echo [WARN] Could not find visualize.py or inject_report.py in pipeline directories.
     )
     echo.
     echo Press any key to close this window...

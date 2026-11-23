@@ -2000,6 +2000,7 @@ def main():
             output_dir / "mtf_report_values.json",
             base_dir / "Output" / "mtf_report_values.json",
             base_dir / "Output" / "streamlined" / "mtf_report_values.json",
+            base_dir / "interactive_suite" / "Output" / "mtf_report_values.json",
         ]
         json_path = next((c for c in candidates if c.exists()), candidates[0])
 
@@ -2010,6 +2011,8 @@ def main():
         candidates = [
             DO_FILE_DIR / "MTF_Report_Template.md",
             base_dir / "Do-file" / "MTF_Report_Template.md",
+            base_dir / "stata_pipeline" / "MTF_Report_Template.md",
+            base_dir / "interactive_suite" / "MTF_Report_Template.md",
         ]
         template_path = next((c for c in candidates if c.exists()), candidates[0])
 
@@ -2021,6 +2024,7 @@ def main():
             output_dir / "charts",
             base_dir / "Output" / "charts",
             base_dir / "Output" / "streamlined" / "charts",
+            base_dir / "interactive_suite" / "Output" / "charts",
         ]
         charts_dir = next((c for c in candidates if c.exists()), candidates[0])
 
