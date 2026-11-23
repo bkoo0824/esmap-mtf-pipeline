@@ -884,9 +884,17 @@ foreach sec in section_a2 section_b section_c section_d section_e section_g sect
 gen hh_wt = hh_weight_final
 lab var hh_wt "Final Calibrated Household Weight"
 
-* Merge household size and head characteristics
-merge 1:1 interview__id using "$wip_hh/hhsize.dta", nogen
-merge 1:1 interview__id using "$wip_hh/headgender.dta", nogen
+* Merge household size and head characteristics (demographics.dta compiled in Stage 1)
+capture confirm file "$wip_hh/demographics.dta"
+if !_rc {
+    merge 1:1 interview__id using "$wip_hh/demographics.dta", nogen
+}
+else {
+    capture confirm file "$wip_hh/hhsize.dta"
+    if !_rc merge 1:1 interview__id using "$wip_hh/hhsize.dta", nogen
+    capture confirm file "$wip_hh/headgender.dta"
+    if !_rc merge 1:1 interview__id using "$wip_hh/headgender.dta", nogen
+}
 
 * Population weight:
 gen pop_wt = hh_wt * hhsize
