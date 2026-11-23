@@ -98,15 +98,36 @@ class MTFMasterBuilder:
                 except Exception:
                     pass
 
-        # Check for MTF_<Country>_Calibration.xlsx to infer country
+        # Check for Calibration Workbook Instructions_&_Metadata sheet or MTF_<Country>_Calibration.xlsx
         if not cfg.get("country"):
-            for s_dir in [self.raw_dir, self.base_dir, Path(".."), Path(".")]:
-                if s_dir and s_dir.exists():
-                    for cal_f in s_dir.glob("MTF_*_Calibration.xlsx"):
-                        m = re.match(r"MTF_(.+)_Calibration\.xlsx", cal_f.name)
-                        if m:
-                            cfg["country"] = m.group(1).replace("_", " ").title()
-                            break
+            calib_search = [self.raw_dir, self.base_dir, Path(".."), Path("."), self.base_dir / "config"]
+            for s_dir in calib_search:
+                if not (s_dir and s_dir.exists()):
+                    continue
+                for cal_f in list(s_dir.glob("MTF_*_Calibration.xlsx")) + list(s_dir.glob("mtf_calibration*.xlsx")):
+                    # Check filename first
+                    m = re.match(r"MTF_(.+)_Calibration\.xlsx", cal_f.name)
+                    if m and m.group(1).lower() not in ["standard", "template"]:
+                        cfg["country"] = m.group(1).replace("_", " ").title()
+                        break
+                    # Check Instructions_&_Metadata sheet
+                    try:
+                        import openpyxl
+                        wb = openpyxl.load_workbook(cal_f, data_only=True, read_only=True)
+                        if "Instructions_&_Metadata" in wb.sheetnames:
+                            ws = wb["Instructions_&_Metadata"]
+                            for row in ws.iter_rows(values_only=True):
+                                if row and len(row) >= 2:
+                                    k = str(row[0]).strip().lower()
+                                    v = str(row[1]).strip() if row[1] is not None else ""
+                                    if k == "country name" and v and not v.startswith("{{"):
+                                        cfg["country"] = v
+                                    elif k == "country iso3 code" and v and not v.startswith("{{"):
+                                        cfg["country_iso3"] = v
+                            if cfg.get("country"):
+                                break
+                    except Exception:
+                        pass
                 if cfg.get("country"):
                     break
 
@@ -1539,6 +1560,8 @@ class MTFMasterBuilder:
                     if not ea_m.empty:
                         elc_rel.loc[grp.index] = elc_rel.loc[grp.index].fillna(ea_m.min())
         df["elc_rel_tier"] = elc_rel
+        df["dis_frq"] = dis_frq
+        df["dis_dur"] = dis_dur
 
         # Quality Tier (grid/mini-grid only)
         appl_dam = pd.Series(np.nan, index=df.index)

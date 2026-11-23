@@ -20,13 +20,17 @@ Purpose:
 
 import os
 import sys
+import re
 import json
 import argparse
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 import pandas as pd
 import numpy as np
+
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 
 def weighted_mean(series: pd.Series, weights: pd.Series, mask: Optional[pd.Series] = None) -> float:
@@ -105,8 +109,13 @@ class MTFEngine:
         r = self.r
 
         # Helper masks & dummy vectors
-        grid_hh = df["elec_tech_type"] == 1 if "elec_tech_type" in df.columns else (df["grid_hh"] == 1 if "grid_hh" in df.columns else pd.Series(False, index=df.index))
-        solar_hh = df["elec_tech_type"].isin([4, 5, 6]) if "elec_tech_type" in df.columns else (df["solar_hh"] == 1 if "solar_hh" in df.columns else pd.Series(False, index=df.index))
+        if "grid_hh" not in df.columns:
+            df["grid_hh"] = (df["elec_tech_type"] == 1).astype(int) if "elec_tech_type" in df.columns else 0
+        if "solar_hh" not in df.columns:
+            df["solar_hh"] = (df["elec_tech_type"].isin([4, 5, 6])).astype(int) if "elec_tech_type" in df.columns else 0
+        grid_hh = df["grid_hh"] == 1
+        solar_hh = df["solar_hh"] == 1
+        grid_col_name = "grid_hh"
         mhh = df["hh_head_gender"] == 1 if "hh_head_gender" in df.columns else pd.Series(True, index=df.index)
         fhh = df["hh_head_gender"] == 2 if "hh_head_gender" in df.columns else pd.Series(False, index=df.index)
         q_col = "hh_exp_quintile" if "hh_exp_quintile" in df.columns else ("quintile" if "quintile" in df.columns else None)
@@ -331,13 +340,13 @@ class MTFEngine:
             elif v == "under_the_grid":
                 if "ea_grid_present" in df.columns: series = (df["ea_grid_present"] == 1).astype(float)
                 elif "under_the_grid" in df.columns: series = df["under_the_grid"].astype(float)
-                elif "psu_id" in df.columns: series = (df.groupby("psu_id")["grid_hh"].transform("max") == 1).astype(float)
+                elif "psu_id" in df.columns: series = (df.groupby("psu_id")[grid_col_name].transform("max") == 1).astype(float)
                 else: continue
             elif v == "under_grid_unconnected":
                 if "under_grid_unconnected" in df.columns:
                     series = df["under_grid_unconnected"].astype(float)
                 else:
-                    utg = (df["ea_grid_present"] == 1) if "ea_grid_present" in df.columns else (df.groupby("psu_id")["grid_hh"].transform("max") == 1 if "psu_id" in df.columns else None)
+                    utg = (df["ea_grid_present"] == 1) if "ea_grid_present" in df.columns else (df.groupby("psu_id")[grid_col_name].transform("max") == 1 if "psu_id" in df.columns else None)
                     series = (utg & (~grid_hh)).astype(float) if utg is not None else pd.Series(0.0, index=df.index)
             elif v in df.columns:
                 series = df[v].astype(float)
@@ -597,6 +606,44 @@ class MTFEngine:
                 self.set_tok(f"{col.upper()}_NAT", val)
         self.sheets["Gender_Profiles"] = pd.DataFrame(s10_rows)
 
+        # Country Metadata Tokens
+        detected_cname = None
+        calib_search = [self.data_path.parent, self.data_path.parent.parent, Path("config"), Path("Tools"), Path(".")]
+        for s_dir in calib_search:
+            if not (s_dir and s_dir.exists()):
+                continue
+            for cal_f in list(s_dir.glob("MTF_*_Calibration.xlsx")) + list(s_dir.glob("mtf_calibration*.xlsx")):
+                m = re.match(r"MTF_(.+)_Calibration\.xlsx", cal_f.name)
+                if m and m.group(1).lower() not in ["standard", "template"]:
+                    detected_cname = m.group(1).replace("_", " ").title()
+                    break
+                try:
+                    import openpyxl
+                    wb = openpyxl.load_workbook(cal_f, data_only=True, read_only=True)
+                    if "Instructions_&_Metadata" in wb.sheetnames:
+                        ws = wb["Instructions_&_Metadata"]
+                        for row in ws.iter_rows(values_only=True):
+                            if row and len(row) >= 2:
+                                k = str(row[0]).strip().lower()
+                                v = str(row[1]).strip() if row[1] is not None else ""
+                                if k == "country name" and v and not v.startswith("{{"):
+                                    detected_cname = v
+                                    break
+                except Exception:
+                    pass
+            if detected_cname:
+                break
+        if not detected_cname:
+            if "country_name" in df.columns:
+                detected_cname = str(df["country_name"].iloc[0]).strip().title()
+            elif "country" in df.columns:
+                detected_cname = str(df["country"].iloc[0]).strip().title()
+            else:
+                detected_cname = "Guinea-Bissau"
+
+        self.set_tok("COUNTRY_NAME", detected_cname)
+        self.set_tok("COUNTRY", detected_cname)
+
         # Additional analytical indicators
         if "women_fuel_min_day" in df.columns: self.set_tok("WOMEN_FUEL_TIME", svy_mean_val(df["women_fuel_min_day"], w, decimals=1))
         if "men_fuel_min_day" in df.columns: self.set_tok("MEN_FUEL_TIME", svy_mean_val(df["men_fuel_min_day"], w, decimals=1))
@@ -605,6 +652,9 @@ class MTFEngine:
         if "own_both_stoves" in df.columns: self.set_tok("PCT_STOVE_STACKING", svy_pct(df["own_both_stoves"], w))
         if "clean_stove" in df.columns: self.set_tok("PCT_CLEAN_STOVE_OWNERSHIP", svy_pct(df["clean_stove"], w))
         if "dis_frq" in df.columns: self.set_tok("AVG_OUTAGES_PER_WEEK", svy_mean_val(df["dis_frq"], w, grid_hh, decimals=1))
+        elif "SEC_C_Q29" in df.columns:
+            q29_c = df["SEC_C_Q29"].replace({888: np.nan, 111: 0.0})
+            self.set_tok("AVG_OUTAGES_PER_WEEK", svy_mean_val(q29_c, w, grid_hh, decimals=1))
 
         # =====================================================================
         # SHEET 11: Indicator_Catalog (Executive Human-Readable Dictionary)

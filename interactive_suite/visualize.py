@@ -79,26 +79,27 @@ parser = argparse.ArgumentParser(description="ESMAP MTF Visualization Pipeline")
 parser.add_argument("--base-dir", default=None, help="Country working directory")
 _cli_args, _ = parser.parse_known_args()
 
-if _cli_args.base_dir:
-    BASE_DIR = Path(_cli_args.base_dir)
-    OUTPUT_DIR = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
-    CHARTS_DIR = OUTPUT_DIR / "charts"
-    _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
-    if not _xls_candidates:
-        _xls_candidates = [f for f in OUTPUT_DIR.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
-    if not _xls_candidates and (BASE_DIR / "interactive_suite" / "Output").exists():
-        _alt_dir = BASE_DIR / "interactive_suite" / "Output"
-        _xls_candidates = [f for f in _alt_dir.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+    if _cli_args.base_dir:
+        BASE_DIR = Path(_cli_args.base_dir)
+        OUTPUT_DIR = BASE_DIR / "Output" / "streamlined" if (BASE_DIR / "Output" / "streamlined").exists() else BASE_DIR / "Output"
+        CHARTS_DIR = OUTPUT_DIR / "charts"
+        JSON_PATH  = OUTPUT_DIR / "mtf_report_values.json"
+        _xls_candidates = [f for f in OUTPUT_DIR.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
         if not _xls_candidates:
-            _xls_candidates = [f for f in _alt_dir.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
-        if _xls_candidates:
+            _xls_candidates = [f for f in OUTPUT_DIR.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
+        if not _xls_candidates and (BASE_DIR / "interactive_suite" / "Output").exists():
+            _alt_dir = BASE_DIR / "interactive_suite" / "Output"
+            _xls_candidates = [f for f in _alt_dir.glob("MTF_*_Summary.xlsx") if not f.name.startswith(".~lock")]
+            if not _xls_candidates:
+                _xls_candidates = [f for f in _alt_dir.glob("*Full_Indicators*.xlsx") if not f.name.startswith(".~lock")]
+            if _xls_candidates:
+                XLS_PATH = _xls_candidates[0]
+            if not JSON_PATH.exists() and (_alt_dir / "mtf_report_values.json").exists():
+                JSON_PATH = _alt_dir / "mtf_report_values.json"
+        if not _xls_candidates:
+            XLS_PATH = OUTPUT_DIR / "MTF_Summary.xlsx"
+        else:
             XLS_PATH = _xls_candidates[0]
-        if not JSON_PATH.exists() and (_alt_dir / "mtf_report_values.json").exists():
-            JSON_PATH = _alt_dir / "mtf_report_values.json"
-    if not _xls_candidates:
-        XLS_PATH = OUTPUT_DIR / "MTF_Summary.xlsx"
-    else:
-        XLS_PATH = _xls_candidates[0]
 
 try:
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)

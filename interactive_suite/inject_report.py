@@ -145,8 +145,10 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
     Determines country name using priority hierarchy:
     1. Explicit CLI argument (--country)
     2. {{COUNTRY_NAME}} or COUNTRY_NAME in JSON values
-    3. Workspace directory name pattern (e.g. '35_Liberia(2024)' -> 'Liberia')
-    4. Fallback default 'Liberia'
+    3. Country Calibration Workbook (Sheet: Instructions_&_Metadata -> Country Name)
+    4. country_config.yaml (country parameter)
+    5. Workspace directory name pattern (e.g. '35_Liberia(2024)' -> 'Liberia')
+    6. Fallback default 'Guinea-Bissau'
     """
     if explicit_country and explicit_country.strip():
         return explicit_country.strip()
@@ -156,6 +158,43 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
             val = json_data.get(key)
             if val and isinstance(val, str) and val.strip() and not val.startswith("{{"):
                 return val.strip()
+
+    # Priority 3: Check Calibration Workbook Instructions_&_Metadata sheet
+    search_dirs = []
+    if base_dir:
+        search_dirs.extend([Path(base_dir), Path(base_dir).parent, Path(base_dir) / "config", Path(base_dir) / "Tools"])
+    search_dirs.extend([Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".."), Path(".")])
+
+    for s_dir in search_dirs:
+        if not s_dir.exists():
+            continue
+        for calib_file in list(s_dir.glob("MTF_*_Calibration.xlsx")) + list(s_dir.glob("mtf_calibration*.xlsx")):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(calib_file, data_only=True, read_only=True)
+                if "Instructions_&_Metadata" in wb.sheetnames:
+                    ws = wb["Instructions_&_Metadata"]
+                    for row in ws.iter_rows(values_only=True):
+                        if row and len(row) >= 2:
+                            k = str(row[0]).strip().lower()
+                            v = str(row[1]).strip() if row[1] is not None else ""
+                            if k == "country name" and v and not v.startswith("{{"):
+                                return v
+            except Exception:
+                pass
+
+    # Priority 4: country_config.yaml
+    for s_dir in search_dirs:
+        cfg_p = s_dir / "country_config.yaml"
+        if cfg_p.exists():
+            try:
+                for line in cfg_p.read_text(encoding="utf-8").splitlines():
+                    if line.strip().startswith("country:"):
+                        c_val = line.split(":", 1)[1].strip().strip("\"'")
+                        if c_val:
+                            return c_val
+            except Exception:
+                pass
 
     if base_dir:
         p = Path(base_dir).resolve()
@@ -167,7 +206,8 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
                     "data analysis", "data", "output", "do-file", "streamlined",
                     "scripts", "standard template", "00 standard template", "charts",
                     "esmap-mtf-pipeline git", "do file", "tools", "media", "bryan",
-                    "mtf countries", "data analysis mtf countries", "mtf"
+                    "mtf countries", "data analysis mtf countries", "mtf", "test",
+                    "interactive suite", "interactive_suite"
                 } and "mtf countries" not in cand.lower():
                     return cand
 

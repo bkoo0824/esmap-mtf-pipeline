@@ -93,14 +93,22 @@ set /p CHOICE="Select (0/1/2/3/4/5/6, Default Enter=1): "
 
 if "%CHOICE%"=="0" (
     echo.
-    echo [*] Scanning Data\ folder to detect country metadata and generate Calibration Workbook...
+    echo [*] 1-Click Country Setup: Scan Data & Generate Calibration Workbook...
+    echo If you want to specify a Country Name, enter it below (or press Enter to auto-detect):
+    set "USER_COUNTRY="
+    set /p "USER_COUNTRY=Enter Country Name (e.g. Guinea-Bissau, Liberia, Namibia, or press Enter): "
+
     set CALIB_SCRIPT=
     if exist "..\dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py
     if exist "dev_tools\mtf_calibrator.py" set CALIB_SCRIPT=dev_tools\mtf_calibrator.py
     if exist "mtf_calibrator.py" set CALIB_SCRIPT=mtf_calibrator.py
 
     if defined CALIB_SCRIPT (
-        python %CALIB_SCRIPT% --country-dir ".." --calibrate-country --auto-confirm
+        if defined USER_COUNTRY (
+            python "%CALIB_SCRIPT%" --country-dir ".." --country-name "%USER_COUNTRY%" --calibrate-country --auto-confirm
+        ) else (
+            python "%CALIB_SCRIPT%" --country-dir ".." --calibrate-country --auto-confirm
+        )
         echo.
         echo ===============================================================================
         echo  ✓ Success! Country Calibration Workbook generated in the root folder.
@@ -208,7 +216,12 @@ if "%CHOICE%"=="3" (
         echo ===============================================================================
         echo  [OK] Success! Publication charts and World Bank Word report generated.
         echo ===============================================================================
+        REM Ensure charts and reports are available in both Output\ and ..\Output\
         if exist "..\Output" (
+            if exist "Output\charts" xcopy /y /i /e "Output\charts" "..\Output\charts" >nul 2>&1
+            if exist "..\Output\charts" xcopy /y /i /e "..\Output\charts" "Output\charts" >nul 2>&1
+            copy /y Output\MTF_*.* ..\Output\ >nul 2>&1
+            copy /y ..\Output\MTF_*.* Output\ >nul 2>&1
             start "" "..\Output"
         ) else if exist "Output" (
             start "" "Output"

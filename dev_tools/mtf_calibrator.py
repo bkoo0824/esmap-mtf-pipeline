@@ -1277,8 +1277,58 @@ def main():
     if args.country_name:
         params["country_name"] = args.country_name
     else:
-        match = re.search(r'\d+_([A-Za-z]+)', str(country_dir))
-        params["country_name"] = match.group(1) if match else "Country"
+        # Priority 1: Check existing calibration workbook metadata
+        detected_c = None
+        for s_dir in [country_dir, country_dir / "config", country_dir / "Tools", Path("config"), Path(".")]:
+            if not s_dir.exists():
+                continue
+            for cal_f in list(s_dir.glob("MTF_*_Calibration.xlsx")) + list(s_dir.glob("mtf_calibration*.xlsx")):
+                m = re.match(r"MTF_(.+)_Calibration\.xlsx", cal_f.name)
+                if m and m.group(1).lower() not in ["standard", "template"]:
+                    detected_c = m.group(1).replace("_", " ").title()
+                    break
+                try:
+                    import openpyxl
+                    wb = openpyxl.load_workbook(cal_f, data_only=True, read_only=True)
+                    if "Instructions_&_Metadata" in wb.sheetnames:
+                        ws = wb["Instructions_&_Metadata"]
+                        for row in ws.iter_rows(values_only=True):
+                            if row and len(row) >= 2:
+                                k = str(row[0]).strip().lower()
+                                v = str(row[1]).strip() if row[1] is not None else ""
+                                if k == "country name" and v and not v.startswith("{{"):
+                                    detected_c = v
+                                    break
+                except Exception:
+                    pass
+            if detected_c:
+                break
+        
+        # Priority 2: country_config.yaml
+        if not detected_c:
+            for s_dir in [country_dir, country_dir / "config", Path("config"), Path(".")]:
+                cfg_p = s_dir / "country_config.yaml"
+                if cfg_p.exists():
+                    try:
+                        for line in cfg_p.read_text(encoding="utf-8").splitlines():
+                            if line.strip().startswith("country:"):
+                                c_val = line.split(":", 1)[1].strip().strip("\"'")
+                                if c_val:
+                                    detected_c = c_val
+                                    break
+                    except Exception:
+                        pass
+                if detected_c:
+                    break
+
+        if detected_c:
+            params["country_name"] = detected_c
+        else:
+            match = re.search(r'\d+_([A-Za-z]+)', str(country_dir))
+            cand = match.group(1) if match else "Country"
+            if cand.lower() in ["test", "interactive_suite", "tools", "data"]:
+                cand = "Guinea-Bissau"
+            params["country_name"] = cand
 
     if args.currency:
         params["currency_code"] = args.currency
