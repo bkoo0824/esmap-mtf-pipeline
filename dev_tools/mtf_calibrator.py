@@ -550,17 +550,20 @@ class MTFScanner:
         self.params["urban_rural_var"] = loc_var if loc_var else "SEC_A_Q06"
         self.params["urban_rural_mapping"] = val_labels.get(self.params["urban_rural_var"], {1: 'Urban', 2: 'Rural'})
 
-        # 3. PSU / EA (cluster variable, must NOT be locality variable)
+        # 3. PSU / EA (SEC_A_Q06 standard EA identifier across MTF countries)
         psu_var = None
-        for col in ["SEC_A_Q07", "SEC_A_Q06", "SEC_A_Q05", "ea_number", "ea_id", "cluster", "psu"]:
+        for col in ["SEC_A_Q06", "SEC_A_Q07", "SEC_A_Q05", "ea_number", "ea_id", "ea_code", "cluster", "psu"]:
             if col in cols and col != self.params["urban_rural_var"]:
                 vlabel = var_labels.get(col, "").lower()
                 if any(k in vlabel for k in ["ea", "enumeration", "cluster", "psu"]) or any(k in col.lower() for k in ["ea", "cluster", "psu"]):
                     psu_var = col
                     break
         if not psu_var:
-            ea_candidates = [c for c in cols if c != self.params["urban_rural_var"] and ("ea" in c.lower() or "cluster" in c.lower())]
-            psu_var = ea_candidates[0] if ea_candidates else "SEC_A_Q05"
+            if "SEC_A_Q06" in cols and "SEC_A_Q06" != self.params["urban_rural_var"]:
+                psu_var = "SEC_A_Q06"
+            else:
+                ea_candidates = [c for c in cols if c != self.params["urban_rural_var"] and ("ea" in c.lower() or "cluster" in c.lower())]
+                psu_var = ea_candidates[0] if ea_candidates else ("SEC_A_Q06" if "SEC_A_Q06" in cols else "SEC_A_Q05")
         self.params["psu_var"] = psu_var
 
         # 4. Admin 1 (Regions / Counties / Provinces)
@@ -938,19 +941,19 @@ lab var loc_urban_rural "Urban / Rural Locality"
 egen strata_id = group(SEC_A_Q01 SEC_A_Q05)
 lab var strata_id "Survey Stratum: Admin 1 × Locality"
 
-* Primary Sampling Unit (Cluster / EA)
-capture confirm numeric variable SEC_A_Q07
+* Primary Sampling Unit (Cluster / EA) — Standard: SEC_A_Q06 (EA code)
+capture confirm numeric variable SEC_A_Q06
 if !_rc {
-    gen double psu_id = SEC_A_Q07
+    gen double psu_id = SEC_A_Q06
 }
 else {
-    capture confirm variable SEC_A_Q07
+    capture confirm variable SEC_A_Q06
     if !_rc {
-        egen psu_id = group(SEC_A_Q07)
+        egen psu_id = group(SEC_A_Q06)
     }
     else {
-        capture confirm variable SEC_A_Q06
-        if !_rc egen psu_id = group(SEC_A_Q06)
+        capture confirm variable SEC_A_Q07
+        if !_rc egen psu_id = group(SEC_A_Q07)
         else {
             capture confirm variable SEC_A_Q05
             if !_rc egen psu_id = group(SEC_A_Q05)
@@ -1041,11 +1044,11 @@ if _rc {{
         egen psu_id = group({psu})
     }}
     else {{
-        capture confirm variable SEC_A_Q07
-        if !_rc egen psu_id = group(SEC_A_Q07)
+        capture confirm variable SEC_A_Q06
+        if !_rc egen psu_id = group(SEC_A_Q06)
         else {{
-            capture confirm variable SEC_A_Q06
-            if !_rc egen psu_id = group(SEC_A_Q06)
+            capture confirm variable SEC_A_Q07
+            if !_rc egen psu_id = group(SEC_A_Q07)
             else {{
                 capture confirm variable SEC_A_Q05
                 if !_rc egen psu_id = group(SEC_A_Q05)

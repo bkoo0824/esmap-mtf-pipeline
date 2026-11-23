@@ -541,12 +541,13 @@ class MTFMasterBuilder:
                 else:
                     df["strata_id"] = 1
 
-            # PSU: sorted unique SEC_A_Q07 mapped to 1..N
+            # PSU: Standard SEC_A_Q06 (or SEC_A_Q07) mapped to 1..N
             if "psu_id" not in df.columns:
-                if "SEC_A_Q07" in df.columns:
-                    unique_psus = sorted(df["SEC_A_Q07"].dropna().unique())
-                    psu_df = pd.DataFrame({"SEC_A_Q07": unique_psus, "psu_id": range(1, len(unique_psus) + 1)})
-                    df = df.merge(psu_df, on="SEC_A_Q07", how="left")
+                ea_col = "SEC_A_Q06" if "SEC_A_Q06" in df.columns else ("SEC_A_Q07" if "SEC_A_Q07" in df.columns else None)
+                if ea_col:
+                    unique_psus = sorted(df[ea_col].dropna().unique())
+                    psu_df = pd.DataFrame({ea_col: unique_psus, "psu_id": range(1, len(unique_psus) + 1)})
+                    df = df.merge(psu_df, on=ea_col, how="left")
                 else:
                     df["psu_id"] = 1
 
@@ -573,12 +574,12 @@ class MTFMasterBuilder:
             elif "hh_wt" not in admin.columns:
                 admin["hh_wt"] = 1.0
 
-            # PSU
+            # PSU (Standard: SEC_A_Q06 EA code across MTF surveys)
             if "psu_id" not in admin.columns:
-                if "SEC_A_Q07" in admin.columns:
-                    admin["psu_id"] = admin["SEC_A_Q07"]
-                elif "SEC_A_Q06" in admin.columns:
+                if "SEC_A_Q06" in admin.columns:
                     admin["psu_id"] = admin["SEC_A_Q06"]
+                elif "SEC_A_Q07" in admin.columns:
+                    admin["psu_id"] = admin["SEC_A_Q07"]
                 elif "ea_code" in admin.columns:
                     admin["psu_id"] = admin["ea_code"]
                 else:

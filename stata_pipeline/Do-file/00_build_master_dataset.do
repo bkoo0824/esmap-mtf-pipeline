@@ -148,17 +148,17 @@
 	gen pop_wt = hh_wt * hhsize
 	lab var pop_wt "Final Population Weight (hh_wt × hhsize)"
 
-	** Sampling Unit / EA cluster uniqueness (Comment C21)
-	capture confirm variable SEC_A_Q07
+	** Sampling Unit / EA cluster uniqueness (Standard: SEC_A_Q06 EA code)
+	capture confirm variable SEC_A_Q06
 	if !_rc {
 		capture drop psu_id
-		egen psu_id = group(SEC_A_Q07)
+		egen psu_id = group(SEC_A_Q06)
 	}
 	else {
-		capture confirm variable SEC_A_Q06
+		capture confirm variable SEC_A_Q07
 		if !_rc {
 			capture drop psu_id
-			egen psu_id = group(SEC_A_Q06)
+			egen psu_id = group(SEC_A_Q07)
 		}
 		else {
 			capture drop psu_id
