@@ -74,7 +74,7 @@ class MTFMasterBuilder:
         if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
             for f in self.raw_dir.glob("*.dta"):
                 fname = f.name.lower()
-                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname:
+                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname and "roster" not in fname and not fname.startswith("section_"):
                     monolithic_hh = f
                     break
 
@@ -478,7 +478,7 @@ class MTFMasterBuilder:
         if hasattr(self, "raw_dir") and self.raw_dir and self.raw_dir.exists():
             for f in self.raw_dir.glob("*.dta"):
                 fname = f.name.lower()
-                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname:
+                if ("household" in fname or "energy" in fname or "field" in fname or "hh" in fname) and "master" not in fname and "roster" not in fname and not fname.startswith("section_"):
                     monolithic_hh = f
                     break
 
@@ -1313,14 +1313,29 @@ class MTFMasterBuilder:
         q117 = self._col(df, "SEC_C_Q117", 0)
         nbr_e = df["nbr_elec"]
 
+        # If SEC_C_Q162 is entirely missing/empty, initialize from primary sources
+        if q162.isna().all():
+            q40 = self._col(df, "SEC_C_Q40", 0)
+            q78 = self._col(df, "SEC_C_Q78", 0)
+            q100 = self._col(df, "SEC_C_Q100", 0)
+            q162.loc[q02 == 1] = 1
+            q162.loc[(q162.isna()) & (q40 == 1)] = 2
+            q162.loc[(q162.isna()) & (q78 == 1)] = 3
+            q162.loc[(q162.isna()) & (q117 == 1) & (q128b == 1)] = 4
+            q162.loc[(q162.isna()) & (q117 == 1) & (q128b == 2)] = 5
+            q162.loc[(q162.isna()) & (q117 == 1) & (q128b == 3)] = 6
+            q162.loc[(q162.isna()) & (q117 == 1)] = 5
+            q162.loc[(q162.isna()) & (q100 == 1)] = 7
+            q162 = q162.fillna(8)
+
         q162.loc[(q128b == 1) & q162.isin([5, 6])] = 4
         q162.loc[(q128b == 2) & q162.isin([4, 6])] = 5
         q162.loc[(q128b == 3) & q162.isin([4, 5])] = 6
 
-        q162.loc[(q02 == 1) & q162.isin([8, 111]) & (nbr_e == 1)] = 1
-        q162.loc[(q128b == 1) & (q117 == 1) & q162.isin([8, 111]) & (nbr_e == 1)] = 4
-        q162.loc[(q128b == 2) & (q117 == 1) & q162.isin([8, 111]) & (nbr_e == 1)] = 5
-        q162.loc[(q128b == 3) & (q117 == 1) & q162.isin([8, 111]) & (nbr_e == 1)] = 6
+        q162.loc[(q02 == 1) & (q162.isna() | q162.isin([8, 111])) & (nbr_e == 1)] = 1
+        q162.loc[(q128b == 1) & (q117 == 1) & (q162.isna() | q162.isin([8, 111])) & (nbr_e == 1)] = 4
+        q162.loc[(q128b == 2) & (q117 == 1) & (q162.isna() | q162.isin([8, 111])) & (nbr_e == 1)] = 5
+        q162.loc[(q128b == 3) & (q117 == 1) & (q162.isna() | q162.isin([8, 111])) & (nbr_e == 1)] = 6
         df["SEC_C_Q162"] = q162
 
         # elec_tech_type: 1=Grid, 2=Mini-grid, 3=Generator, 4=SHS, 5=SLS, 6=SL, 7=Rech Battery, 8=No Access / Dry-cell
@@ -1333,6 +1348,7 @@ class MTFMasterBuilder:
         tech.loc[q162 == 4] = 6
         tech.loc[q162 == 7] = 7
         tech.loc[q162.isin([8, 111])] = 8
+        tech = tech.fillna(8)
         df["elec_tech_type"] = tech
 
         df["grid_hh"] = (df["elec_tech_type"] == 1).astype(int)
