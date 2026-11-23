@@ -74,7 +74,10 @@ class MTFEngine:
                 try:
                     from mtf_builder import MTFMasterBuilder
                 except ImportError:
-                    from interactive_suite.mtf_builder import MTFMasterBuilder
+                    cur_dir = Path(__file__).resolve().parent
+                    if str(cur_dir) not in sys.path:
+                        sys.path.insert(0, str(cur_dir))
+                    from mtf_builder import MTFMasterBuilder
                 builder = MTFMasterBuilder(raw_dir=raw_found)
                 builder.build_all()
                 self.data_path = builder.export_master(self.data_path)
@@ -846,7 +849,10 @@ def find_default_dataset(force_rebuild: bool = False) -> Optional[Path]:
             try:
                 from mtf_builder import MTFMasterBuilder
             except ImportError:
-                from interactive_suite.mtf_builder import MTFMasterBuilder
+                cur_dir = Path(__file__).resolve().parent
+                if str(cur_dir) not in sys.path:
+                    sys.path.insert(0, str(cur_dir))
+                from mtf_builder import MTFMasterBuilder
             builder = MTFMasterBuilder(raw_dir=raw_dir)
             builder.build_all()
             target_out = Path("Data") / builder.config.get("master_dta", "MTF_Master.dta")

@@ -19,7 +19,10 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 import numpy as np
 import pandas as pd
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 class MTFMasterBuilder:
@@ -78,10 +81,13 @@ class MTFMasterBuilder:
             Path("..") / "country_config.yaml"
         ]
         for p in search_paths:
-            if p and p.exists():
-                with open(p, "r", encoding="utf-8") as f:
-                    cfg = yaml.safe_load(f) or {}
-                break
+            if p and p.exists() and yaml is not None:
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        cfg = yaml.safe_load(f) or {}
+                    break
+                except Exception:
+                    pass
 
         # Check for MTF_<Country>_Calibration.xlsx to infer country
         if not cfg.get("country"):
