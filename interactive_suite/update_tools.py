@@ -65,8 +65,14 @@ def update():
                         continue
                     
                     fname = p.name
-                    # If this is a tool/script file matching our current directory
-                    if fname and (curr_dir / fname).exists():
+                    # If this is a tool/script file matching our current directory, or one of the core interactive tools
+                    is_core_tool = fname in (
+                        "visualize.py", "inject_report.py", "MTF_Report_Template.md",
+                        "mtf_builder.py", "mtf_engine.py", "run_mtf_local.bat",
+                        "report_error.py", "update_tools.py", "requirements.txt",
+                        "MTF_Interactive_Analyzer.ipynb"
+                    )
+                    if fname and ((curr_dir / fname).exists() or is_core_tool):
                         target_file = curr_dir / fname
                         zip_ref.extract(member, tmpdir)
                         src_file = Path(tmpdir) / member
