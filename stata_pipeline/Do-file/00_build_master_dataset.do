@@ -80,6 +80,16 @@
 	duplicates drop
 	save "$wip_hh/demographics.dta", replace
 
+	* Backward-compatibility stubs (prevents crashes in legacy/custom country do-files):
+	preserve
+		keep interview__id hhsize
+		save "$wip_hh/hhsize.dta", replace
+	restore
+	preserve
+		keep interview__id hh_head_* SEC_A1_*
+		save "$wip_hh/headgender.dta", replace
+	restore
+
 
 	*===========================================================================
 	*  2. SAMPLING WEIGHTS & SURVEY STRATIFICATION

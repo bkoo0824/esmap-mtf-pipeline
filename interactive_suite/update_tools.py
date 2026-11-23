@@ -86,6 +86,16 @@ def update():
                             shutil.copy2(Path(tmpdir) / member, target_file)
                             print(f"  ✓ Updated [dev_tools]: {p.name}")
                             extracted_count += 1
+                    # 3. Update stata_pipeline / Do-file templates
+                    elif "stata_pipeline/Do-file/" in member:
+                        base_root = curr_dir.parent if curr_dir.name == "interactive_suite" else curr_dir
+                        for candidate in [base_root / "stata_pipeline" / "Do-file", base_root / "Do-file"]:
+                            if candidate.exists():
+                                target_file = candidate / p.name
+                                zip_ref.extract(member, tmpdir)
+                                shutil.copy2(Path(tmpdir) / member, target_file)
+                                print(f"  ✓ Updated [Do-file]: {p.name}")
+                                extracted_count += 1
 
             print(f"\n✓ Update finished! {extracted_count} tools/scripts successfully refreshed.")
             print("  🔒 Confidential Data/ files and custom outputs were fully preserved.")
