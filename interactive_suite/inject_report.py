@@ -159,11 +159,28 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
             if val and isinstance(val, str) and val.strip() and not val.startswith("{{"):
                 return val.strip()
 
-    # Priority 3: Check Calibration Workbook Instructions_&_Metadata sheet
+    # Priority 3: Check base_dir directory name first if it clearly identifies a country
+    if base_dir:
+        p = Path(base_dir).resolve()
+        for part in reversed(p.parts):
+            m = re.match(r"^(?:\d+[_.\s-]*)?([A-Za-z]+(?:[_\s-][A-Za-z]+)*?)(?:\s*\(\d+\))?$", part)
+            if m:
+                cand = m.group(1).replace("_", " ").strip()
+                if cand.lower() not in {
+                    "data analysis", "data", "output", "do-file", "streamlined",
+                    "scripts", "standard template", "00 standard template", "charts",
+                    "esmap-mtf-pipeline git", "do file", "tools", "media", "bryan",
+                    "mtf countries", "data analysis mtf countries", "mtf", "test",
+                    "interactive suite", "interactive_suite", "github", "esmap-mtf-pipeline"
+                } and "mtf countries" not in cand.lower():
+                    return cand
+
+    # Priority 4: Check Calibration Workbook Instructions_&_Metadata sheet
     search_dirs = []
     if base_dir:
         search_dirs.extend([Path(base_dir), Path(base_dir).parent, Path(base_dir) / "config", Path(base_dir) / "Tools"])
-    search_dirs.extend([Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".."), Path(".")])
+    else:
+        search_dirs.extend([Path("config"), Path("Tools"), Path("Data"), Path("examples/guinea_bissau_reference"), Path(".."), Path(".")])
 
     for s_dir in search_dirs:
         if not s_dir.exists():
@@ -183,7 +200,7 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
             except Exception:
                 pass
 
-    # Priority 4: country_config.yaml
+    # Priority 5: country_config.yaml
     for s_dir in search_dirs:
         cfg_p = s_dir / "country_config.yaml"
         if cfg_p.exists():
@@ -196,22 +213,8 @@ def infer_country_name(explicit_country: str = None, base_dir: Path = None, json
             except Exception:
                 pass
 
-    if base_dir:
-        p = Path(base_dir).resolve()
-        for part in reversed(p.parts):
-            m = re.match(r"^(?:\d+[_.\s-]*)?([A-Za-z]+(?:[_\s-][A-Za-z]+)*?)(?:\s*\(\d+\))?$", part)
-            if m:
-                cand = m.group(1).replace("_", " ").strip()
-                if cand.lower() not in {
-                    "data analysis", "data", "output", "do-file", "streamlined",
-                    "scripts", "standard template", "00 standard template", "charts",
-                    "esmap-mtf-pipeline git", "do file", "tools", "media", "bryan",
-                    "mtf countries", "data analysis mtf countries", "mtf", "test",
-                    "interactive suite", "interactive_suite"
-                } and "mtf countries" not in cand.lower():
-                    return cand
-
     return DEFAULT_COUNTRY
+
 
 
 # ─── LOAD JSON VALUES ─────────────────────────────────────────────────────────

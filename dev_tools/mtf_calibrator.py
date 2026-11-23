@@ -729,20 +729,20 @@ local current_dir "`c(pwd)'"
 * Dynamic Path Auto-Discovery: If configured $user or $raw_hh does not exist on this machine,
 * automatically fall back to current directory or parent directory containing Data/
 capture confirm file "$user/Data"
-if _rc {
+if _rc {{
     capture confirm file "`current_dir'/Data"
-    if !_rc {
+    if !_rc {{
         global user "`current_dir'"
         global raw_hh "`current_dir'/Data"
-    }
-    else {
+    }}
+    else {{
         capture confirm file "`current_dir'/../Data"
-        if !_rc {
+        if !_rc {{
             global user "`current_dir'/.."
             global raw_hh "`current_dir'/../Data"
-        }
-    }
-}
+        }}
+    }}
+}}
 
 * Common folder paths
 global wip_hh    "$user/Data/wip_hh"
@@ -753,14 +753,14 @@ global out_sl    "$output"
 
 * Locate Do-file scripts directory dynamically if moved
 capture confirm file "$scripts/01_setup.do"
-if _rc {
+if _rc {{
     capture confirm file "`current_dir'/01_setup.do"
     if !_rc global scripts "`current_dir'"
-    else {
+    else {{
         capture confirm file "`current_dir'/Do-file/01_setup.do"
         if !_rc global scripts "`current_dir'/Do-file"
-    }
-}
+    }}
+}}
 
 * Parameters
 global country    "{country}"
@@ -1282,6 +1282,11 @@ def main():
     args = parser.parse_args()
 
     country_dir = Path(args.country_dir).resolve()
+    # Normalize: if user passed path directly to Data/ or interactive_suite/, resolve to country root
+    if country_dir.name.lower() in ["data", "interactive_suite"]:
+        if (country_dir.parent / "Data").exists() or any(country_dir.parent.glob("*.dta")):
+            country_dir = country_dir.parent
+
     template_dir = find_template_dir(args.template_dir)
 
     print(f"\n==================================================================")
