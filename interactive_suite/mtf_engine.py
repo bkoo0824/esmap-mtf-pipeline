@@ -1008,16 +1008,16 @@ def find_latest_calibration_file() -> Optional[Path]:
 def find_default_dataset(force_rebuild: bool = False) -> Optional[Path]:
     """Auto-detects the compiled MTF Master dataset across standard project folders,
     with smart auto-rebuild if calibration workbook has been updated or force_rebuild is set."""
-    raw_dirs = [Path("Data"), Path("Data/raw"), Path("Data/wip_hh"), Path(".")]
+    raw_dirs = [Path("Data"), Path("Data/raw"), Path("Data/wip_hh"), Path(".."), Path("../Data"), Path(".")]
     raw_dir = None
     for r in raw_dirs:
         if r.exists():
-            if (r / "admin_info.dta").exists():
+            if (r / "admin_info.dta").exists() or (r / "sec_a1_hh_roster.dta").exists() or (r / "section_a1_hh_roster.dta").exists():
                 raw_dir = r
                 break
             for f in r.glob("*.dta"):
                 fname = f.name.lower()
-                if "household" in fname and "master" not in fname:
+                if ("roster" in fname or "household" in fname) and "master" not in fname:
                     raw_dir = r
                     break
             if raw_dir:

@@ -58,9 +58,9 @@ class MTFMasterBuilder:
                     return c
                 for f in c.glob("*.dta"):
                     fname = f.name.lower()
-                    if ("household" in fname or "hh" in fname or "energy" in fname) and "master" not in fname:
+                    if ("roster" in fname or "household" in fname or "hh" in fname or "energy" in fname) and "master" not in fname:
                         return c
-        return Path("..") if (Path("..") / "hhroster.dta").exists() else Path("Data")
+        return Path("..") if ((Path("..") / "hhroster.dta").exists() or (Path("..") / "section_a1_hh_roster.dta").exists() or (Path("..") / "sec_a1_hh_roster.dta").exists()) else Path("Data")
 
     @staticmethod
     def _col(df: pd.DataFrame, col_name: str, default: Any = np.nan) -> pd.Series:
@@ -202,21 +202,23 @@ class MTFMasterBuilder:
 
         # Standard Survey Solutions CAPI naming fallbacks
         capi_fallbacks = {
-            "generator": ["SEC_C_GENERATOR.dta", "sec_c_generator.dta", "generator.dta"],
-            "rechar_ba": ["SEC_C_RECHAR_BA.dta", "sec_c_rechar_ba.dta", "rechar_ba.dta"],
-            "solar_device": ["Solar_C_Device.dta", "solar_c_device.dta", "solar_device.dta"],
-            "fuel_h11": ["fuel_H11.dta", "fuel_h11.dta"],
-            "cookstoves": ["cookstoves.dta"],
-            "appliances": ["appliances.dta", "appliance.dta"],
-            "hhroster": ["hhroster.dta", "section_a1_hh_roster.dta"],
-            "food": ["food.dta"],
-            "nonfood_1mon": ["nonfood_1mon.dta"],
-            "nonfood_12mon": ["nonfood_12mon.dta"],
-            "fuel_consump": ["fuel_consumption.dta"],
-            "time_coll": ["time_collecting.dta", "time_coll.dta"],
-            "time_use": ["time_use.dta"],
-            "lighting_fuel": ["lighting_fuel.dta"],
-            "solar_business": ["solar_business.dta"]
+            "generator": ["sec_c_generator_roster.dta", "section_c_generator_roster.dta", "SEC_C_GENERATOR.dta", "sec_c_generator.dta", "generator.dta"],
+            "rechar_ba": ["sec_c_rechargeablebattery_roster.dta", "section_c_rechargeablebattery_roster.dta", "SEC_C_RECHAR_BA.dta", "sec_c_rechar_ba.dta", "rechar_ba.dta"],
+            "solar_device": ["sec_c_solardevice_roster.dta", "section_c_solardevice_roster.dta", "Solar_C_Device.dta", "solar_c_device.dta", "solar_device.dta"],
+            "fuel_h11": ["sec_h_fuel_h11_roster.dta", "section_h_fuel_h11_roster.dta", "fuel_H11.dta", "fuel_h11.dta"],
+            "cookstoves": ["sec_g_cookstoves_roster.dta", "section_g_cookstoves_roster.dta", "cookstoves.dta"],
+            "stove_fuel": ["sec_g_stovefuel_roster.dta", "section_g_stovefuel_roster.dta", "stove_fuel.dta"],
+            "appliances": ["sec_f_appliance_roster.dta", "section_f_appliance_roster.dta", "appliances.dta", "appliance.dta"],
+            "hhroster": ["sec_a1_hh_roster.dta", "section_a1_hh_roster.dta", "hhroster.dta"],
+            "food": ["sec_o_food_roster.dta", "section_o_food_roster.dta", "food.dta"],
+            "nonfood_1mon": ["sec_o_nonfood_1mon_roster.dta", "section_o_nonfood_1mon_roster.dta", "nonfood_1mon.dta"],
+            "nonfood_12mon": ["sec_o_nonfood_12mon_roster.dta", "section_o_nonfood_12mon_roster.dta", "nonfood_12mon.dta"],
+            "fuel_consump": ["sec_i_fuel_consumption_roster.dta", "section_i_fuel_consumption_roster.dta", "fuel_consumption.dta"],
+            "time_coll": ["sec_i_time_collecting_roster.dta", "section_i_time_collecting_roster.dta", "time_collecting.dta", "time_coll.dta"],
+            "time_use": ["section_l.dta", "sec_l.dta", "sec_i_time_use_roster.dta", "section_i_time_use_roster.dta", "time_use.dta"],
+            "lighting_fuel": ["sec_h_lighting_fuel_roster.dta", "section_h_lighting_fuel_roster.dta", "lighting_fuel.dta"],
+            "solar_business": ["sec_a2_solar_business_roster.dta", "section_a2_solar_business_roster.dta", "solar_business.dta"],
+            "admin_info": ["admin_info.dta"]
         }
         names.extend(capi_fallbacks.get(mod_key, []))
 
@@ -235,6 +237,34 @@ class MTFMasterBuilder:
                     return actual_files[n_low]
         except Exception:
             pass
+
+        # 3. Dynamic Regex pattern matching across actual files on disk
+        regex_patterns = {
+            "hhroster": r"^(?:sec(?:tion)?_)?a1.*(?:hh_)?roster.*\.dta$|^hhroster.*\.dta$",
+            "cookstoves": r"^(?:sec(?:tion)?_)?g.*cookstove.*roster.*\.dta$|^cookstoves?.*\.dta$",
+            "stove_fuel": r"^(?:sec(?:tion)?_)?g.*stovefuel.*roster.*\.dta$|^stove_?fuel.*\.dta$",
+            "appliances": r"^(?:sec(?:tion)?_)?f.*appliance.*roster.*\.dta$|^appliances?.*\.dta$",
+            "generator": r"^(?:sec(?:tion)?_)?c.*generator.*roster.*\.dta$|^sec_c_generator.*\.dta$",
+            "rechar_ba": r"^(?:sec(?:tion)?_)?c.*rechargeable.*roster.*\.dta$|^sec_c_rechar_ba.*\.dta$",
+            "solar_device": r"^(?:sec(?:tion)?_)?c.*solar.*device.*roster.*\.dta$|^solar_c_device.*\.dta$",
+            "food": r"^(?:sec(?:tion)?_)?o.*_food_roster.*\.dta$|^food.*\.dta$",
+            "nonfood_1mon": r"^(?:sec(?:tion)?_)?o.*nonfood_?1m.*roster.*\.dta$|^nonfood_?1mon.*\.dta$",
+            "nonfood_12mon": r"^(?:sec(?:tion)?_)?o.*nonfood_?12m.*roster.*\.dta$|^nonfood_?12mon.*\.dta$",
+            "fuel_consump": r"^(?:sec(?:tion)?_)?i.*fuel_?consump.*roster.*\.dta$|^fuel_?consumption.*\.dta$",
+            "fuel_h11": r"^(?:sec(?:tion)?_)?h.*fuel_?h11.*roster.*\.dta$|^fuel_?h11.*\.dta$",
+            "lighting_fuel": r"^(?:sec(?:tion)?_)?h.*lighting_?fuel.*roster.*\.dta$|^lighting_?fuel.*\.dta$",
+            "time_coll": r"^(?:sec(?:tion)?_)?i.*time.*collect.*roster.*\.dta$|^time_?collecting.*\.dta$",
+            "time_use": r"^(?:sec(?:tion)?_)?l\.dta$|^time_?use.*\.dta$",
+            "admin_info": r"^admin_info.*\.dta$"
+        }
+        pat = regex_patterns.get(mod_key)
+        if pat:
+            try:
+                for f in self.raw_dir.glob("*.dta"):
+                    if re.search(pat, f.name, re.IGNORECASE):
+                        return f
+            except Exception:
+                pass
 
         return None
 

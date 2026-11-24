@@ -47,21 +47,21 @@ STANDARD_ROSTERS = [
 ]
 
 ROSTER_PATTERNS = {
-    "fn_hhroster": r"^(?:section_)?a1.*(?:hh_)?roster.*\.dta$|^hhroster.*\.dta$",
-    "fn_cookstoves": r"^(?:section_)?g.*cookstove.*roster.*\.dta$|^cookstoves?.*\.dta$",
-    "fn_stovefuel": r"^(?:section_)?g.*stovefuel.*roster.*\.dta$|^stove_?fuel.*\.dta$",
-    "fn_appliance": r"^(?:section_)?f.*appliance.*roster.*\.dta$|^appliances?.*\.dta$",
-    "fn_generator": r"^(?:section_)?c.*generator.*roster.*\.dta$|^sec_c_generator.*\.dta$",
-    "fn_rechar_ba": r"^(?:section_)?c.*rechargeable.*roster.*\.dta$|^sec_c_rechar_ba.*\.dta$",
-    "fn_solar_device": r"^(?:section_)?c.*solar.*device.*roster.*\.dta$|^solar_c_device.*\.dta$",
-    "fn_food": r"^(?:section_)?o.*_food_roster.*\.dta$|^food.*\.dta$",
-    "fn_nonfood_1mon": r"^(?:section_)?o.*nonfood_?1m.*roster.*\.dta$|^nonfood_?1mon.*\.dta$",
-    "fn_nonfood_12mon": r"^(?:section_)?o.*nonfood_?12m.*roster.*\.dta$|^nonfood_?12mon.*\.dta$",
-    "fn_fuel_consump": r"^(?:section_)?i.*fuel_?consump.*roster.*\.dta$|^fuel_?consumption.*\.dta$",
-    "fn_fuel_h11": r"^(?:section_)?h.*fuel_?h11.*roster.*\.dta$|^fuel_?h11.*\.dta$",
-    "fn_lighting_fuel": r"^(?:section_)?h.*lighting_?fuel.*roster.*\.dta$|^lighting_?fuel.*\.dta$",
-    "fn_time_coll": r"^(?:section_)?i.*time.*collect.*roster.*\.dta$|^time_?collecting.*\.dta$",
-    "fn_time_use": r"^(?:section_)?l\.dta$|^time_?use.*\.dta$",
+    "fn_hhroster": r"^(?:sec(?:tion)?_)?a1.*(?:hh_)?roster.*\.dta$|^hhroster.*\.dta$",
+    "fn_cookstoves": r"^(?:sec(?:tion)?_)?g.*cookstove.*roster.*\.dta$|^cookstoves?.*\.dta$",
+    "fn_stovefuel": r"^(?:sec(?:tion)?_)?g.*stovefuel.*roster.*\.dta$|^stove_?fuel.*\.dta$",
+    "fn_appliance": r"^(?:sec(?:tion)?_)?f.*appliance.*roster.*\.dta$|^appliances?.*\.dta$",
+    "fn_generator": r"^(?:sec(?:tion)?_)?c.*generator.*roster.*\.dta$|^sec_c_generator.*\.dta$",
+    "fn_rechar_ba": r"^(?:sec(?:tion)?_)?c.*rechargeable.*roster.*\.dta$|^sec_c_rechar_ba.*\.dta$",
+    "fn_solar_device": r"^(?:sec(?:tion)?_)?c.*solar.*device.*roster.*\.dta$|^solar_c_device.*\.dta$",
+    "fn_food": r"^(?:sec(?:tion)?_)?o.*_food_roster.*\.dta$|^food.*\.dta$",
+    "fn_nonfood_1mon": r"^(?:sec(?:tion)?_)?o.*nonfood_?1m.*roster.*\.dta$|^nonfood_?1mon.*\.dta$",
+    "fn_nonfood_12mon": r"^(?:sec(?:tion)?_)?o.*nonfood_?12m.*roster.*\.dta$|^nonfood_?12mon.*\.dta$",
+    "fn_fuel_consump": r"^(?:sec(?:tion)?_)?i.*fuel_?consump.*roster.*\.dta$|^fuel_?consumption.*\.dta$",
+    "fn_fuel_h11": r"^(?:sec(?:tion)?_)?h.*fuel_?h11.*roster.*\.dta$|^fuel_?h11.*\.dta$",
+    "fn_lighting_fuel": r"^(?:sec(?:tion)?_)?h.*lighting_?fuel.*roster.*\.dta$|^lighting_?fuel.*\.dta$",
+    "fn_time_coll": r"^(?:sec(?:tion)?_)?i.*time.*collect.*roster.*\.dta$|^time_?collecting.*\.dta$",
+    "fn_time_use": r"^(?:sec(?:tion)?_)?l\.dta$|^time_?use.*\.dta$",
 }
 
 
