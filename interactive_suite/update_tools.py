@@ -80,12 +80,12 @@ def update():
                     # 2. Update dev_tools files (mtf_calibrator.py, etc.)
                     elif "dev_tools/" in member:
                         target_dev = curr_dir.parent / "dev_tools" if curr_dir.name == "interactive_suite" else curr_dir / "dev_tools"
-                        if target_dev.exists():
-                            target_file = target_dev / p.name
-                            zip_ref.extract(member, tmpdir)
-                            shutil.copy2(Path(tmpdir) / member, target_file)
-                            print(f"  ✓ Updated [dev_tools]: {p.name}")
-                            extracted_count += 1
+                        target_dev.mkdir(parents=True, exist_ok=True)
+                        target_file = target_dev / p.name
+                        zip_ref.extract(member, tmpdir)
+                        shutil.copy2(Path(tmpdir) / member, target_file)
+                        print(f"  ✓ Updated [dev_tools]: {p.name}")
+                        extracted_count += 1
                     # 3. Update stata_pipeline / Do-file templates
                     elif "stata_pipeline/Do-file/" in member:
                         base_root = curr_dir.parent if curr_dir.name == "interactive_suite" else curr_dir

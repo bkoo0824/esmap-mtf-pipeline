@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 chcp 65001 >nul
 title World Bank ESMAP MTF Local Interactive Analyzer
 color 0B
@@ -104,9 +105,21 @@ set "USER_COUNTRY="
 set /p USER_COUNTRY=Country Name: 
 
 set "CALIB_SCRIPT="
-if exist "..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py"
-if exist "dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=dev_tools\mtf_calibrator.py"
-if exist "mtf_calibrator.py" set "CALIB_SCRIPT=mtf_calibrator.py"
+if exist "%~dp0..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=%~dp0..\dev_tools\mtf_calibrator.py"
+if not defined CALIB_SCRIPT if exist "%~dp0dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=%~dp0dev_tools\mtf_calibrator.py"
+if not defined CALIB_SCRIPT if exist "%~dp0mtf_calibrator.py" set "CALIB_SCRIPT=%~dp0mtf_calibrator.py"
+if not defined CALIB_SCRIPT if exist "..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py"
+if not defined CALIB_SCRIPT if exist "dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=dev_tools\mtf_calibrator.py"
+if not defined CALIB_SCRIPT if exist "mtf_calibrator.py" set "CALIB_SCRIPT=mtf_calibrator.py"
+
+if not defined CALIB_SCRIPT (
+    echo [*] mtf_calibrator.py not found locally. Running automatic update to download it...
+    python update_tools.py
+    if exist "%~dp0..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=%~dp0..\dev_tools\mtf_calibrator.py"
+    if not defined CALIB_SCRIPT if exist "%~dp0dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=%~dp0dev_tools\mtf_calibrator.py"
+    if not defined CALIB_SCRIPT if exist "..\dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=..\dev_tools\mtf_calibrator.py"
+    if not defined CALIB_SCRIPT if exist "dev_tools\mtf_calibrator.py" set "CALIB_SCRIPT=dev_tools\mtf_calibrator.py"
+)
 
 if defined CALIB_SCRIPT (
     if defined USER_COUNTRY (
